@@ -50,7 +50,7 @@ async def getEmbed(interaction, title='', content='', footer='', color=''):
 
 
 # Creates and sends an Embed message
-async def send(interaction, title='', content='', footer='', color='', ephemeral: bool = False):
+async def send(interaction, title='', content='', footer='', color='', ephemeral: bool = False) -> None:
     embed = await getEmbed(interaction, title, content, footer)
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
@@ -95,7 +95,11 @@ async def _join(interaction: discord.Interaction):
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
+    if interaction.guild.voice_client is not None:
+        await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
+        return
     channel = interaction.user.voice.channel
     await channel.connect()
+    await send(interaction, title='Joined!', content=':white_check_mark:')
 
 bot.run(key)
