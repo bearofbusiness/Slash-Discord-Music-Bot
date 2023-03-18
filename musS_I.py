@@ -1,3 +1,8 @@
+
+#!!!DEPRECATED!!!#
+#!!!DEPRECATED!!!#
+# do not use this file, it is deprecated and will not work#
+
 import interactions
 import discord
 from discord.ext import commands
@@ -33,11 +38,12 @@ TODO:
 load_dotenv()
 key = os.environ.get('key')
 
-
+dpy = commands.Bot(command_prefix="/")
 bot = interactions.Client(token=key)
+state = interactions.api.models.gw.VoiceState()
 
 
-def pront(content, lvl="DEBUG"):
+def pront(*content, lvl="DEBUG"):
     colors = {
         "LOG": "",
         "DEBUG": "\033[1;95m",
@@ -87,7 +93,7 @@ async def test_command(ctx: interactions.CommandContext):
     await send(ctx, title="Hello World!", footer="MaBalls")
 
 
-@commands.is_owner()
+# @commands.is_owner() !Doesn't work!
 @bot.command(
     name="execute",
     description="This is the exec command only can be used be owner for obvious reasons",
@@ -123,4 +129,32 @@ async def execute(ctx, input: str):
         await send(ctx, title='You Do Not Have Perms', footer='MABALLS')
 
 
-bot.start()
+@bot.command(
+    name="join",
+    description="This is the join/leave vc",
+)
+async def join(ctx):
+    print(dir(ctx.member), ctx.member.voice_state, ctx.member.user.id)
+    # print(dir(ctx.guild), dir(ctx.guild.voice_states))
+    # if ctx.guild.voice_client is not None:
+    #     print('already in vc, leaving.')
+    #     await ctx.voice_client.disconnect()
+    #     return
+    # authorVoiceState = ctx.author.voice
+    # if authorVoiceState is None or ctx.author.voice.channel is None:
+    #     send(ctx, title='You are not in a voice channel', footer='MABALLS')
+    #     return
+    # voice_channel = ctx.author.voice.channel
+
+
+@dpy.command()
+async def join(ctx):
+    ctx.send('Joining vc')
+
+loop = asyncio.get_event_loop()
+
+task2 = loop.create_task(dpy.start(token=key, bot=True))
+task1 = loop.create_task(bot.start())
+
+gathered = asyncio.gather(task1, task2, loop=loop)
+loop.run_until_complete(gathered)
