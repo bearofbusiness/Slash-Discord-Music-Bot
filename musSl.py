@@ -1,5 +1,6 @@
 import interactions
 import discord
+from discord.ext import commands
 import asyncio
 import functools
 from io import StringIO
@@ -9,9 +10,32 @@ import random
 from datetime import datetime
 import os
 import sys
-import var  # where my env vars are stored
+from dotenv import load_dotenv
 
-bot = interactions.Client(token=var.token)
+import json
+from yt_dlp import YoutubeDL
+
+'''
+TODO:
+     -get downloading to work
+        -get it to download to disk
+        -get to download to memory
+     - Be able to join vc and play sound
+        - join vc
+        - leave vc
+        - play sound
+     - Be able to play music from youtube
+        - play music
+        - stop music
+
+'''
+
+
+load_dotenv()
+key = os.environ.get('key')
+
+
+bot = interactions.Client(token=key)
 
 
 def pront(content, lvl="DEBUG"):
@@ -67,7 +91,7 @@ async def test_command(ctx: interactions.CommandContext):
     await send(ctx, title="Hello World!", footer="MaBalls")
 
 
-@interactions.is_owner()
+@commands.is_owner()
 @bot.command(
     name="execute",
     description="This is the exec command only can be used be owner for obvious reasons",
@@ -86,15 +110,9 @@ async def execute(ctx, input: str):
         pront(comand, "LOG")
         old_stdout = sys.stdout
         sys.stdout = mystdout = StringIO()
-        '''if (comand[2] == '`'):
-            comand = comand.split('\n')
-            comand = comand[1:-1]
-            temp = ""
-            for i in comand:
-                temp += i + "\n"
-            comand = temp'''
         comand = comand.rstrip('`')
         comand = comand.lstrip('`')
+        comand = comand.lstrip('python')
         # pront(comand)
 
         try:
