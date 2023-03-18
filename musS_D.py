@@ -60,7 +60,7 @@ class Bot(discord.Client):
         intents = discord.Intents.default()
         intents.members = True
         intents.message_content = True
-        super().__init__(intents=discord.Intents)
+        super().__init__(intents=intents)
         self.synced = False
 
     async def on_ready(self):
