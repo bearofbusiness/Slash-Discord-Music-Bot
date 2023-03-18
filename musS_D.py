@@ -5,6 +5,8 @@ import random
 from datetime import datetime
 from dotenv import load_dotenv
 
+# importing other classes from other files
+from Song import Song
 
 load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
@@ -62,6 +64,7 @@ class Bot(discord.Client):
         intents.message_content = True
         super().__init__(intents=intents)
         self.synced = False
+        self.vc = None
 
     async def on_ready(self):
         await self.wait_until_ready()
@@ -93,11 +96,11 @@ async def _join(interaction: discord.Interaction):
         await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
         return
     channel = interaction.user.voice.channel
-    await channel.connect()
-    await send(interaction, title='Joined!', content=':white_check_mark:')
+    bot.vc = await channel.connect()
+    await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True)
 
 
-@tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in", ephemeral=True)
+@tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
 async def _leave(interaction: discord.Interaction):
     print(interaction.user.voice)
     print(interaction.guild.voice_client)
@@ -107,8 +110,23 @@ async def _leave(interaction: discord.Interaction):
     if interaction.guild.voice_client is None:
         await interaction.response.send_message('MaBalls is not in a voice channel', ephemeral=True)
         return
-    channel = interaction.guild.voice_client()
-    await channel.disconect()
-    await send(interaction, title='Left!', content=':white_check_mark:')
+    await interaction.guild.voice_client.disconnect()
+    await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True)
+
+
+@tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
+async def _play(interaction: discord.Interaction, link: str):
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+        return
+    if interaction.guild.voice_client is None:
+        channel = interaction.user.voice.channel
+        bot.vc = await channel.connect()
+    # temperary system for playing songs one at a time
+    new_song = Song(interaction.guild.voice_client, link)
+    asyncio.sleep(1)
+    await new_song.populate()
+    print(new_song.audio)
+    bot.vc.play(new_song.audio)
 
 bot.run(key)

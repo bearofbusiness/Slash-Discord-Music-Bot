@@ -1,4 +1,6 @@
-import YTDLInterface
+from YTDLInterface import YTDLInterface
+
+
 class Song:
     def __init__(self, interaction, link):
         self.link = link
@@ -14,7 +16,7 @@ class Song:
         self.original_url = None
 
     # Populate all None fields
-    @classmethod
+    # @classmethod
     async def populate(self) -> None:
         data = await YTDLInterface.query_link(self.link)
         self.title = data.get('title')
@@ -41,3 +43,27 @@ class Song:
             duration.append('{} seconds'.format(seconds))
 
         return ', '.join(duration)
+
+
+if __name__ == "__main__":  # for debuging
+    import asyncio
+
+    class fake_interaction:
+        def __init__(self):
+            self.user = "fake_user"
+            self.channel = "fake_channel"
+
+    async def main():
+        song = Song(fake_interaction(),
+                    'https://youtu.be/HNn1N6-2euk')
+        await song.populate()
+        print(song.title)
+        print(song.audio)
+        print(song.id)
+        print(song.thumbnail)
+        print(song.duration)
+        print(song.original_url)
+        print(song.parse_duration(song.duration))
+
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
