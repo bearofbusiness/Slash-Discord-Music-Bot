@@ -29,22 +29,20 @@ def pront(content, lvl="DEBUG"):
           "} " + lvl + ": " + str(content) + colors["NONE"])
 
 
-async def _getRandomHex(seed=None):
+async def getRandomHex(seed=None):
     random.seed(int(seed))
     return random.randint(0, 16777215)
 
 
 async def getEmbed(ctx, title='', content='', footer='', color=''):
-    # print(dir(ctx))
     if color == '':
-        color = await _getRandomHex(seed=ctx.author.id)
+        color = await getRandomHex(seed=ctx.author.id)
 
     embed = interactions.Embed(
         title=title,
         description=content,
         color=color
     )
-    # print(dir(ctx.author), ctx.author.get_avatar_url())
     embed.set_author(name=ctx.author.name  # ,
                      , icon_url="https://bearofbusines.me/gorilla.png")
     embed.set_footer(text=footer)
@@ -60,7 +58,6 @@ async def send(ctx, title='', content='', footer='', color='', time=1800):
 @ bot.command(
     name="test_command",
     description="This is the test command",
-    # scope=the_id_of_your_guild,
 )
 async def test_command(ctx: interactions.CommandContext):
     # message = await ctx.send('Sometext')
