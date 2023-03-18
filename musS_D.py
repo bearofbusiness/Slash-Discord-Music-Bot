@@ -1,20 +1,9 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
-
 import asyncio
-import functools
-from io import StringIO
-import itertools
-import math
+import discord
+import os
 import random
 from datetime import datetime
-import os
-import sys
 from dotenv import load_dotenv
-
-import json
-from yt_dlp import YoutubeDL
 
 
 load_dotenv()  # getting the key from the .env file
@@ -80,7 +69,12 @@ class Bot(discord.Client):
 
 
 bot = Bot()
-tree = app_commands.CommandTree(bot)
+tree = discord.app_commands.CommandTree(bot)
+
+
+
+## COMMANDS ##
+
 
 
 @tree.command(name="ping", description="The ping command")
@@ -93,54 +87,4 @@ async def _ping(interaction: discord.Interaction):
     await interaction.response.send_message('Pong!', ephemeral=True)
 
 
-bot.run(key)  # make sure you set your intents in the portal and here on line 10
-
-
-'''
-@bot.command(aliases=['eval'])
-# @tree.command(name="commandname", description="My first application Command")
-# @bot.tree.command(name="eval", description="The eval command",)
-@commands.is_owner()
-async def _eval(ctx: discord.Interaction, comand=None):
-    # if (ctx.author.id == {idhere}):#for when you are not owner but want to make it so only you can use it
-    # pront("LOG", comand)
-    old_stdout = sys.stdout
-    sys.stdout = mystdout = StringIO()
-    comand.rstrip("`")
-    comand.lstrip("`")
-    comand.lstrip("python")
-    try:
-        print(eval(comand))
-    except Exception as e:
-        pront(e, "ERROR")
-    sys.stdout = old_stdout
-    # pront("LOG", mystdout.getvalue())
-    print(mystdout.getvalue())
-    await send(ctx, title='Command Sent:', content='in:\n```' + comand + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
-#    else:#sends no perms if has none
-#        await send(ctx, title='You Do Not Have Perms')
-
-
-@bot.command(aliases=['exec'])
-@commands.is_owner()
-async def _exec(ctx, *, comand=None):
-    # if (ctx.author.id == {idhere}):#for when you are not owner 369999044023549962
-    # pront("LOG", comand)
-    old_stdout = sys.stdout
-    sys.stdout = mystdout = StringIO()
-    comand = comand.rstrip("`")
-    comand = comand.lstrip("`")
-    comand = comand.lstrip("python")
-    # pront(comand)
-
-    try:
-        exec(comand)
-    except Exception as e:
-        pront(e, "ERROR")
-    sys.stdout = old_stdout
-    # pront("LOG", mystdout.getvalue())
-    print(mystdout.getvalue())
-    await send(ctx, title='Command Sent:', content='in:\n```' + comand + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
-#    else:#sends no perms if has none
-#        await send(ctx, title='You Do Not Have Perms')
-'''
+bot.run(key)
