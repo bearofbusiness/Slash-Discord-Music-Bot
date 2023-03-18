@@ -78,20 +78,14 @@ tree = discord.app_commands.CommandTree(bot)
 ## COMMANDS ##
 
 
-@tree.command(name="ping", description="The ping command")
+@tree.command(name="ping", description="The ping command (^-^)")
 async def _ping(interaction: discord.Interaction):
-    pront(dir(interaction), end="\n\n")
-    pront(dir(interaction.channel), end="\n\n")
-    pront(dir(interaction.user), end="\n\n")
     # await send(interaction, title='Pong!', content=':ping_pong:')
     await interaction.response.send_message('Pong!', ephemeral=True)
 
 
-@tree.command(name="join", description="The ping command")
+@tree.command(name="join", description="Adds the MaBalls to the voice channel you are in")
 async def _join(interaction: discord.Interaction):
-    pront(dir(interaction.user), end="\n\n")
-    pront(dir(interaction.user.voice), end="\n\n")
-    pront(interaction.user.voice, end="\n\n")
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
@@ -101,5 +95,18 @@ async def _join(interaction: discord.Interaction):
     channel = interaction.user.voice.channel
     await channel.connect()
     await send(interaction, title='Joined!', content=':white_check_mark:')
+
+
+@tree.command(name="leave", description="The ping command")
+async def _leave(interaction: discord.Interaction):
+    if interaction.user.voice != interaction.guild.voice_client:
+        await interaction.response.send_message('You are not in a voice channel with the MaBalls', ephemeral=True)
+        return
+    if interaction.guild.voice_client is None:
+        await interaction.response.send_message('MaBalls is not in a voice channel', ephemeral=True)
+        return
+    channel = interaction.guild.voice_client
+    await channel.disconect()
+    await send(interaction, title='Left!', content=':white_check_mark:')
 
 bot.run(key)
