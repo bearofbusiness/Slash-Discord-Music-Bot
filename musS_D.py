@@ -1,14 +1,8 @@
-import discord
-from discord.ext import commands
-from discord import app_commands
-
 import asyncio
-import functools
-from io import StringIO
+import discord
+import os
 import random
 from datetime import datetime
-import os
-import sys
 from dotenv import load_dotenv
 
 
@@ -40,25 +34,25 @@ async def getRandomHex(seed):
 
 
 # Creates a standard Embed object
-async def getEmbed(ctx, title='', content='', footer='', color=''):
+async def getEmbed(interaction, title='', content='', footer='', color=''):
     if color == '':
-        color = await getRandomHex(ctx.author.id)
+        color = await getRandomHex(interaction.user.id)
     embed = discord.Embed(
         title=title,
         description=content,
         color=color
     )
-    embed.set_author(name=ctx.author.display_name,
-                     icon_url=ctx.author.display_avatar.url)
+    embed.set_author(name=interaction.user.display_name,
+                     icon_url=interaction.user.display_avatar.url)
     # TODO Hide the footer until i find out what to do with it
     # embed.set_footer(footer=footer)
     return embed
 
 
 # Creates and sends an Embed message
-async def send(ctx, title='', content='', footer='', color=''):
-    embed = await getEmbed(ctx, title, content, footer)
-    await ctx.send(embed=embed)
+async def send(interaction, title='', content='', footer='', color='', ephemeral: bool = False):
+    embed = await getEmbed(interaction, title, content, footer)
+    await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
 class Bot(discord.Client):
@@ -78,7 +72,10 @@ class Bot(discord.Client):
 
 
 bot = Bot()
-tree = app_commands.CommandTree(bot)
+tree = discord.app_commands.CommandTree(bot)
+
+
+## COMMANDS ##
 
 
 @tree.command(name="ping", description="The ping command")
@@ -101,4 +98,4 @@ async def _join(interaction: discord.Interaction):
     channel = interaction.user.voice.channel
     await channel.connect()
 
-bot.run(key)  # make sure you set your intents in the portal and here on line 10
+bot.run(key)
