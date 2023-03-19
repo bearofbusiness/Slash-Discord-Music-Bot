@@ -102,6 +102,7 @@ async def send_np(song: Song) -> None:
     embed.set_image(url=song.thumbnail)
     embed.set_author(name=song.requester.display_name,
                      icon_url=song.requester.display_avatar.url)
+    print(song.channel)
     await song.channel.send(embed=embed)
 
 
@@ -166,6 +167,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
 
 @tasks.loop()
 async def player() -> None:
+    global vc
     while True:
         # Pull the top song in queue
         song = queue.remove(0)
