@@ -162,7 +162,7 @@ async def player() -> None:
     while True:
         # Pull the top song in queue
         song = queue.remove(0)
-        song.populate()
+        await song.populate()
         # There should be ~10 seconds left before the current song is over, wait it out.
         while vc.is_playing():
             await asyncio.sleep(1)

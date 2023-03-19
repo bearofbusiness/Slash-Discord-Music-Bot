@@ -17,11 +17,11 @@ class Song:
         self.original_url = None
 
     # Populate all None fields
-    # @classmethod
+    @classmethod
     async def populate(self) -> None:
         data = await YTDLInterface.query_link(self.link)
         self.title = data.get('title')
-        self.channel = data.get('channel')
+        self.uploader = data.get('channel')
         self.audio = data.get('url')
         self.id = data.get('id')
         self.thumbnail = data.get('thumbnail')
