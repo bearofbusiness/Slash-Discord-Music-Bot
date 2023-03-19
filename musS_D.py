@@ -89,7 +89,7 @@ async def _join(interaction: discord.Interaction) -> None:
     if interaction.guild.voice_client is not None:
         await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
         return
-    interaction.guild.voice_client.voice_channel = await interaction.user.voice.channel.connect(self_deaf = True)
+    interaction.guild.voice_client.voice_channel = await interaction.user.voice.channel.connect(self_deaf=True)
     await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True)
 
 
@@ -112,7 +112,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         return
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
-        interaction.guild.voice_client.voice_channel = vc = await channel.connect(self_deaf = True)
+        interaction.guild.voice_client.voice_channel = vc = await channel.connect(self_deaf=True)
     else:
         vc = interaction.guild.voice_client.voice_channel
     # temporary system for playing songs one at a time
