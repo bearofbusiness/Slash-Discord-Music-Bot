@@ -15,6 +15,19 @@ from YTDLInterface import YTDLInterface
 load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
 
+
+class Bot(discord.Client):  # Im Sorry But the bot class needs to be above where bot is called. i could fix this but it would be jank
+    def __init__(self):
+        intents = discord.Intents.default()
+        intents.members = True
+        intents.message_content = True
+        super().__init__(intents=intents)
+
+    async def on_ready(self):
+
+        pront("Bot is ready", lvl="OKGREEN")
+
+
 # Global Variables
 bot = Bot()
 tree = discord.app_commands.CommandTree(bot)
@@ -90,18 +103,6 @@ async def send_np(song: Song) -> None:
     embed.set_author(name=song.requester.display_name,
                      icon_url=song.requester.display_avatar.url)
     await song.channel.send(embed=embed)
-
-
-class Bot(discord.Client):
-    def __init__(self):
-        intents = discord.Intents.default()
-        intents.members = True
-        intents.message_content = True
-        super().__init__(intents=intents)
-
-    async def on_ready(self):
-
-        pront("Bot is ready", lvl="OKGREEN")
 
 
 ## COMMANDS ##
