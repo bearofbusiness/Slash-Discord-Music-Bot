@@ -95,7 +95,7 @@ async def send_np(song: Song) -> None:
     embed = discord.Embed(
         title='Now Playing:',
         url=song.original_url,
-        description=song.title.join(' -- ').join([song.uploader]),
+        description=f'{song.title} -- {song.uploader}',
         color=await getRandomHex(song.id)
     )
     embed.add_field(name='Duration:', value=song.parse_duration(
@@ -104,7 +104,6 @@ async def send_np(song: Song) -> None:
     embed.set_image(url=song.thumbnail)
     embed.set_author(name=song.requester.display_name,
                      icon_url=song.requester.display_avatar.url)
-    print(song.channel)
     await song.channel.send(embed=embed)
 
 
@@ -147,6 +146,7 @@ async def _leave(interaction: discord.Interaction) -> None:
 @tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str) -> None:
     global vc
+
     # Check if author is in VC
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
