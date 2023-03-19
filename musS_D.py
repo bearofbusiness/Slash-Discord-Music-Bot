@@ -91,6 +91,7 @@ async def _join(interaction: discord.Interaction) -> None:
     if interaction.guild.voice_client is not None:
         await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
         return
+    # connect to the voice channel
     interaction.guild.voice_client.voice_channel = await interaction.user.voice.channel.connect(self_deaf=True)
     await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True)
 
@@ -103,6 +104,7 @@ async def _leave(interaction: discord.Interaction) -> None:
     if interaction.guild.voice_client is None:
         await interaction.response.send_message('MaBalls is not in a voice channel', ephemeral=True)
         return
+    # disconnect from the voice channel
     await interaction.guild.voice_client.disconnect()
     await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True)
 
@@ -117,10 +119,12 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         interaction.guild.voice_client.voice_channel = vc = await channel.connect(self_deaf=True)
     else:
         vc = interaction.guild.voice_client.voice_channel
+
     # temporary system for playing songs one at a time
     new_song = Song(interaction, link)
     await new_song.populate()
-    vc.play(discord.FFmpegPCMAudio(new_song.audio, **YTDLInterface.ffmpeg_options))
+    vc.play(discord.FFmpegPCMAudio(
+        new_song.audio, **YTDLInterface.ffmpeg_options))
     await asyncio.sleep(new_song.duration)
     while vc.is_playing():
         await asyncio.sleep(1)
