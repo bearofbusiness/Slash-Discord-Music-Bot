@@ -3,15 +3,23 @@ import discord
 import os
 import random
 from datetime import datetime
+from discord.ext import tasks
 from dotenv import load_dotenv
-from YTDLInterface import YTDLInterface
 
 
 # importing other classes from other files
+from Queue import Queue
 from Song import Song
+from YTDLInterface import YTDLInterface
 
 load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
+
+# Global Variables
+bot = Bot()
+tree = discord.app_commands.CommandTree(bot)
+queue = Queue()
+vc = None
 
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
@@ -59,6 +67,31 @@ async def send(interaction, title='', content='', footer='', color='', ephemeral
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
+# Cleans up and closes the player
+async def clean(interaction) -> None:
+    queue.clear()
+    player.cancel()
+    await interaction.guild.voice_client.disconnect()
+
+# Sends a "Now Playing" embed for a populated Song
+
+
+async def send_np(song: Song) -> None:
+    embed = discord.Embed(
+        title='Now Playing:',
+        url=song.original_url,
+        description=song.title.join(' -- ').join(song.channel),
+        color=await getRandomHex(song.id)
+    )
+    embed.add_field(name='Duration:', value=song.parse_duration(
+        song.duration), inline=True)
+    embed.add_field(name='Requested by:', value=song.requester.mention)
+    embed.set_image(url=song.thumbnail)
+    embed.set_author(name=song.requester.display_name,
+                     icon_url=song.requester.display_avatar.url)
+    await song.channel.send(embed=embed)
+
+
 class Bot(discord.Client):
     def __init__(self):
         intents = discord.Intents.default()
@@ -67,11 +100,8 @@ class Bot(discord.Client):
         super().__init__(intents=intents)
 
     async def on_ready(self):
+
         pront("Bot is ready", lvl="OKGREEN")
-
-
-bot = Bot()
-tree = discord.app_commands.CommandTree(bot)
 
 
 ## COMMANDS ##
@@ -85,6 +115,7 @@ async def _ping(interaction: discord.Interaction) -> None:
 
 @tree.command(name="join", description="Adds the MaBalls to the voice channel you are in")
 async def _join(interaction: discord.Interaction) -> None:
+    global vc
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
@@ -92,7 +123,7 @@ async def _join(interaction: discord.Interaction) -> None:
         await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
         return
     # connect to the voice channel
-    interaction.guild.voice_client.voice_channel = await interaction.user.voice.channel.connect(self_deaf=True)
+    vc = await interaction.user.voice.channel.connect(self_deaf=True)
     await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True)
 
 
@@ -105,29 +136,60 @@ async def _leave(interaction: discord.Interaction) -> None:
         await interaction.response.send_message('MaBalls is not in a voice channel', ephemeral=True)
         return
     # disconnect from the voice channel
-    await interaction.guild.voice_client.disconnect()
+    await clean(interaction)
     await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True)
 
 
 @tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str) -> None:
+    global vc
+
+    # Check if author is in VC
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
+
+    # If not already in VC, join
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
-        interaction.guild.voice_client.voice_channel = vc = await channel.connect(self_deaf=True)
-    else:
-        vc = interaction.guild.voice_client.voice_channel
+        vc = await channel.connect(self_deaf=True)
 
-    # temporary system for playing songs one at a time
-    new_song = Song(interaction, link)
-    await new_song.populate()
-    vc.play(discord.FFmpegPCMAudio(
-        new_song.audio, **YTDLInterface.ffmpeg_options))
-    await asyncio.sleep(new_song.duration)
-    while vc.is_playing():
-        await asyncio.sleep(1)
-    await interaction.guild.voice_client.disconnect()
+    song = Song(interaction, link)
+    queue.add(song)
+    await send(interaction, "Added to queue.")
 
+    # If the player isn't already running, start it.
+    if not player.is_running():
+        player.start()
+
+
+@tasks.loop()
+async def player() -> None:
+    while True:
+        # Pull the top song in queue
+        song = queue.remove(0)
+        song.populate()
+        # There should be ~10 seconds left before the current song is over, wait it out.
+        while vc.is_playing():
+            await asyncio.sleep(1)
+
+        await send_np(song)
+        vc.play(discord.FFmpegPCMAudio(
+            song.audio, **YTDLInterface.ffmpeg_options))
+        # Wait until 10 seconds before the song ends to queue up the next one.
+        await asyncio.sleep(song.duration - 10)
+        # If we see the queue is empty, get ready to close
+        if queue.get() is None:
+            # Keep checking for those last 10 seconds
+            while vc.is_playing():
+                await asyncio.sleep(0.5)
+
+                # If a song is added in this time, abort early to let us get ready for it.
+                if queue.get() is not None:
+                    return
+            # Kill the player and leave VC
+            break
+
+    player.stop()
+    await song.channel.guild.voice_client.disconnect()
 bot.run(key)
