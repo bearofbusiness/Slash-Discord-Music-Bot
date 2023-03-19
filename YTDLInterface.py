@@ -33,7 +33,7 @@ class YTDLInterface:
         with yt_dlp.YoutubeDL(YTDLInterface.options) as ytdlp:
             # Define ytdlp command within a partial to be able to run it within run_in_executor
             partial = functools.partial(ytdlp.extract_info, link, download=False)
-            query_result = loop.run_in_executor(None, partial)
+            query_result = await loop.run_in_executor(None, partial)
         
         # If yt-dlp threw an error
         if query_result is None:
