@@ -9,7 +9,7 @@ class Song:
 
         # All of these will be populated when the populate() method is called
         self.title = None
-        self.channel = None
+        self.uploader = None
         self.audio = None
         self.id = None
         self.thumbnail = None
@@ -17,7 +17,7 @@ class Song:
         self.original_url = None
 
     # Populate all None fields
-    @classmethod
+    # @classmethod
     async def populate(self) -> None:
         data = await YTDLInterface.query_link(self.link)
         self.title = data.get('title')
