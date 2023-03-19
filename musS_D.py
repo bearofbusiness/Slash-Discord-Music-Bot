@@ -163,13 +163,13 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     embed = discord.Embed(
         title='Added to Queue:',
         url=song.original_url,
-        description=song.title.join(' -- ').join([song.uploader]),
+        description=f'{song.title} -- {song.uploader}',
         color=await getRandomHex(song.id)
     )
     embed.add_field(name='Duration:', value=song.parse_duration(
         song.duration), inline=True)
     embed.add_field(name='Requested by:', value=song.requester.mention)
-    # embed.set_image(url=song.thumbnail)
+    embed.set_thumbnail(url=song.thumbnail)
     embed.set_author(name=song.requester.display_name,
                      icon_url=song.requester.display_avatar.url)
     print(song.channel)
