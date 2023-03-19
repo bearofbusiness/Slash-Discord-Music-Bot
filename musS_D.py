@@ -95,8 +95,6 @@ async def _join(interaction: discord.Interaction) -> None:
 
 @tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
 async def _leave(interaction: discord.Interaction) -> None:
-    print(interaction.user.voice)
-    print(interaction.guild.voice_client)
     if interaction.user.voice is None:  # TODO: make it check if the user is in the same voice channel as the bot
         await interaction.response.send_message('You are not in a voice channel with the MaBalls', ephemeral=True)
         return
@@ -119,10 +117,11 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         vc = interaction.guild.voice_client.voice_channel
     # temporary system for playing songs one at a time
     new_song = Song(interaction, link)
-    await asyncio.sleep(1) # Why do we do this?
     await new_song.populate()
     vc.play(discord.FFmpegPCMAudio(new_song.audio))
     await asyncio.sleep(new_song.duration)
-    await _leave(interaction)
+    while vc.is_playing():
+        await asyncio.sleep(1)
+    await interaction.guild.voice_client.disconnect()
 
 bot.run(key)
