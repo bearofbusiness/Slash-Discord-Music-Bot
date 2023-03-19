@@ -4,6 +4,8 @@ import os
 import random
 from datetime import datetime
 from dotenv import load_dotenv
+from YTDLInterface import YTDLInterface
+
 
 # importing other classes from other files
 from Song import Song
@@ -118,7 +120,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     # temporary system for playing songs one at a time
     new_song = Song(interaction, link)
     await new_song.populate()
-    vc.play(discord.FFmpegPCMAudio(new_song.audio))
+    vc.play(discord.FFmpegPCMAudio(new_song.audio, **YTDLInterface.ffmpeg_options))
     await asyncio.sleep(new_song.duration)
     while vc.is_playing():
         await asyncio.sleep(1)

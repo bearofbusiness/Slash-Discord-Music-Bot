@@ -23,6 +23,8 @@ class YTDLInterface:
         'source_address': '0.0.0.0',
     }
 
+    ffmpeg_options = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+
 
     # Pulls information from a yt-dlp accepted URL and returns a Dict containing that information
     @staticmethod
