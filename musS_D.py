@@ -12,6 +12,45 @@ from Queue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
 
+'''
+TODO:
+    -make more commands
+        9- skip (force skip)
+        9- pause
+        9- resume
+        9- now
+        8- queue
+        8- remove
+        8- play_top
+        8- search
+        7- play_list_shuffle
+        7- play_list
+        6- clear
+        5- shuffle
+        4- loop (queue, song)
+        1- help
+        1- volume
+        1- settings (after muliti server)
+        0- filter?(audio effects) # i dont know if this is possible it may be cool to have tho
+    -other
+        8- remove author's songs from queue when author leaves vc
+
+
+
+
+DONE:
+     - Be able to play music from youtube
+        - play music
+        - stop music
+    (kind but found a better way)- get downloading to work
+     - Be able to join vc and play sound
+        - join vc
+        - leave vc
+        - play sound
+
+'''
+
+
 load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
 
@@ -173,7 +212,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         embed.set_thumbnail(url=song.thumbnail)
         embed.set_author(name=song.requester.display_name,
                          icon_url=song.requester.display_avatar.url)
-        await interaction.response.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
         # If the player isn't already running, start it.
         if not player.is_running():
@@ -203,13 +242,11 @@ async def player() -> None:
             # Keep checking for those last 10 seconds
             while vc.is_playing():
                 await asyncio.sleep(0.5)
-
                 # If a song is added in this time, abort early to let us get ready for it.
                 if queue.get():
-                    return
+                    return  # returns to the first loop
             # Kill the player and leave VC
             break
-
     player.stop()
     await song.channel.guild.voice_client.disconnect()
 bot.run(key)
