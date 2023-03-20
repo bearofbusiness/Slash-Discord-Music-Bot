@@ -1,6 +1,7 @@
 from YTDLInterface import YTDLInterface
 import time
 
+
 class Song:
     def __init__(self, interaction, link):
         self.link = link
@@ -17,9 +18,9 @@ class Song:
         self.original_url = None
 
         # Delta time handling variables
-        self.start_time = None
-        self.pause_start = None
-        self.pause_time = None
+        self.start_time = 0
+        self.pause_start = 0
+        self.pause_time = 0
 
     # Populate all None fields
     # @classmethod
@@ -51,25 +52,32 @@ class Song:
 
         return ', '.join(duration)
 
+    @staticmethod
+    def parse_duration_short_hand(duration: int) -> str:
+        minutes, seconds = divmod(duration, 60)
+        hours, minutes = divmod(minutes, 60)
+        days, hours = divmod(hours, 24)
+
+        duration = []
+        if days > 0:
+            duration.append(f'{days:02d}')
+        if hours > 0:
+            duration.append(f'{hours:02d}')
+        duration.append(f'{minutes:02d}')
+        duration.append(f'{seconds:02d}')
+
+        return ':'.join(duration)
+
     async def start(self) -> None:
-        self.start_time = time.gmtime()
-        self.pause_time = None
+        self.start_time = time.time()
+        self.pause_time = 0
 
     async def pause(self) -> None:
-        self.pause_start = time.gmtime()
-        
+        self.pause_start = time.time()
+
     async def resume(self) -> None:
-        self.pause_time += time.gmtime() - self.pause_start
+        self.pause_time += time.time() - self.pause_start
         self.pause_start = None
 
     async def get_elapsed_time(self) -> int:
-        if self.pause_time is None:
-            return (time.gmtime() - self.start_time)
-        else:
-            return time.gmtime() - (self.pause_start - self.start_time)
-
-
-if __name__ == "__main__":
-    def get_progress_bar(song: Song) -> str:
-        float_of_duration =  (song.get_elapsed_time() / song.duration)
-        return f'[{math.floor(float_of_duration * 10) * "▬"}{">" if float_of_duration < 1 else ""}{(10 - math.floor(float_of_duration * 10)) * " "}]'
+        return (time.time() + self.pause_time) - self.start_time

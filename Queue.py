@@ -1,6 +1,7 @@
 import Song
 import random
 
+
 class Queue:
     def __init__(self):
         self.list = []
@@ -13,7 +14,6 @@ class Queue:
 
     def shuffle(self) -> None:
         random.shuffle(self.list)
-        
 
     def remove(self, index: int) -> Song:
         return self.list.pop(index)
