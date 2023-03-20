@@ -15,20 +15,21 @@ from YTDLInterface import YTDLInterface
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 fnt stands for finished not tested
+f is just finished
 TODO:
     -make more commands
         9- skip (force skip) #sming
-        9-fnt pause #bear //vc.pause() and vc.resume()
-        9-fnt resume #bear
-        9-fnt now #bear
-        8-fnt queue #bear
-        8-fnt remove #bear
-        8-fnt play_top #bear
+        9-f pause #bear //vc.pause() and vc.resume()
+        9-f resume #bear
+        9-f now #bear
+        8-f queue #bear
+        8-f remove #bear
+        8-f play_top #bear
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
-        6-fnt clear #bear
-        5-fnt shuffle #bear
+        6-f clear #bear
+        5-f shuffle #bear
         4- loop (queue, song) #bear
         1- help #bear
         1- volume #nrn
@@ -36,7 +37,7 @@ TODO:
         0- filter?(audio effects) #nrn //i dont know if this is possible it may be cool to have tho 
     -other
         6- remove author's songs from queue when author leaves vc #sming
-        9-fnt footer that states the progress of the song #bear
+        9-f footer that states the progress of the song #bear
         3- make it multi server #bear
 
 
@@ -67,7 +68,7 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         super().__init__(intents=intents)
 
     async def on_ready(self):
-        await tree.sync()  # please dont remove just in case i need to sync
+        # await tree.sync()  # please dont remove just in case i need to sync
         pront("Bot is ready", lvl="OKGREEN")
 
 
@@ -153,8 +154,10 @@ async def send_np(song: Song) -> None:
 
 # makes and ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
-    float_of_duration = (song.get_elapsed_time() / song.duration)
-    return f'[{math.floor(float_of_duration * 10) * "▬"}{">" if float_of_duration < 1 else ""}{(10 - math.floor(float_of_duration * 10)) * " "}]'
+    print(await song.get_elapsed_time())
+    percent_duration = (await song.get_elapsed_time() / song.duration)*100
+    print(percent_duration)
+    return f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}[{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
 
 
 ## COMMANDS ##
@@ -242,7 +245,8 @@ async def _queue(interaction: discord.Interaction) -> None:
         color=await getRandomHex(queue.get()[0].id)
     )
     for song in queue.get():
-        embed.add_field(name=song.uploader, value=song.title)
+        embed.add_field(name=song.title,
+                        value=f"by: {song.uploader}", inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
@@ -260,12 +264,13 @@ async def _now(interaction: discord.Interaction) -> None:
     embed.set_image(url=current_song.thumbnail)
     embed.set_author(name=current_song.requester.display_name,
                      icon_url=current_song.requester.display_avatar.url)
+    embed.set_footer(text=await get_progress_bar(current_song))
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 @tree.command(name="remove", description="Removes a song from the queue")
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
-    removed_song = Queue.remove(number_in_queue)
+    removed_song = queue.remove(number_in_queue)
     if removed_song is not None:
         embed = discord.Embed(
             title='Removed from Queue:',
@@ -299,7 +304,7 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
     await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
-        queue.add_at(0, song)
+        queue.add_at(song, 0)
 
         embed = discord.Embed(
             title='Added to the top of the Queue:',
@@ -358,6 +363,7 @@ async def player() -> None:
             await asyncio.sleep(1)
 
         await send_np(song)
+        await song.start()
         vc.play(discord.FFmpegPCMAudio(
             song.audio, **YTDLInterface.ffmpeg_options))
         # Wait until 10 seconds before the song ends to queue up the next one.
