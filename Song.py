@@ -1,6 +1,5 @@
-from datetime import datetime
 from YTDLInterface import YTDLInterface
-
+import time
 
 class Song:
     def __init__(self, interaction, link):
@@ -52,6 +51,25 @@ class Song:
 
         return ', '.join(duration)
 
+    async def start(self) -> None:
+        self.start_time = time.gmtime()
+        self.pause_time = None
+
     async def pause(self) -> None:
-        self.pause_start = datetime.now()
-        self.vc.pause()
+        self.pause_start = time.gmtime()
+        
+    async def resume(self) -> None:
+        self.pause_time += time.gmtime() - self.pause_start
+        self.pause_start = None
+
+    async def get_elapsed_time(self) -> int:
+        if self.pause_time is None:
+            return (time.gmtime() - self.start_time)
+        else:
+            return time.gmtime() - (self.pause_start - self.start_time)
+
+
+if __name__ == "__main__":
+    def get_progress_bar(song: Song) -> str:
+        float_of_duration =  (song.get_elapsed_time() / song.duration)
+        return f'[{math.floor(float_of_duration * 10) * "▬"}{">" if float_of_duration < 1 else ""}{(10 - math.floor(float_of_duration * 10)) * " "}]'
