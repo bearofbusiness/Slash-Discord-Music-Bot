@@ -6,13 +6,13 @@ from datetime import datetime
 from discord.ext import tasks
 from dotenv import load_dotenv
 
-
 # importing other classes from other files
 from Queue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
 
-'''
+#needed to add it to a var bc of pylint on my laptop but i delete it right after
+XX = '''
 TODO:
     -make more commands
         9- skip (force skip) #sming
@@ -50,7 +50,7 @@ DONE:
         - play sound
 
 '''
-
+del XX
 
 load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
@@ -234,9 +234,25 @@ async def _queue(interaction: discord.Interaction) -> None:
         embed.add_field(name=song.uploader, value=song.title)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
+@tree.command(name="now", description="Shows the current song")
+async def _now(interaction: discord.Interaction) -> None:
+    embed = discord.Embed(
+        title='Now Playing:',
+        url=current_song.original_url,
+        description=f'{current_song.title} -- {current_song.uploader}',
+        color=await getRandomHex(current_song.id)
+    )
+    embed.add_field(name='Duration:', value=current_song.parse_duration(
+        current_song.duration), inline=True)
+    embed.add_field(name='Requested by:', value=current_song.requester.mention)
+    embed.set_image(url=current_song.thumbnail)
+    embed.set_author(name=current_song.requester.display_name,
+                     icon_url=current_song.requester.display_avatar.url)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
 @tasks.loop()
 async def player() -> None:
-    global vc
+    global current_song
     while True:
         # Pull the top song in queue
         current_song = song = queue.remove(0)
