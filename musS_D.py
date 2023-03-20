@@ -19,17 +19,9 @@ f is just finished
 TODO:
     -make more commands
         9- skip (force skip) #sming
-        9-f pause #bear //vc.pause() and vc.resume()
-        9-f resume #bear
-        9-f now #bear
-        8-f queue #bear
-        8-f remove #bear
-        8-f play_top #bear
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
-        6-f clear #bear
-        5-f shuffle #bear
         4- loop (queue, song) #bear
         1- help #bear
         1- volume #nrn
@@ -37,13 +29,21 @@ TODO:
         0- filter?(audio effects) #nrn //i dont know if this is possible it may be cool to have tho 
     -other
         6- remove author's songs from queue when author leaves vc #sming
-        9-f footer that states the progress of the song #bear
         3- make it multi server #bear
 
 
 
 
 DONE:
+     - make more commands
+        9-f pause #bear //vc.pause() and vc.resume()
+        9-f resume #bear
+        9-f now #bear
+        8-f queue #bear
+        8-f remove #bear
+        8-f play_top #bear
+        6-f clear #bear
+        5-f shuffle #bear
      - Be able to play music from youtube
         - play music
         - stop music
@@ -52,6 +52,8 @@ DONE:
         - join vc
         - leave vc
         - play sound
+    - other
+        9-f footer that states the progress of the song #bear
 
 '''
 del XX
