@@ -15,25 +15,26 @@ from YTDLInterface import YTDLInterface
 '''
 TODO:
     -make more commands
-        9- skip (force skip)
-        9- pause
-        9- resume
-        9- now
-        8- queue
-        8- remove
-        8- play_top
-        8- search
-        7- play_list_shuffle
-        7- play_list
-        6- clear
-        5- shuffle
+        9- skip (force skip) #sming
+        9- pause #bear //vc.pause() and vc.resume()
+        9- resume #bear
+        9- now #bear
+        8- queue #bear
+        8- remove #bear
+        8- play_top #bear
+        8- search #sming
+        7- play_list_shuffle #sming
+        7- play_list #sming
+        6- clear #bear
+        5- shuffle #bear
         4- loop (queue, song)
-        1- help
-        1- volume
-        1- settings (after muliti server)
-        0- filter?(audio effects) # i dont know if this is possible it may be cool to have tho
+        1- help #bear
+        1- volume #nrn
+        1- settings (after muliti server) #nrn
+        0- filter?(audio effects) #nrn //i dont know if this is possible it may be cool to have tho 
     -other
-        8- remove author's songs from queue when author leaves vc
+        6- remove author's songs from queue when author leaves vc #sming
+        9- footer that states the progress of the song #bear
 
 
 
