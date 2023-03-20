@@ -18,8 +18,8 @@ fnt stands for finished not tested
 TODO:
     -make more commands
         9- skip (force skip) #sming
-        9- pause #bear //vc.pause() and vc.resume()
-        9- resume #bear
+        9-fnt pause #bear //vc.pause() and vc.resume()
+        9-fnt resume #bear
         9-fnt now #bear
         8-fnt queue #bear
         8-fnt remove #bear
@@ -36,7 +36,7 @@ TODO:
         0- filter?(audio effects) #nrn //i dont know if this is possible it may be cool to have tho 
     -other
         6- remove author's songs from queue when author leaves vc #sming
-        9- footer that states the progress of the song #bear
+        9-fnt footer that states the progress of the song #bear
 
 
 
