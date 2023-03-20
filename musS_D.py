@@ -64,7 +64,7 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         super().__init__(intents=intents)
 
     async def on_ready(self):
-
+        await tree.sync() #please dont remove just in case i need to sync
         pront("Bot is ready", lvl="OKGREEN")
 
 
@@ -73,7 +73,7 @@ bot = Bot()
 tree = discord.app_commands.CommandTree(bot)
 queue = Queue()
 vc = None
-
+current_song = None
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
     colors = {
@@ -221,13 +221,25 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     else:
         await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
 
+@tree.command(name="queue", description="Shows the current queue")
+async def _queue(interaction: discord.Interaction) -> None:
+    if not queue.get():
+        await send(interaction, title='Queue is empty!', ephemeral=True)
+        return
+    embed = discord.Embed(
+        title='Queue:',
+        color=await getRandomHex(queue.get()[0].id)
+    )
+    for song in queue.get():
+        embed.add_field(name=song.uploader, value=song.title)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @tasks.loop()
 async def player() -> None:
     global vc
     while True:
         # Pull the top song in queue
-        song = queue.remove(0)
+        current_song = song = queue.remove(0)
         await song.populate()
         # There should be ~10 seconds left before the current song is over, wait it out.
         while vc.is_playing():
@@ -250,4 +262,6 @@ async def player() -> None:
             break
     player.stop()
     await song.channel.guild.voice_client.disconnect()
+
+
 bot.run(key)
