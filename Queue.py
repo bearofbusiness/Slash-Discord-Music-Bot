@@ -1,5 +1,5 @@
 import Song
-
+import random
 
 class Queue:
     def __init__(self):
@@ -7,6 +7,13 @@ class Queue:
 
     def add(self, song: Song) -> None:
         self.list.append(song)
+
+    def add_at(self, song: Song, index) -> None:
+        self.list.insert(index, song)
+
+    def shuffle(self) -> None:
+        random.shuffle(self.list)
+        
 
     def remove(self, index: int) -> Song:
         return self.list.pop(index)
