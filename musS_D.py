@@ -27,7 +27,7 @@ TODO:
         7- play_list #sming
         6- clear #bear
         5- shuffle #bear
-        4- loop (queue, song)
+        4- loop (queue, song) #bear
         1- help #bear
         1- volume #nrn
         1- settings (after muliti server) #nrn
@@ -35,6 +35,7 @@ TODO:
     -other
         6- remove author's songs from queue when author leaves vc #sming
         9- footer that states the progress of the song #bear
+        3- make it multi server #bear
 
 
 
