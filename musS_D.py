@@ -16,7 +16,7 @@ load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
 
 
-class Bot(discord.Client):
+class Bot(discord.Client):  # initiates the bots intents and on_ready event
     def __init__(self):
         intents = discord.Intents.default()
         intents.members = True
@@ -158,26 +158,28 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         vc = await channel.connect(self_deaf=True)
 
     song = Song(interaction, link)
-    queue.add(song)
+    await song.populate()
+    # Check if song.populated didnt fail (duration is just a random attribute to check)
+    if song.duration is not None:
+        queue.add(song)
 
-    embed = discord.Embed(
-        title='Added to Queue:',
-        url=song.original_url,
-        description=f'{song.title} -- {song.uploader}',
-        color=await getRandomHex(song.id)
-    )
-    embed.add_field(name='Duration:', value=song.parse_duration(
-        song.duration), inline=True)
-    embed.add_field(name='Requested by:', value=song.requester.mention)
-    embed.set_thumbnail(url=song.thumbnail)
-    embed.set_author(name=song.requester.display_name,
-                     icon_url=song.requester.display_avatar.url)
-    print(song.channel)
-    await song.channel.send(embed=embed)
+        embed = discord.Embed(
+            title='Added to Queue:',
+            url=song.original_url,
+            color=await getRandomHex(song.id)
+        )
+        embed.add_field(name=song.uploader, value=song.title)
+        embed.add_field(name='Requested by:', value=song.requester.mention)
+        embed.set_thumbnail(url=song.thumbnail)
+        embed.set_author(name=song.requester.display_name,
+                         icon_url=song.requester.display_avatar.url)
+        await interaction.response.send(embed=embed)
 
-    # If the player isn't already running, start it.
-    if not player.is_running():
-        player.start()
+        # If the player isn't already running, start it.
+        if not player.is_running():
+            player.start()
+    else:
+        await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
 
 
 @tasks.loop()
@@ -197,13 +199,13 @@ async def player() -> None:
         # Wait until 10 seconds before the song ends to queue up the next one.
         await asyncio.sleep(song.duration - 10)
         # If we see the queue is empty, get ready to close
-        if queue.get() is None:
+        if not queue.get():
             # Keep checking for those last 10 seconds
             while vc.is_playing():
                 await asyncio.sleep(0.5)
 
                 # If a song is added in this time, abort early to let us get ready for it.
-                if queue.get() is not None:
+                if queue.get():
                     return
             # Kill the player and leave VC
             break

@@ -1,3 +1,4 @@
+from datetime import datetime
 from YTDLInterface import YTDLInterface
 
 
@@ -15,6 +16,11 @@ class Song:
         self.thumbnail = None
         self.duration = None
         self.original_url = None
+
+        # Delta time handling variables
+        self.start_time = None
+        self.pause_start = None
+        self.pause_time = None
 
     # Populate all None fields
     # @classmethod
@@ -36,12 +42,16 @@ class Song:
 
         duration = []
         if days > 0:
-            duration.append('{} days'.format(days))
+            duration.append(f'{days} days')
         if hours > 0:
-            duration.append('{} hours'.format(hours))
+            duration.append(f'{hours} hours')
         if minutes > 0:
-            duration.append('{} minutes'.format(minutes))
+            duration.append(f'{minutes} minutes')
         if seconds > 0:
-            duration.append('{} seconds'.format(seconds))
+            duration.append(f'{seconds} seconds')
 
         return ', '.join(duration)
+
+    async def pause(self) -> None:
+        self.pause_start = datetime.now()
+        self.vc.pause()
