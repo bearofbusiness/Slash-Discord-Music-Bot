@@ -70,7 +70,7 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         super().__init__(intents=intents)
 
     async def on_ready(self):
-        # await tree.sync()  # please dont remove just in case i need to sync
+        await tree.sync()  # please dont remove just in case i need to sync
         pront("Bot is ready", lvl="OKGREEN")
 
 
@@ -80,6 +80,7 @@ tree = discord.app_commands.CommandTree(bot)
 queue = Queue()
 vc = None
 current_song = None
+queue_loop = loop = False
 
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
@@ -129,10 +130,11 @@ async def send(interaction, title='', content='', footer='', color='', ephemeral
 
 # Cleans up and closes the player
 async def clean(interaction) -> None:
-    global vc
+    global vc, queue_loop, loop
     queue.clear()
     player.cancel()
     vc = None
+    queue_loop = loop = False
     await interaction.guild.voice_client.disconnect()
 
 # Sends a "Now Playing" embed for a populated Song
@@ -353,12 +355,42 @@ async def _resume(interaction: discord.Interaction) -> None:
     await send(interaction, title='Resumed')
 
 
+@tree.command(name="loop", description="Loops the current song")
+async def _loop(interaction: discord.Interaction) -> None:
+    global loop, queue_loop
+    if (loop):
+        loop = False
+        await send(interaction, title='Loop deactivated')
+    else:
+        loop = True
+        queue_loop_check = queue_loop
+        queue_loop = False
+        await send(interaction, title='Looped', content="deactivated queue loop" if queue_loop_check else '')
+
+
+@tree.command(name="queue_loop", description="Loops the queue")
+async def _queue_loop(interaction: discord.Interaction) -> None:
+    global queue_loop, loop
+    if (queue_loop):
+        queue_loop = False
+        await send(interaction, title='Loop deactivated')
+    else:
+        queue_loop = True
+        loop_check = loop
+        loop = False
+        await send(interaction, title='Queue looped', content="deactivated loop" if loop_check else '')
+
+
 @tasks.loop()
 async def player() -> None:
     global current_song
     while True:
         # Pull the top song in queue
         current_song = song = queue.remove(0)
+        if (loop):
+            queue.add_at(song, 0)
+        if (queue_loop):
+            queue.add(song)
         await song.populate()
         # There should be ~10 seconds left before the current song is over, wait it out.
         while vc.is_playing():
