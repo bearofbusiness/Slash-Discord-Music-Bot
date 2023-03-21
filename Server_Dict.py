@@ -10,10 +10,11 @@ class Server_Dict():
         self.dict = {}
 
     # idk what type player is
-    def add(self, server: str | int, queue: Queue, vc: VoiceClient, player) -> None:
+    def add(self, server: str | int, queue: Queue, vc: VoiceClient,) -> None:
         self.dict[str(server)] = {"queue": queue, "vc": vc,
-                                  "player": player, "current_song": None,
-                                  "loop": False, "queue_loop": False}
+                                  "player": None, "current_song": None,
+                                  "loop": False, "queue_loop": False,
+                                  "player_is_running": False}
 
     def remove(self, server: str) -> None:
         del self.dict[str(server)]
@@ -27,8 +28,11 @@ class Server_Dict():
     def get_player(self, server: str | int):  # idk what type player is
         return self.dict[str(server)]["player"]
 
+    def set_player(self, server: str | int, player):  # idk what type player is
+        self.dict[str(server)]["player"] = player
+
     def get_song(self, server: str | int, index: int) -> Song:
-        return self.dict[str(server)].get()[index]
+        return self.dict[str(server)].get(index)
 
     def get_current_song(self, server: str | int) -> Song:
         return self.dict[str(server)]["current_song"]
@@ -48,6 +52,12 @@ class Server_Dict():
     def set_queue_loop(self, server: str | int, queue_loop: bool) -> None:
         self.dict[str(server)]["queue_loop"] = queue_loop
 
+    def get_player_is_running(self, server: str | int) -> bool:
+        return self.dict[str(server)]["player_is_running"]
+
+    def set_player_is_running(self, server: str | int, player_is_running: bool) -> None:
+        self.dict[str(server)]["player_is_running"] = player_is_running
+
     def get_all_songs(self, server: str | int) -> list:
         return self.dict[str(server)].get()
 
@@ -59,7 +69,7 @@ class Server_Dict():
 
 
 if __name__ == "__main__":
-    dict = ServerDict()
+    dict = Server_Dict()
     dict.add('server1', Queue.Queue())
     dict.add('server2', Queue.Queue())
     dict.add('server3', Queue.Queue())
