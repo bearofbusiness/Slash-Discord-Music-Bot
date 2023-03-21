@@ -22,7 +22,6 @@ TODO:
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
-        4- loop (queue, song) #bear
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
@@ -44,6 +43,7 @@ DONE:
         8-f play_top #bear
         6-f clear #bear
         5-f shuffle #bear
+        4-f loop (queue, song) #bear
      - Be able to play music from youtube
         - play music
         - stop music
