@@ -6,6 +6,7 @@ import math
 from datetime import datetime
 from discord.ext import tasks
 from dotenv import load_dotenv
+from Vote import Vote
 
 # importing other classes from other files
 from Queue import Queue
@@ -18,7 +19,7 @@ fnt stands for finished not tested
 f is just finished
 TODO:
     -make more commands
-        9- skip (force skip) #sming
+        9- skip (force skip) #sming  //FNT
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
@@ -81,6 +82,7 @@ queue = Queue()
 vc = None
 current_song = None
 queue_loop = loop = False
+skip_vote = None
 
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
@@ -101,51 +103,50 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 
 
 # Returns a random hex code
-async def getRandomHex(seed) -> int:
+async def get_random_hex(seed) -> int:
     random.seed(seed)
     return random.randint(0, 16777215)
 
 
 # Creates a standard Embed object
-async def getEmbed(interaction, title='', content='', footer='', color='') -> discord.Embed:
+async def get_embed(interaction, title='', content='', url=None, color='') -> discord.Embed:
     if color == '':
-        color = await getRandomHex(interaction.user.id)
+        color = await get_random_hex(interaction.user.id)
     embed = discord.Embed(
         title=title,
         description=content,
+        url=url,
         color=color
     )
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
-    # TODO Hide the footer until i find out what to do with it
-    # embed.set_footer(footer=footer)
+    embed.set_footer(text=await get_progress_bar(current_song))
     return embed
 
 
 # Creates and sends an Embed message
-async def send(interaction, title='', content='', footer='', color='', ephemeral: bool = False) -> None:
-    embed = await getEmbed(interaction, title, content, footer)
+async def send(interaction: discord.Interaction, title='', content='', url='', color='', ephemeral: bool = False) -> None:
+    embed = await get_embed(interaction, title, content, url)
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
 # Cleans up and closes the player
 async def clean(interaction) -> None:
-    global vc, queue_loop, loop
+    global vc, queue_loop, loop, current_song
     queue.clear()
     player.cancel()
     vc = None
     queue_loop = loop = False
+    current_song = None
     await interaction.guild.voice_client.disconnect()
 
 # Sends a "Now Playing" embed for a populated Song
-
-
 async def send_np(song: Song) -> None:
     embed = discord.Embed(
         title='Now Playing:',
         url=song.original_url,
         description=f'{song.title} -- {song.uploader}',
-        color=await getRandomHex(song.id)
+        color=await get_random_hex(song.id)
     )
     embed.add_field(name='Duration:', value=song.parse_duration(
         song.duration), inline=True)
@@ -153,14 +154,15 @@ async def send_np(song: Song) -> None:
     embed.set_image(url=song.thumbnail)
     embed.set_author(name=song.requester.display_name,
                      icon_url=song.requester.display_avatar.url)
+    embed.set_footer(text=await get_progress_bar(current_song))
     await song.channel.send(embed=embed)
 
 
 # makes and ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
-    print(await song.get_elapsed_time())
+    if song is None:
+        return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
-    print(percent_duration)
     return f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}[{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
 
 
@@ -220,16 +222,11 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     if song.duration is not None:
         queue.add(song)
 
-        embed = discord.Embed(
-            title='Added to Queue:',
-            url=song.original_url,
-            color=await getRandomHex(song.id)
-        )
+
+        embed = await get_embed(interaction, title='Added to queue', url=song.original_url, color=await get_random_hex(song.id))
         embed.add_field(name=song.uploader, value=song.title)
         embed.add_field(name='Requested by:', value=song.requester.mention)
         embed.set_thumbnail(url=song.thumbnail)
-        embed.set_author(name=song.requester.display_name,
-                         icon_url=song.requester.display_avatar.url)
         await interaction.response.send_message(embed=embed)
 
         # If the player isn't already running, start it.
@@ -239,15 +236,76 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
 
 
+@tree.command(name="skip", description="Skips the currently playing song")
+async def _skip(interaction: discord.Interaction) -> None:
+    # Get a complex embed for votes
+    async def skip_msg(title = '', content = '', present_tense = True, ephemeral = False):
+        embed = await get_embed(title, content, color=get_random_hex(current_song))
+        if present_tense:
+            song_message = "Song being voted on:"
+        else:
+            song_message = "Song that was voted on:"
+        embed.add_field(title=song_message, value=current_song.title, inline=True)
+        users = ''
+        for user in skip_vote.get():
+            users = f'{user.name}, {users}'
+        users = users[:-2]
+        if present_tense:
+                                            # != 1 because if for whatever reason len(skip_vote) == 0 it will still make sense
+            voter_message = f"User{'s who have' if len(skip_vote) != 1 else ' who has'} voted to skip:"
+        else:
+            voter_message = f"Vote passed by:"
+        embed.add_field(title=voter_message, value=users, inline=True)
+        interaction.response(embed=embed, ephemeral=ephemeral)
+
+    global skip_vote
+    # If there's enough people for it to make sense to call a vote in the first place
+    #TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
+    if vc.channel.members > 1:
+        if skip_vote is None:
+            # Create new Vote
+            skip_vote = Vote(current_song, interaction.user)
+
+        # If user has already voted to skip
+        if interaction.user in skip_vote.get():
+            await skip_msg(interaction, "You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
+            return
+        
+        # Add vote
+        skip_vote.add(interaction.user)
+        votes_required = vc.channel.members // 2
+        
+        # If vote succeeds
+        if len(skip_vote) >= votes_required:
+            await skip_msg("Skip vote succeeded! :confetti:", present_tense=False)
+            # Kill and restart the player to queue the next song.
+            player.cancel()
+            vc.stop()
+            player.start()
+            skip_vote = None
+            return
+
+        await skip_msg(interaction, "Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
+    # If there isn't just skip
+    else:
+        await _force_skip(interaction)
+
+
+@tree.command(name="force_skip", description="Skips the currently playing song without having a vote.")
+async def _force_skip(interaction: discord.Interaction) -> None:
+    # Kill and restart the player to queue the next song.
+    player.cancel()
+    vc.stop()
+    player.start()
+    await send(interaction, "Skipped!", ":white_check_mark:")
+
+
 @tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction) -> None:
     if not queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = discord.Embed(
-        title='Queue:',
-        color=await getRandomHex(queue.get()[0].id)
-    )
+    embed = await get_embed(title='Queue', color=get_random_hex(queue.get()[0].id))
     for song in queue.get():
         embed.add_field(name=song.title,
                         value=f"by: {song.uploader}", inline=False)
@@ -256,38 +314,39 @@ async def _queue(interaction: discord.Interaction) -> None:
 
 @tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
-    embed = discord.Embed(
-        title='Now Playing:',
-        url=current_song.original_url,
-        description=f'{current_song.title} -- {current_song.uploader}',
-        color=await getRandomHex(current_song.id)
-    )
+
+    embed = await get_embed(interaction, 
+                            title='Now Playing:',
+                            url = current_song.original_url, 
+                            content = f'{current_song.title} -- {current_song.uploader}',
+                            color = await get_random_hex(current_song.id)
+                            )
     embed.add_field(name='Duration:', value=current_song.parse_duration(
         current_song.duration), inline=True)
     embed.add_field(name='Requested by:', value=current_song.requester.mention)
     embed.set_image(url=current_song.thumbnail)
+    # embed.remove_author()
     embed.set_author(name=current_song.requester.display_name,
                      icon_url=current_song.requester.display_avatar.url)
-    embed.set_footer(text=await get_progress_bar(current_song))
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
 @tree.command(name="remove", description="Removes a song from the queue")
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
     removed_song = queue.remove(number_in_queue)
-    if removed_song is not None:
-        embed = discord.Embed(
-            title='Removed from Queue:',
-            url=removed_song.original_url,
-            color=await getRandomHex(removed_song.id)
-        )
-        embed.add_field(name=removed_song.uploader, value=removed_song.title)
-        embed.add_field(name='Requested by:',
+    embed = await get_embed(interaction,
+                            title='Removed from Queue:',
+                            url=removed_song.original_url,
+                            color=await get_random_hex(removed_song.id)
+                            )
+    embed.add_field(name=removed_song.uploader, value=removed_song.title)
+    embed.add_field(name='Requested by:',
                         value=removed_song.requester.mention)
-        embed.set_thumbnail(url=removed_song.thumbnail)
-        embed.set_author(name=removed_song.requester.display_name,
+    embed.set_thumbnail(url=removed_song.thumbnail)
+    # embed.remove_author
+    embed.set_author(name=removed_song.requester.display_name,
                          icon_url=removed_song.requester.display_avatar.url)
-        await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=embed)
 
 
 @tree.command(name="play_top", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
@@ -310,16 +369,14 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
     if song.duration is not None:
         queue.add_at(song, 0)
 
-        embed = discord.Embed(
-            title='Added to the top of the Queue:',
-            url=song.original_url,
-            color=await getRandomHex(song.id)
-        )
+        embed = await get_embed(interaction,
+                                title='Added to the top of the Queue:',
+                                url=song.original_url,
+                                color=await get_random_hex(song.id)
+                                )
         embed.add_field(name=song.uploader, value=song.title)
         embed.add_field(name='Requested by:', value=song.requester.mention)
         embed.set_thumbnail(url=song.thumbnail)
-        embed.set_author(name=song.requester.display_name,
-                         icon_url=song.requester.display_avatar.url)
         await interaction.response.send_message(embed=embed)
 
         # If the player isn't already running, start it.
