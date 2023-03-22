@@ -3,7 +3,7 @@ import random
 
 
 class Queue:
-    def __init__(self):
+    def __init__(self) -> None:
         self.list = []
 
     def add(self, song: Song) -> None:
@@ -12,11 +12,10 @@ class Queue:
     def add_at(self, song: Song, index) -> None:
         self.list.insert(index, song)
 
-    def get(self, index: int) -> Song:
+    def get(self, index: int | None = None) -> Song:
+        if index is None:
+            return self.list
         return self.list[index]
-    
-    def get(self) -> list:
-        return self.list
 
     def shuffle(self) -> None:
         random.shuffle(self.list)
