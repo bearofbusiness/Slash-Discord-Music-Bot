@@ -1,3 +1,4 @@
+from discord import Member
 from Vote import Vote
 from YTDLInterface import YTDLInterface
 import time
@@ -35,6 +36,9 @@ class Song:
         self.thumbnail = data.get('thumbnail')
         self.duration = data.get('duration')
         self.original_url = data.get('webpage_url')
+
+    def create_vote(self, member: Member) -> None:
+        self.vote = Vote()
 
     @staticmethod
     def parse_duration(duration: int) -> str:
