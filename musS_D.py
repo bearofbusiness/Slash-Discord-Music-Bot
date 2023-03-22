@@ -335,21 +335,21 @@ async def _queue(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
-    current_song = servers.get_player(interaction.guild_id).song
+    player = servers.get_player(interaction.guild_id)
+    title_message = f'Now Playing:\t{":repeat:" if player.looping else ""} {":repeat_one:" if player.queue_looping else ""}'
     embed = await get_embed(interaction,
-                            title='Now Playing:',
-                            url=current_song.original_url,
-                            content=f'{current_song.title} -- {current_song.uploader}',
+                            title=title_message,
+                            url=player.song.original_url,
+                            content=f'{player.song.title} -- {player.song.uploader}',
                             color=get_random_hex(
-                                current_song.id)
+                                player.song.id)
                             )
-    embed.add_field(name='Duration:', value=current_song.parse_duration(
-        current_song.duration), inline=True)
-    embed.add_field(name='Requested by:',
-                    value=current_song.requester.mention)
-    embed.set_image(url=current_song.thumbnail)
-    embed.set_author(name=current_song.requester.display_name,
-                     icon_url=current_song.requester.display_avatar.url)
+    embed.add_field(name='Duration:', value=player.song.parse_duration(
+        player.song.duration), inline=True)
+    embed.add_field(name='Requested by:', value=player.song.requester.mention)
+    embed.set_image(url=player.song.thumbnail)
+    embed.set_author(name=player.song.requester.display_name,
+                     icon_url=player.song.requester.display_avatar.url)
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
@@ -437,27 +437,16 @@ async def _resume(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="loop", description="Loops the current song")
 async def _loop(interaction: discord.Interaction) -> None:
-    if (servers.get_player(interaction.guild_id).looping):
-        servers.get_player(interaction.guild_id).set_loop(False)
-        await send(interaction, title='Loop deactivated')
-    else:
-        servers.get_player(interaction.guild_id).set_loop(True)
-        queue_loop_check = servers.get_player(
-            interaction.guild_id).queue_looping
-        servers.get_player(interaction.guild_id).set_queue_loop(False)
-        await send(interaction, title='Looped', content="deactivated queue loop" if queue_loop_check else '')
+    player = servers.get_player(interaction.guild.id)
+    player.set_loop(not player.looping)
+    await send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
 
 
 @ tree.command(name="queue_loop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
-    if (servers.get_player(interaction.guild_id).queue_looping):
-        servers.get_player(interaction.guild_id).set_queue_loop(False)
-        await send(interaction, title='Loop deactivated')
-    else:
-        servers.get_player(interaction.guild_id).set_queue_loop(True)
-        loop_check = servers.get_player(interaction.guild_id).looping
-        servers.get_player(interaction.guild_id).set_loop(False)
-        await send(interaction, title='Queue looped', content="deactivated loop" if loop_check else '')
+    player = servers.get_player(interaction.guild.id)
+    player.set_queue_loop(not player.queue_looping)
+    await send(interaction, title='Queue Looped.' if player.queue_looping else 'Queue loop disabled.')
 
 
 bot.run(key)
