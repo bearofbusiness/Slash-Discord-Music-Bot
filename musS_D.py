@@ -1,17 +1,14 @@
-import asyncio
 import discord
 import os
 import random
 import math
 import time
 from datetime import datetime
-from discord.ext import tasks
 from dotenv import load_dotenv
 
 # importing other classes from other files
 from Song import Song
 from Servers import Servers
-from Vote import Vote
 from Player import Player
 
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
@@ -130,12 +127,13 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
         url=url,
         color=color
     )
-    current_song = servers.get_player(interaction.guild_id).queue.get(0)
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
-    embed.set_footer(text=await get_progress_bar(current_song))
-    if progress and await get_progress_bar(current_song) is not None:
-        embed.set_footer(text=await get_progress_bar(current_song), icon_url=current_song.thumbnail)
+    current_song = servers.get_player(interaction.guild_id).queue.get(0)
+    progress_bar = await get_progress_bar(current_song)
+    if progress and progress_bar != "":
+        embed.set_footer(text=f"{progress_bar}",
+                         icon_url=current_song.thumbnail)
     return embed
 
 
@@ -195,6 +193,9 @@ async def _join(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
 async def _leave(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     if interaction.user.voice is None:  # TODO: make it check if the user is in the same voice channel as the bot
         await interaction.response.send_message('You are not in a voice channel with the MaBalls', ephemeral=True)
         return
@@ -239,12 +240,16 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         if not servers.get_player(interaction.guild_id).is_started():
             await servers.get_player(interaction.guild_id).start()
     else:
-        await interaction.followup.send(get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
+        await interaction.followup.send(await get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
 
 
 @ tree.command(name="skip", description="Skips the currently playing song")
 async def _skip(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     # Get a complex embed for votes
+
     async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
         current_song = servers.get_player(
             interaction.guild_id).queue.get(0)
@@ -312,6 +317,9 @@ async def _skip(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="force_skip", description="Skips the currently playing song without having a vote.")
 async def _force_skip(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     # Kill and restart the player to queue the next song.
     servers.get_player(interaction.guild_id).terminate_player()
     servers.get_player(interaction.guild_id).vc.stop()
@@ -323,6 +331,9 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     if not servers.get_player(interaction.guild_id).queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
@@ -335,6 +346,9 @@ async def _queue(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     player = servers.get_player(interaction.guild_id)
     title_message = f'Now Playing:\t{":repeat:" if player.looping else ""} {":repeat_one:" if player.queue_looping else ""}'
     embed = await get_embed(interaction,
@@ -355,6 +369,9 @@ async def _now(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="remove", description="Removes a song from the queue")
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     removed_song = servers.get_player(
         interaction.guild_id).queue.remove(number_in_queue + 1)
     if removed_song is not None:
@@ -411,18 +428,27 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
 
 @ tree.command(name="clear", description="Clears the queue")
 async def _clear(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     servers.get_player(interaction.guild_id).queue.clear()
     await interaction.response.send_message('Queue cleared')
 
 
 @ tree.command(name="shuffle", description="Shuffles the queue")
 async def _shuffle(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     servers.get_player(interaction.guild_id).queue.shuffle()
     await interaction.response.send_message('Queue shuffled')
 
 
 @ tree.command(name="pause", description="Pauses the current song")
 async def _pause(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     servers.get_player(interaction.guild_id).vc.pause()
     await servers.get_player(interaction.guild_id).song.pause()
     await send(interaction, title='Paused')
@@ -430,6 +456,9 @@ async def _pause(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="resume", description="Resumes the current song")
 async def _resume(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     servers.get_player(interaction.guild_id).vc.resume()
     await servers.get_player(interaction.guild_id).song.resume()
     await send(interaction, title='Resumed')
@@ -437,6 +466,9 @@ async def _resume(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="loop", description="Loops the current song")
 async def _loop(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     player = servers.get_player(interaction.guild.id)
     player.set_loop(not player.looping)
     await send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
@@ -444,6 +476,9 @@ async def _loop(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="queue_loop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
+    if servers.get_player(interaction.guild.id) == None:
+        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
+        return
     player = servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
     await send(interaction, title='Queue Looped.' if player.queue_looping else 'Queue loop disabled.')
