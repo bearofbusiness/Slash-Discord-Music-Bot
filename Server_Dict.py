@@ -1,20 +1,21 @@
 from discord.voice_client import VoiceClient
 
 # imports for classes from other files
-import Queue
-import Song
+from Queue import Queue
+from Song import Song
+from Vote import Vote
 
 
 class Server_Dict():
     def __init__(self):
         self.dict = {}
 
-    # idk what type player is
-    def add(self, server: str | int, queue: Queue, vc: VoiceClient,) -> None:
+    def add(self, server: str | int, queue: Queue, vc: VoiceClient) -> None:
         self.dict[str(server)] = {"queue": queue, "vc": vc,
                                   "player": None, "current_song": None,
                                   "loop": False, "queue_loop": False,
-                                  "player_is_running": False}
+                                  "player_is_running": False, "skip_vote": None,
+                                  "abort_player": False, }
 
     def remove(self, server: str) -> None:
         del self.dict[str(server)]
@@ -32,7 +33,7 @@ class Server_Dict():
         self.dict[str(server)]["player"] = player
 
     def get_song(self, server: str | int, index: int) -> Song:
-        return self.dict[str(server)].get(index)
+        return self.dict[str(server)]["queue"].get()[index]
 
     def get_current_song(self, server: str | int) -> Song:
         return self.dict[str(server)]["current_song"]
@@ -57,6 +58,12 @@ class Server_Dict():
 
     def set_player_is_running(self, server: str | int, player_is_running: bool) -> None:
         self.dict[str(server)]["player_is_running"] = player_is_running
+
+    def get_skip_vote(self, server: str | int) -> Vote:
+        return self.dict[str(server)]["skip_vote"]
+
+    def set_skip_vote(self, server: str | int, skip_vote: Vote) -> None:
+        self.dict[str(server)]["skip_vote"] = skip_vote
 
     def get_all_songs(self, server: str | int) -> list:
         return self.dict[str(server)].get()
