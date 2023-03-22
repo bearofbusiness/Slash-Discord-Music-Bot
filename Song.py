@@ -81,6 +81,6 @@ class Song:
 
     async def get_elapsed_time(self) -> int:
         return (time.time() + self.pause_time) - self.start_time
-    
+
     def __str__(self) -> str:
         return f'{self.title} by {self.uploader}'
