@@ -99,13 +99,11 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 # makes a ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started ( - 100000 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100000 or servers.get_player(song.channel.guild.id).vc.is_playing() is False:
-        print(await song.get_elapsed_time() > time.time() - 1000, await song.get_elapsed_time(), time.time() - 100000)
+    if song is None or await song.get_elapsed_time() > time.time() - 100000:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
     ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
-    print(ret)
     return ret
 
 
@@ -131,10 +129,11 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
     # If the calling method wants the progress bar
     if progress:
         player = servers.get_player(interaction.guild_id)
-        footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{await get_progress_bar(player.queue.get(0))}'
+        if player is not None:
+            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{await get_progress_bar(player.queue.get(0))}'
 
-        embed.set_footer(text=footer_message,
-                         icon_url=player.queue.get(0).thumbnail)
+            embed.set_footer(text=footer_message,
+                             icon_url=player.queue.get(0).thumbnail)
     return embed
 
 
@@ -194,7 +193,6 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
 
     # If not already in VC, join
     if interaction.guild.voice_client is None:
@@ -207,7 +205,6 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         return
 
     await interaction.response.defer(ephemeral=True, thinking=True)
-
 
     song = Song(interaction, link)
     await song.populate()
@@ -339,6 +336,9 @@ async def _now(interaction: discord.Interaction) -> None:
         await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
         return
     player = servers.get_player(interaction.guild_id)
+    if player.song is None:
+        await send(interaction, title='Error!', content='No song is playing', ephemeral=True)
+        return
     title_message = f'Now Playing:\t{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}'
     embed = await get_embed(interaction,
                             title=title_message,
