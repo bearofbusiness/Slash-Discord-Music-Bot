@@ -98,8 +98,9 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 
 # makes a ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
-    # if the song is None or the song has been has not been started (-100 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 1000 or servers.get_player(song.channel.guild.id).vc.is_playing() is False:
+    # if the song is None or the song has been has not been started ( - 100000 is an arbitrary number)
+    if song is None or await song.get_elapsed_time() > time.time() - 100000 or servers.get_player(song.channel.guild.id).vc.is_playing() is False:
+        print(await song.get_elapsed_time() > time.time() - 1000, await song.get_elapsed_time(), time.time() - 100000)
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
