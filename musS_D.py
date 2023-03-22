@@ -25,6 +25,7 @@ TODO:
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
+        7- remove user's songs from queue
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
