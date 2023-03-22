@@ -16,18 +16,17 @@ from Vote import Vote
 
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
-fnt stands for finished not tested
-f is just finished
+#-fnt stands for finished not tested
+#-f is just finished
 TODO:
     -make more commands
-        9- skip (force skip) #sming  //FNT
+        9-fnt skip (force skip) #sming
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
         1- help #bear
         1- volume #nrn
-        1- settings #nrn //after muliti server
-        0- filter?(audio effects) #nrn //i dont know if this is possible it may be cool to have tho 
+        1- settings #bear //after muliti server
     -other
         6- remove author's songs from queue when author leaves vc #sming
         3- make it multi server #bear
@@ -164,12 +163,12 @@ async def send_np(song: Song) -> None:
 # makes and ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started (-100 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100:
+    if song is None or await song.get_elapsed_time() > time.time() - 100 or player.is_playing() is False:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
-    print(f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}[{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]')
-    return f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}[{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
-
+    ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
+    ret += f'[{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
+    return ret
 
 ## COMMANDS ##
 
