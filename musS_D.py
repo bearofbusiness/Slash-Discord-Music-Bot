@@ -278,8 +278,8 @@ async def _skip(interaction: discord.Interaction) -> None:
 
         if servers.get_player(interaction.guild_id).song.vote is None:
             # Create new Vote
-            servers.get_player(interaction.guild_id).song.vote = Vote(
-                servers.get_player(interaction.guild_id).vc, interaction.user)
+            servers.get_player(interaction.guild_id).song.create_vote(
+                interaction.user)
             await skip_msg("Vote added.", f"{votes_required - len(servers.get_player(interaction.guild_id).song.vote)}/{votes_required} votes to skip.")
             return
 
