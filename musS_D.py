@@ -279,7 +279,7 @@ async def _skip(interaction: discord.Interaction) -> None:
 
         # If user has already voted to skip
         if interaction.user in skip_vote.get():
-            await skip_msg(interaction, "You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
+            await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
             return
 
         # Add vote
@@ -297,7 +297,7 @@ async def _skip(interaction: discord.Interaction) -> None:
                 await clean()
             return
 
-        await skip_msg(interaction, "Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
+        await skip_msg("Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
     # If there isn't just skip
     else:
         await _force_skip(interaction)
