@@ -1,17 +1,14 @@
-import asyncio
 import discord
 import os
 import random
 import math
 import time
 from datetime import datetime
-from discord.ext import tasks
 from dotenv import load_dotenv
 
 # importing other classes from other files
 from Song import Song
 from Servers import Servers
-from Vote import Vote
 from Player import Player
 
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
@@ -80,10 +77,6 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
 bot = Bot()
 tree = discord.app_commands.CommandTree(bot)
 servers = Servers()
-# queue = Queue()
-# vc = None
-# current_song = None
-# queue_loop = loop = False
 
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
@@ -336,7 +329,7 @@ async def _queue(interaction: discord.Interaction) -> None:
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild_id)
-    title_message = f'Now Playing:\t{":repeat:" if player.looping else ""} {":repeat_one:" if player.queue_looping else ""}'
+    title_message = f'Now Playing:\t{":repeat: " if player.looping else ""}{":repeat_one:" if player.queue_looping else ""}'
     embed = await get_embed(interaction,
                             title=title_message,
                             url=player.song.original_url,
