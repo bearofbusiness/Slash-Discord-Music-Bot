@@ -175,15 +175,13 @@ async def _join(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
 async def _leave(interaction: discord.Interaction) -> None:
-    if servers.get_player(interaction.guild.id) == None:
-        await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
-        return
-    if interaction.user.voice is None:  # TODO: make it check if the user is in the same voice channel as the bot
-        await interaction.response.send_message('You are not in a voice channel with the MaBalls', ephemeral=True)
-        return
     if interaction.guild.voice_client is None:
         await interaction.response.send_message('MaBalls is not in a voice channel', ephemeral=True)
         return
+    if interaction.user.voice is None or interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message('You are not in a voice channel with the MaBalls', ephemeral=True)
+        return
+
     # Disconnect from the voice channel
     await clean(interaction.guild_id)
     await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True)
