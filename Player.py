@@ -40,6 +40,7 @@ class Player:
             self.vc.play(discord.FFmpegPCMAudio(
                 self.song.audio, **YTDLInterface.ffmpeg_options
             ))
+            self.song.play()
 
             # Sleep player until song ends
             await asyncio.sleep(self.song.duration)

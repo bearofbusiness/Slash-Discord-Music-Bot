@@ -99,11 +99,12 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 # makes a ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started (-100 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100 or servers.get_player(song.channel.guild.id).vc.is_playing() is False:
+    if song is None or await song.get_elapsed_time() > time.time() - 1000 or servers.get_player(song.channel.guild.id).vc.is_playing() is False:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
     ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
+    print(ret)
     return ret
 
 
@@ -147,24 +148,6 @@ async def clean(id: int) -> None:
     await servers.get_player(id).vc.disconnect()
     servers.get_player(id).terminate_player()
     servers.remove(id)
-
-
-# Sends a "Now Playing" embed for a populated Song
-async def send_np(song: Song) -> None:
-    embed = discord.Embed(
-        title='Now Playing:',
-        url=song.original_url,
-        description=f'{song.title} -- {song.uploader}',
-        color=get_random_hex(song.id)
-    )
-    embed.add_field(name='Duration:', value=song.parse_duration(
-        song.duration), inline=True)
-    embed.add_field(name='Requested by:', value=song.requester.mention)
-    embed.set_image(url=song.thumbnail)
-    embed.set_author(name=song.requester.display_name,
-                     icon_url=song.requester.display_avatar.url)
-    embed.set_footer(text=await get_progress_bar(song))
-    await song.channel.send(embed=embed)
 
 
 ## COMMANDS ##
