@@ -149,24 +149,6 @@ async def clean(id: int) -> None:
     servers.remove(id)
 
 
-# Sends a "Now Playing" embed for a populated Song
-async def send_np(song: Song) -> None:
-    embed = discord.Embed(
-        title='Now Playing:',
-        url=song.original_url,
-        description=f'{song.title} -- {song.uploader}',
-        color=get_random_hex(song.id)
-    )
-    embed.add_field(name='Duration:', value=song.parse_duration(
-        song.duration), inline=True)
-    embed.add_field(name='Requested by:', value=song.requester.mention)
-    embed.set_image(url=song.thumbnail)
-    embed.set_author(name=song.requester.display_name,
-                     icon_url=song.requester.display_avatar.url)
-    embed.set_footer(text=await get_progress_bar(song))
-    await song.channel.send(embed=embed)
-
-
 ## COMMANDS ##
 
 
