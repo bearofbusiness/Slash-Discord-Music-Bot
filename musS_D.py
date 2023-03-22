@@ -109,7 +109,7 @@ def get_random_hex(seed) -> int:
 
 
 # Creates a standard Embed object
-async def get_embed(interaction, title='', content='', url=None, color='') -> discord.Embed:
+async def get_embed(interaction, title='', content='', url=None, color='', progress: bool = True) -> discord.Embed:
     if color == '':
         color = get_random_hex(interaction.user.id)
     embed = discord.Embed(
@@ -120,13 +120,14 @@ async def get_embed(interaction, title='', content='', url=None, color='') -> di
     )
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
-    embed.set_footer(text=await get_progress_bar(current_song))
+    if progress and current_song is not None:
+        embed.set_footer(text=await get_progress_bar(current_song))
     return embed
 
 
 # Creates and sends an Embed message
-async def send(interaction: discord.Interaction, title='', content='', url='', color='', ephemeral: bool = False) -> None:
-    embed = await get_embed(interaction, title, content, url)
+async def send(interaction: discord.Interaction, title='', content='', url='', color='', ephemeral: bool = False, progress: bool = True) -> None:
+    embed = await get_embed(interaction, title, content, url, progress)
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
@@ -250,6 +251,7 @@ async def _skip(interaction: discord.Interaction) -> None:
             song_message = "Song that was voted on:"
         embed.add_field(name=song_message,
                         value=current_song.title, inline=True)
+        embed.set_thumbnail(url=current_song.thumbnail)
         users = ''
         for user in skip_vote.get():
             users = f'{user.name}, {users}'
@@ -260,15 +262,20 @@ async def _skip(interaction: discord.Interaction) -> None:
         else:
             voter_message = f"Vote passed by:"
         embed.add_field(name=voter_message, value=users, inline=True)
+        embed.add_field(name="Initiated by:", value=skip_vote.initiator)
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
     global skip_vote
     # If there's enough people for it to make sense to call a vote in the first place
     # TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
     if len(vc.channel.members) > 1:
+        votes_required = len(vc.channel.members) // 2
+
         if skip_vote is None:
             # Create new Vote
             skip_vote = Vote(current_song, interaction.user)
+            await skip_msg(interaction, "Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
+            return
 
         # If user has already voted to skip
         if interaction.user in skip_vote.get():
@@ -277,7 +284,7 @@ async def _skip(interaction: discord.Interaction) -> None:
 
         # Add vote
         skip_vote.add(interaction.user)
-        votes_required = len(vc.channel.members) // 2
+        
 
         # If vote succeeds
         if len(skip_vote) >= votes_required:
@@ -287,6 +294,8 @@ async def _skip(interaction: discord.Interaction) -> None:
             vc.stop()
             player.start()
             skip_vote = None
+            if not queue.get():
+                await clean()
             return
 
         await skip_msg(interaction, "Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
@@ -301,6 +310,8 @@ async def _force_skip(interaction: discord.Interaction) -> None:
     player.cancel()
     vc.stop()
     player.start()
+    if not queue.get():
+        await clean()
     await send(interaction, "Skipped!", ":white_check_mark:")
 
 
@@ -309,7 +320,7 @@ async def _queue(interaction: discord.Interaction) -> None:
     if not queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = await get_embed(interaction, title='Queue', color=get_random_hex(queue.get()[0].id))
+    embed = await get_embed(interaction, title='Queue', color=get_random_hex(queue.get()[0].id), progress=False)
     for song in queue.get():
         embed.add_field(name=song.title,
                         value=f"by: {song.uploader}", inline=False)
@@ -473,8 +484,7 @@ async def player() -> None:
                     return  # returns to the first loop
             # Kill the player and leave VC
             break
-    player.stop()
-    await song.channel.guild.voice_client.disconnect()
+    await clean()
 
 
 bot.run(key)
