@@ -164,7 +164,7 @@ async def send_np(song: Song) -> None:
 # makes and ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started (-100 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100 or player.is_playing() is False:
+    if song is None or await song.get_elapsed_time() > time.time() - 100 or vc.is_playing() is False:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
@@ -274,7 +274,7 @@ async def _skip(interaction: discord.Interaction) -> None:
         if skip_vote is None:
             # Create new Vote
             skip_vote = Vote(current_song, interaction.user)
-            await skip_msg(interaction, "Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
+            await skip_msg("Vote added.", f"{votes_required - len(skip_vote)}/{votes_required} votes to skip.")
             return
 
         # If user has already voted to skip
@@ -284,7 +284,6 @@ async def _skip(interaction: discord.Interaction) -> None:
 
         # Add vote
         skip_vote.add(interaction.user)
-        
 
         # If vote succeeds
         if len(skip_vote) >= votes_required:
