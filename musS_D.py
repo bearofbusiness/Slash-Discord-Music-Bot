@@ -121,7 +121,7 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
     if progress and current_song is not None:
-        embed.set_footer(text=await get_progress_bar(current_song))
+        embed.set_footer(text=await get_progress_bar(current_song), icon_url=current_song.thumbnail)
     return embed
 
 
@@ -132,14 +132,14 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
 
 
 # Cleans up and closes the player
-async def clean(interaction) -> None:
+async def clean() -> None:
     global vc, queue_loop, loop, current_song
     queue.clear()
     player.cancel()
-    vc = None
     queue_loop = loop = False
     current_song = None
-    await interaction.guild.voice_client.disconnect()
+    await vc.disconnect()
+    vc = None
 
 # Sends a "Now Playing" embed for a populated Song
 
@@ -168,7 +168,7 @@ async def get_progress_bar(song: Song) -> str:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
-    ret += f'[{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
+    ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
     return ret
 
 ## COMMANDS ##
@@ -203,7 +203,7 @@ async def _leave(interaction: discord.Interaction) -> None:
         await interaction.response.send_message('MaBalls is not in a voice channel', ephemeral=True)
         return
     # Disconnect from the voice channel
-    await clean(interaction)
+    await clean()
     await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True)
 
 
