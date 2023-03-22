@@ -1,5 +1,5 @@
-from Vote import Vote
 from YTDLInterface import YTDLInterface
+from Vote import Vote
 import time
 
 

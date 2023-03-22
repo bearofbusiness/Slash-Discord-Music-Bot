@@ -259,12 +259,12 @@ async def _skip(interaction: discord.Interaction) -> None:
         users = ''
         embed.add_field(name="Initiated by:", value=servers.get_skip_vote(
             interaction.guild_id).initiator)
-        for user in servers.get_skip_vote(interaction.guild_id).get():
+        for user in servers.get_player(interaction.guild_id).song.vote.get():
             users = f'{user.name}, {users}'
         users = users[:-2]
         if present_tense:
             # != 1 because if for whatever reason len(skip_vote) == 0 it will still make sense
-            voter_message = f"User{'s who have' if len(servers.get_skip_vote(interaction.guild_id)) != 1 else ' who has'} voted to skip:"
+            voter_message = f"User{'s who have' if len(servers.get_player(interaction.guild_id).song.vote) != 1 else ' who has'} voted to skip:"
         else:
             voter_message = f"Vote passed by:"
         embed.add_field(name=voter_message, value=users, inline=False)
@@ -276,16 +276,15 @@ async def _skip(interaction: discord.Interaction) -> None:
         votes_required = len(servers.get_player(
             interaction.guild_id).vc.channel.members) // 2
 
-        if servers.get_skip_vote(
-                interaction.guild_id) is None:
+        if servers.get_player(interaction.guild_id).song.vote is None:
             # Create new Vote
-            servers.set_skip_vote(
-                interaction.guild_id, Vote(servers.get_player(interaction.guild_id).vc, interaction.user))
-            await skip_msg("Vote added.", f"{votes_required - len(servers.get_skip_vote(interaction.guild_id))}/{votes_required} votes to skip.")
+            servers.get_player(interaction.guild_id).song.vote = Vote(
+                servers.get_player(interaction.guild_id).vc, interaction.user)
+            await skip_msg("Vote added.", f"{votes_required - len(servers.get_player(interaction.guild_id).song.vote)}/{votes_required} votes to skip.")
             return
 
         # If user has already voted to skip
-        if interaction.user in servers.get_skip_vote(interaction.guild_id).get():
+        if interaction.user in servers.get_player(interaction.guild_id).song.vote.get():
             await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
             return
 
@@ -294,18 +293,18 @@ async def _skip(interaction: discord.Interaction) -> None:
             interaction.guild_id).add(interaction.user)
 
         # If vote succeeds
-        if len(servers.get_skip_vote(interaction.guild_id)) >= votes_required:
+        if len(servers.get_player(interaction.guild_id).song.vote) >= votes_required:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
             # Kill and restart the player to queue the next song.
             servers.get_player(interaction.guild_id).terminate_player()
             servers.get_player(interaction.guild_id).vc.stop()
             await servers.get_player(interaction.guild_id).start()
-            servers.set_skip_vote(interaction.guild_id, None)
+            servers.get_player(interaction.guild_id).song.vote, = None
             if not servers.get_player(interaction.guild_id).queue.get():
                 await clean()
             return
 
-        await skip_msg("Vote added.", f"{votes_required - len(servers.get_skip_vote(interaction.guild_id))}/{votes_required} votes to skip.")
+        await skip_msg("Vote added.", f"{votes_required - len(servers.get_player(interaction.guild_id).song.vote)}/{votes_required} votes to skip.")
     # If there isn't just skip
     else:
         await _force_skip(interaction)
@@ -346,7 +345,8 @@ async def _now(interaction: discord.Interaction) -> None:
                             )
     embed.add_field(name='Duration:', value=current_song.parse_duration(
         current_song.duration), inline=True)
-    embed.add_field(name='Requested by:', value=current_song.requester.mention)
+    embed.add_field(name='Requested by:',
+                    value=current_song.requester.mention)
     embed.set_image(url=current_song.thumbnail)
     embed.set_author(name=current_song.requester.display_name,
                      icon_url=current_song.requester.display_avatar.url)

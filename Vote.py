@@ -1,5 +1,7 @@
 from Song import Song
 from discord import Member
+
+
 class Vote:
     def __init__(self, song: Song, initiator: Member):
         self.song = song
@@ -12,6 +14,6 @@ class Vote:
     def add(self, member: Member) -> None:
         self.voters.append(member)
         return
-    
+
     def get(self) -> list:
         return self.voters
