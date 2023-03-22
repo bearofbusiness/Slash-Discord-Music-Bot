@@ -131,7 +131,7 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
     # If the calling method wants the progress bar
     if progress:
         player = servers.get_player(interaction.guild_id)
-        footer_message = f'{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}\n{await get_progress_bar(player.queue.get(0))}'
+        footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{await get_progress_bar(player.queue.get(0))}'
 
         embed.set_footer(text=footer_message,
                          icon_url=player.queue.get(0).thumbnail)
@@ -190,17 +190,24 @@ async def _leave(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str) -> None:
-    await interaction.response.defer(ephemeral=True, thinking=True)
     # Check if author is in VC
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
+    
 
     # If not already in VC, join
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
         vc = await channel.connect(self_deaf=True)
         servers.add(interaction.guild_id, Player(vc))
+    # Otherwise, make sure the user is in the same channel
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls")
+        return
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
 
     song = Song(interaction, link)
     await song.populate()
@@ -217,6 +224,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         embed.add_field(name='Requested by:', value=song.requester.mention)
         embed.set_thumbnail(url=song.thumbnail)
         await interaction.followup.send(embed=embed)
+
         # If the player isn't already running, start it.
         if not servers.get_player(interaction.guild_id).is_started():
             await servers.get_player(interaction.guild_id).start()
