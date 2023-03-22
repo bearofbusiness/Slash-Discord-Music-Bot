@@ -138,7 +138,7 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
 
 # Creates and sends an Embed message
 async def send(interaction: discord.Interaction, title='', content='', url='', color='', ephemeral: bool = False, progress: bool = True) -> None:
-    embed = await get_embed(interaction, title, content, url, progress)
+    embed = await get_embed(interaction, title, content, url, color, progress)
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
