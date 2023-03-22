@@ -12,17 +12,17 @@ class Queue:
     def add_at(self, song: Song, index) -> None:
         self.list.insert(index, song)
 
+    def get(self, index: int) -> Song:
+        return self.list[index]
+    
+    def get(self) -> list:
+        return self.list
+
     def shuffle(self) -> None:
         random.shuffle(self.list)
 
     def remove(self, index: int) -> Song:
         return self.list.pop(index)
 
-    def get(self) -> list:
-        return self.list
-
-    def clear(self) -> None:
-        self.list = []
-
-    def length(self) -> int:
+    def __len__(self) -> int:
         return len(self.list)
