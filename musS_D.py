@@ -9,10 +9,8 @@ from discord.ext import tasks
 from dotenv import load_dotenv
 
 # importing other classes from other files
-from Queue import Queue
 from Song import Song
-from YTDLInterface import YTDLInterface
-from Server_Dict import Server_Dict
+from Servers import Servers
 from Vote import Vote
 from Player import Player
 
@@ -81,7 +79,7 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
 # Global Variables
 bot = Bot()
 tree = discord.app_commands.CommandTree(bot)
-server_dict = Server_Dict()
+servers = Servers()
 # queue = Queue()
 # vc = None
 # current_song = None
@@ -108,7 +106,7 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 # makes a ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started (-100 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100 or server_dict.get_vc(song.channel.guild.id).is_playing() is False:
+    if song is None or await song.get_elapsed_time() > time.time() - 100 or servers.get_vc(song.channel.guild.id).is_playing() is False:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
@@ -132,7 +130,7 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
         url=url,
         color=color
     )
-    current_song = server_dict.get_player(interaction.guild_id).queue.get(0)
+    current_song = servers.get_player(interaction.guild_id).queue.get(0)
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
     embed.set_footer(text=await get_progress_bar(current_song))
@@ -149,49 +147,12 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
 
 # Cleans up and closes the player
 async def clean(id: int) -> None:
-    await server_dict.get_player(id).vc.disconnect()
-    server_dict.get_player(id).terminate_player()
-    server_dict.remove(id)
+    await servers.get_player(id).vc.disconnect()
+    servers.get_player(id).terminate_player()
+    servers.remove(id)
 
-'''### DEPRECATED ###
-async def player_DEP(id: int) -> None:  
-    while True:
-        # Pull the top song in queue
-        server_dict.set_current_song(id, server_dict.get_song(id, 0))
-        song = server_dict.get_queue(id).remove(0)
-        if (server_dict.get_loop(id)):
-            server_dict.get_queue(id).add_at(song, 0)
-        if (server_dict.get_queue_loop(id)):
-            server_dict.get_queue(id).add(song)
-        await song.populate()
-        # There should be ~10 seconds left before the current song is over, wait it out.
-        while server_dict.get_vc(id).is_playing():
-            await asyncio.sleep(1)
-
-        await send_np(song)
-        await song.start()
-        server_dict.get_vc(id).play(discord.FFmpegPCMAudio(
-            song.audio, **YTDLInterface.ffmpeg_options))
-        # Wait until 10 seconds before the song ends to queue up the next one.
-        await asyncio.sleep(song.duration - 10)
-        # If we see the queue is empty, get ready to close
-        if not server_dict.get_queue(id).get():
-            # Keep checking for those last 10 seconds
-            while server_dict.get_vc(id).is_playing():
-                await asyncio.sleep(0.5)
-                # If a song is added in this time, abort early to let us get ready for it.
-                if server_dict.get_queue(id).get():
-                    return  # returns to the first loop
-            # Kill the player and leave VC
-            break
-    # player.stop()
-    clean(id)
-    await song.channel.guild.voice_client.disconnect()
-'''
 
 # Sends a "Now Playing" embed for a populated Song
-
-
 async def send_np(song: Song) -> None:
     embed = discord.Embed(
         title='Now Playing:',
@@ -228,7 +189,7 @@ async def _join(interaction: discord.Interaction) -> None:
         return
     # Connect to the voice channel
     vc = await interaction.user.voice.channel.connect(self_deaf=True)
-    server_dict.add(interaction.guild_id, Player(vc))
+    servers.add(interaction.guild_id, Player(vc))
     await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True)
 
 
@@ -247,7 +208,7 @@ async def _leave(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str) -> None:
-
+    await interaction.response.defer(ephemeral=True, thinking=True)
     # Check if author is in VC
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
@@ -257,13 +218,13 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
         vc = await channel.connect(self_deaf=True)
-        server_dict.add(interaction.guild_id, Player(vc))
+        servers.add(interaction.guild_id, Player(vc))
 
     song = Song(interaction, link)
     await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
-        server_dict.get_player(interaction.guild_id).queue.add(song)
+        servers.get_player(interaction.guild_id).queue.add(song)
         embed = await get_embed(
             interaction,
             title='Added to Queue:',
@@ -273,19 +234,19 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         embed.add_field(name=song.uploader, value=song.title)
         embed.add_field(name='Requested by:', value=song.requester.mention)
         embed.set_thumbnail(url=song.thumbnail)
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
         # If the player isn't already running, start it.
-        if not server_dict.get_player(interaction.guild_id).is_started():
-            await server_dict.get_player(interaction.guild_id).start()
+        if not servers.get_player(interaction.guild_id).is_started():
+            await servers.get_player(interaction.guild_id).start()
     else:
-        await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
+        await interaction.followup.send(get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
 
 
 @ tree.command(name="skip", description="Skips the currently playing song")
 async def _skip(interaction: discord.Interaction) -> None:
     # Get a complex embed for votes
     async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
-        current_song = server_dict.get_player(
+        current_song = servers.get_player(
             interaction.guild_id).queue.get(0)
         embed = await get_embed(interaction, title, content, color=get_random_hex(current_song.id))
         if present_tense:
@@ -296,14 +257,14 @@ async def _skip(interaction: discord.Interaction) -> None:
                         value=current_song.title, inline=True)
         embed.set_thumbnail(url=current_song.thumbnail)
         users = ''
-        embed.add_field(name="Initiated by:", value=server_dict.get_skip_vote(
+        embed.add_field(name="Initiated by:", value=servers.get_skip_vote(
             interaction.guild_id).initiator)
-        for user in server_dict.get_skip_vote(interaction.guild_id).get():
+        for user in servers.get_skip_vote(interaction.guild_id).get():
             users = f'{user.name}, {users}'
         users = users[:-2]
         if present_tense:
             # != 1 because if for whatever reason len(skip_vote) == 0 it will still make sense
-            voter_message = f"User{'s who have' if len(server_dict.get_skip_vote(interaction.guild_id)) != 1 else ' who has'} voted to skip:"
+            voter_message = f"User{'s who have' if len(servers.get_skip_vote(interaction.guild_id)) != 1 else ' who has'} voted to skip:"
         else:
             voter_message = f"Vote passed by:"
         embed.add_field(name=voter_message, value=users, inline=False)
@@ -311,40 +272,40 @@ async def _skip(interaction: discord.Interaction) -> None:
 
     # If there's enough people for it to make sense to call a vote in the first place
     # TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
-    if len(server_dict.get_player(interaction.guild_id).vc.channel.members) > 1:
-        votes_required = len(server_dict.get_vc(
+    if len(servers.get_player(interaction.guild_id).vc.channel.members) > 1:
+        votes_required = len(servers.get_vc(
             interaction.guild_id).channel.members) // 2
 
-        if server_dict.get_skip_vote(
+        if servers.get_skip_vote(
                 interaction.guild_id) is None:
             # Create new Vote
-            server_dict.set_skip_vote(
-                interaction.guild_id, Vote(server_dict.get_player(interaction.guild_id).vc, interaction.user))
-            await skip_msg("Vote added.", f"{votes_required - len(server_dict.get_skip_vote(interaction.guild_id))}/{votes_required} votes to skip.")
+            servers.set_skip_vote(
+                interaction.guild_id, Vote(servers.get_player(interaction.guild_id).vc, interaction.user))
+            await skip_msg("Vote added.", f"{votes_required - len(servers.get_skip_vote(interaction.guild_id))}/{votes_required} votes to skip.")
             return
 
         # If user has already voted to skip
-        if interaction.user in server_dict.get_skip_vote(interaction.guild_id).get():
+        if interaction.user in servers.get_skip_vote(interaction.guild_id).get():
             await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
             return
 
         # Add vote
-        server_dict.get_skip_vote(
+        servers.get_skip_vote(
             interaction.guild_id).add(interaction.user)
 
         # If vote succeeds
-        if len(server_dict.get_skip_vote(interaction.guild_id)) >= votes_required:
+        if len(servers.get_skip_vote(interaction.guild_id)) >= votes_required:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
             # Kill and restart the player to queue the next song.
-            server_dict.get_player(interaction.guild_id).terminate_player()
-            server_dict.get_player(interaction.guild_id).vc.stop()
-            await server_dict.get_player(interaction.guild_id).start()
-            server_dict.set_skip_vote(interaction.guild_id, None)
-            if not server_dict.get_player(interaction.guild_id).queue.get():
+            servers.get_player(interaction.guild_id).terminate_player()
+            servers.get_player(interaction.guild_id).vc.stop()
+            await servers.get_player(interaction.guild_id).start()
+            servers.set_skip_vote(interaction.guild_id, None)
+            if not servers.get_player(interaction.guild_id).queue.get():
                 await clean()
             return
 
-        await skip_msg("Vote added.", f"{votes_required - len(server_dict.get_skip_vote(interaction.guild_id))}/{votes_required} votes to skip.")
+        await skip_msg("Vote added.", f"{votes_required - len(servers.get_skip_vote(interaction.guild_id))}/{votes_required} votes to skip.")
     # If there isn't just skip
     else:
         await _force_skip(interaction)
@@ -353,21 +314,21 @@ async def _skip(interaction: discord.Interaction) -> None:
 @ tree.command(name="force_skip", description="Skips the currently playing song without having a vote.")
 async def _force_skip(interaction: discord.Interaction) -> None:
     # Kill and restart the player to queue the next song.
-    server_dict.get_player(interaction.guild_id).terminate_player()
-    server_dict.get_player(interaction.guild_id).vc.stop()
-    await server_dict.get_player(interaction.guild_id).start()
-    if not server_dict.get_player(interaction.guild_id).queue.get():
+    servers.get_player(interaction.guild_id).terminate_player()
+    servers.get_player(interaction.guild_id).vc.stop()
+    await servers.get_player(interaction.guild_id).start()
+    if not servers.get_player(interaction.guild_id).queue.get():
         await clean()
     await send(interaction, "Skipped!", ":white_check_mark:")
 
 
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction) -> None:
-    if not server_dict.get_player(interaction.guild_id).queue.get():
+    if not servers.get_player(interaction.guild_id).queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = await get_embed(interaction, title='Queue', color=get_random_hex(server_dict.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
-    for i, song in enumerate(server_dict.get_player(interaction.guild_id).queue.get()):
+    embed = await get_embed(interaction, title='Queue', color=get_random_hex(servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
+    for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get()):
         embed.add_field(name=song.title,
                         value=f"{i}. by {song.uploader}", inline=False)
     await interaction.response.send_message(embed=embed, ephemeral=True)
@@ -375,11 +336,11 @@ async def _queue(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
-    current_song = server_dict.get_player(interaction.guild_id).song
+    current_song = servers.get_player(interaction.guild_id).song
     embed = await get_embed(interaction,
                             title='Now Playing:',
                             url=current_song.original_url,
-                            description=f'{current_song.title} -- {current_song.uploader}',
+                            content=f'{current_song.title} -- {current_song.uploader}',
                             color=get_random_hex(
                                 current_song.id)
                             )
@@ -394,7 +355,7 @@ async def _now(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="remove", description="Removes a song from the queue")
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
-    removed_song = server_dict.get_player(
+    removed_song = servers.get_player(
         interaction.guild_id).queue.remove(number_in_queue + 1)
     if removed_song is not None:
         embed = discord.Embed(
@@ -423,13 +384,13 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
         vc = await channel.connect(self_deaf=True)
-        server_dict.add(interaction.guild_id, Player(vc))
+        servers.add(interaction.guild_id, Player(vc))
 
     song = Song(interaction, link)
     await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
-        server_dict.get_player(interaction.guild_id).queue.add_at(song, 1)
+        servers.get_player(interaction.guild_id).queue.add_at(song, 1)
 
         embed = await get_embed(interaction,
                                 title='Added to the top of the Queue:',
@@ -442,60 +403,60 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
         await interaction.response.send_message(embed=embed)
 
         # If the player isn't already running, start it.
-        if not server_dict.get_player(interaction.guild_id).is_started():
-            await server_dict.get_player(interaction.guild_id).start()
+        if not servers.get_player(interaction.guild_id).is_started():
+            await servers.get_player(interaction.guild_id).start()
     else:
         await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
 
 
 @ tree.command(name="clear", description="Clears the queue")
 async def _clear(interaction: discord.Interaction) -> None:
-    server_dict.get_player(interaction.guild_id).queue.clear()
+    servers.get_player(interaction.guild_id).queue.clear()
     await interaction.response.send_message('Queue cleared')
 
 
 @ tree.command(name="shuffle", description="Shuffles the queue")
 async def _shuffle(interaction: discord.Interaction) -> None:
-    server_dict.get_player(interaction.guild_id).queue.shuffle()
+    servers.get_player(interaction.guild_id).queue.shuffle()
     await interaction.response.send_message('Queue shuffled')
 
 
 @ tree.command(name="pause", description="Pauses the current song")
 async def _pause(interaction: discord.Interaction) -> None:
-    server_dict.get_player(interaction.guild_id).vc.pause()
-    await server_dict.get_player(interaction.guild_id).song.pause()
+    servers.get_player(interaction.guild_id).vc.pause()
+    await servers.get_player(interaction.guild_id).song.pause()
     await send(interaction, title='Paused')
 
 
 @ tree.command(name="resume", description="Resumes the current song")
 async def _resume(interaction: discord.Interaction) -> None:
-    server_dict.get_player(interaction.guild_id).vc.resume()
-    await server_dict.get_player(interaction.guild_id).song.resume()
+    servers.get_player(interaction.guild_id).vc.resume()
+    await servers.get_player(interaction.guild_id).song.resume()
     await send(interaction, title='Resumed')
 
 
 @ tree.command(name="loop", description="Loops the current song")
 async def _loop(interaction: discord.Interaction) -> None:
-    if (server_dict.get_player(interaction.guild_id).looping):
-        server_dict.get_player(interaction.guild_id).set_loop(False)
+    if (servers.get_player(interaction.guild_id).looping):
+        servers.get_player(interaction.guild_id).set_loop(False)
         await send(interaction, title='Loop deactivated')
     else:
-        server_dict.get_player(interaction.guild_id).set_loop(True)
-        queue_loop_check = server_dict.get_player(
+        servers.get_player(interaction.guild_id).set_loop(True)
+        queue_loop_check = servers.get_player(
             interaction.guild_id).queue_looping
-        server_dict.get_player(interaction.guild_id).set_queue_loop(False)
+        servers.get_player(interaction.guild_id).set_queue_loop(False)
         await send(interaction, title='Looped', content="deactivated queue loop" if queue_loop_check else '')
 
 
 @ tree.command(name="queue_loop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
-    if (server_dict.get_player(interaction.guild_id).queue_looping):
-        server_dict.get_player(interaction.guild_id).set_queue_loop(False)
+    if (servers.get_player(interaction.guild_id).queue_looping):
+        servers.get_player(interaction.guild_id).set_queue_loop(False)
         await send(interaction, title='Loop deactivated')
     else:
-        server_dict.get_player(interaction.guild_id).set_queue_loop(True)
-        loop_check = server_dict.get_player(interaction.guild_id).looping
-        server_dict.get_player(interaction.guild_id).set_loop(False)
+        servers.get_player(interaction.guild_id).set_queue_loop(True)
+        loop_check = servers.get_player(interaction.guild_id).looping
+        servers.get_player(interaction.guild_id).set_loop(False)
         await send(interaction, title='Queue looped', content="deactivated loop" if loop_check else '')
 
 

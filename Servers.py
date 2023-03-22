@@ -3,7 +3,7 @@ from Player import Player
 from Vote import Vote
 
 
-class Server_Dict():
+class Servers():
     def __init__(self):
         self.dict = {}
 

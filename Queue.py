@@ -1,4 +1,4 @@
-import Song
+from Song import Song
 import random
 
 
