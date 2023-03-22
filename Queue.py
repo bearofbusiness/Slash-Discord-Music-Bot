@@ -1,5 +1,6 @@
-from Song import Song
 import random
+
+from Song import Song
 
 
 class Queue:

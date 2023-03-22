@@ -77,10 +77,6 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
 bot = Bot()
 tree = discord.app_commands.CommandTree(bot)
 servers = Servers()
-# queue = Queue()
-# vc = None
-# current_song = None
-# queue_loop = loop = False
 
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
@@ -129,11 +125,14 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
     )
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
-    current_song = servers.get_player(interaction.guild_id).queue.get(0)
-    progress_bar = await get_progress_bar(current_song)
-    if progress and progress_bar != "":
-        embed.set_footer(text=f"{progress_bar}",
-                         icon_url=current_song.thumbnail)
+
+    # If the calling method wants the progress bar
+    if progress:
+        player = servers.get_player(interaction.guild_id)
+        footer_message = f'{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}\n{await get_progress_bar(player.queue.get(0))}'
+
+        embed.set_footer(text=footer_message,
+                         icon_url=player.queue.get(0).thumbnail)
     return embed
 
 
@@ -350,7 +349,7 @@ async def _now(interaction: discord.Interaction) -> None:
         await send(interaction, title='Error!', content='Not in vc', ephemeral=True)
         return
     player = servers.get_player(interaction.guild_id)
-    title_message = f'Now Playing:\t{":repeat:" if player.looping else ""} {":repeat_one:" if player.queue_looping else ""}'
+    title_message = f'Now Playing:\t{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}'
     embed = await get_embed(interaction,
                             title=title_message,
                             url=player.song.original_url,
@@ -481,7 +480,7 @@ async def _queue_loop(interaction: discord.Interaction) -> None:
         return
     player = servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
-    await send(interaction, title='Queue Looped.' if player.queue_looping else 'Queue loop disabled.')
+    await send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
 
 
 bot.run(key)
