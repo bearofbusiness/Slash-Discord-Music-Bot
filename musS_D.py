@@ -106,7 +106,7 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 # makes a ascii song progress bar
 async def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started (-100 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100 or servers.get_vc(song.channel.guild.id).is_playing() is False:
+    if song is None or await song.get_elapsed_time() > time.time() - 100 or servers.get_player(song.channel.guild.id).vc.is_playing() is False:
         return ''
     percent_duration = (await song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
@@ -273,8 +273,8 @@ async def _skip(interaction: discord.Interaction) -> None:
     # If there's enough people for it to make sense to call a vote in the first place
     # TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
     if len(servers.get_player(interaction.guild_id).vc.channel.members) > 1:
-        votes_required = len(servers.get_vc(
-            interaction.guild_id).channel.members) // 2
+        votes_required = len(servers.get_player(
+            interaction.guild_id).vc.channel.members) // 2
 
         if servers.get_skip_vote(
                 interaction.guild_id) is None:
