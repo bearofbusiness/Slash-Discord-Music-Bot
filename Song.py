@@ -1,3 +1,4 @@
+from Vote import Vote
 from YTDLInterface import YTDLInterface
 import time
 
@@ -7,6 +8,7 @@ class Song:
         self.link = link
         self.requester = interaction.user
         self.channel = interaction.channel
+        self.vote = None
 
         # All of these will be populated when the populate() method is called
         self.title = None
