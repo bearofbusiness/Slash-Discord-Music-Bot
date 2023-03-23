@@ -10,25 +10,26 @@ from dotenv import load_dotenv
 from Song import Song
 from Servers import Servers
 from Player import Player
-
+from YTDLInterface import YTDLInterface
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    9- fix automatic now_playing messages
+    9-fnt fix automatic now_playing messages
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
         9-fnt skip (force skip) #sming
         8- search #sming
         7- play_list_shuffle #sming
-        7- play_list #sming
+        7-fnt play_list #sming
         7- remove user's songs from queue
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
     -other
+        8- perform link sanitization before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
         4- option to decide if __send_np goes into vc.channel or song.channel
         3- queue.top() method to avoid get(0) (for readability)
@@ -235,7 +236,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
 
     await interaction.response.defer(ephemeral=True, thinking=True)
 
-    song = Song(interaction, link)
+    song = Song.from_link(interaction, link)
     await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
@@ -427,7 +428,7 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
         vc = await channel.connect(self_deaf=True)
         servers.add(interaction.guild_id, Player(vc))
 
-    song = Song(interaction, link)
+    song = Song.from_link(interaction, link)
     await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
@@ -448,6 +449,65 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
             await servers.get_player(interaction.guild_id).start()
     else:
         await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
+
+@ tree.command(name="playlist", description="Adds a playlist to the queue")
+async def _playlist(interaction: discord.Interaction, link: str) -> None:
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+        return
+    # Exception to pretests() because it will join a voice channel
+    
+    # If not already in VC, join
+    if interaction.guild.voice_client is None:
+        channel = interaction.user.voice.channel
+        vc = await channel.connect(self_deaf=True)
+        servers.add(interaction.guild_id, Player(vc))
+    # Otherwise, make sure the user is in the same channel
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+        return
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
+    player = servers.get_player(interaction.guild_id)
+    
+    playlist = YTDLInterface.query_link(link)
+
+    if playlist.get('_type') != "playlist":
+        await send(interaction, "Not a playlist.")
+        return
+
+    for entry in playlist.get("entries"):
+        dict = Song.get_empty_song_dict()
+        # setdefault() over update so a new dict doesn't need to be initialized for each
+        dict.setdefault('title', entry.get('title'))
+        dict.setdefault('uploader', entry.get('channel'))
+        dict.setdefault('audio', entry.get('url'))
+        dict.setdefault('id', entry.get('id'))
+        dict.setdefault('thumbnail', entry.get('thumbnail'))
+        dict.setdefault('duration', entry.get('duration'))
+        dict.setdefault('original_url', entry.get('webpage_url'))
+
+        # Not sure if we would even get playlist if a song failed to load but maybe check a value to be safe
+        song = Song(interaction, link, dict)
+        player.queue.add(song)
+
+    # Remove all of the entries once we're done with them to save on memory
+    playlist.pop('entries')
+
+    embed = get_embed(
+        interaction,
+        title='Added playlist to Queue:',
+        url=playlist.get('original_url'),
+        color=get_random_hex(playlist.get('id'))
+    )
+    embed.add_field(name=playlist.get('uploader'), value=playlist.get('title'))
+    embed.add_field(name='Length:', value=f'{playlist.get("playlist_count")} songs')
+    embed.add_field(name='Requested by:', value=interaction.user.mention)
+    embed.set_thumbnail(url=playlist.get('thumbnails')[-1].get('url'))
+
+    await interaction.followup.send(embed=embed)
 
 
 @ tree.command(name="clear", description="Clears the queue")

@@ -6,28 +6,30 @@ from YTDLInterface import YTDLInterface
 
 
 class Song:
-    def __init__(self, interaction, link):
+    def __init__(self, interaction, link, dict):
         self.link = link
         self.requester = interaction.user
         self.channel = interaction.channel
         self.vote = None
 
-        # All of these will be populated when the populate() method is called
-        self.title = None
-        self.uploader = None
-        self.audio = None
-        self.id = None
-        self.thumbnail = None
-        self.duration = None
-        self.original_url = None
+        self.title = dict.get('title')
+        self.uploader = dict.get('uploader')
+        self.audio = dict.get('audio')
+        self.id = dict.get('id')
+        self.thumbnail = dict.get('thumbnail')
+        self.duration = dict.get('duration')
+        self.original_url = dict.get('original_url')
 
         # Delta time handling variables
         self.start_time = 0
         self.pause_start = 0
         self.pause_time = 0
 
+    @classmethod
+    def from_link(cls, interaction, link):
+        return cls(interaction, link, Song.get_empty_song_dict())
+
     # Populate all None fields
-    # @classmethod
     async def populate(self) -> None:
         data = await YTDLInterface.query_link(self.link)
         self.title = data.get('title')
@@ -40,6 +42,19 @@ class Song:
 
     def create_vote(self, member: Member) -> None:
         self.vote = Vote(member)
+
+    @staticmethod
+    def get_empty_song_dict():
+        return {
+            'title' : None,
+            'uploader' : None,
+            'audio' : None,
+            'id' : None,
+            'thumbnail' : None,
+            'duration' : None,
+            'original_url' : None
+
+        }
 
     @staticmethod
     def parse_duration(duration: int) -> str:
