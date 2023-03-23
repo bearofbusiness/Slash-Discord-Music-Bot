@@ -174,7 +174,7 @@ async def pretests(interaction: discord.Interaction) -> bool:
     return True
 
 async def ext_pretests(interaction: discord.Interaction) -> bool:
-    if not await pretests:
+    if not await pretests(interaction):
         return False
     
     if not servers.get_player(interaction.guild.id).is_started():
