@@ -75,6 +75,8 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
     async def on_ready(self):
         await tree.sync()  # please dont remove just in case i need to sync
         pront("Bot is ready", lvl="OKGREEN")
+        await self.change_presence(activity=discord.Activity(
+            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
 
 
 # Global Variables
@@ -348,8 +350,13 @@ async def _queue(interaction: discord.Interaction) -> None:
         return
     embed = await get_embed(interaction, title='Queue', color=get_random_hex(servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
     for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get()):
-        embed.add_field(name=song.title,
-                        value=f"{i}. by {song.uploader}", inline=False)
+        if (i >= 25):
+            await send(interaction, title='Queue is too long to display all entries!', content="now is the time to fish this", ephemeral=True)
+            break
+
+        embed.add_field(name=f"`{i}`: {song.title}",
+                        value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
+
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
