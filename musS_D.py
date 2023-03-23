@@ -21,7 +21,7 @@ TODO:
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
-        9-fnt skip (force skip) #sming
+        9- skip (force skip) #sming
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
@@ -56,7 +56,7 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
-        3- make it multi server #bear
+        3-f make it multi server #bear
 
 '''
 del XX
