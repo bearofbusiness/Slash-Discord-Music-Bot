@@ -21,7 +21,7 @@ TODO:
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
-        9- skip (force skip) #sming
+        9-fnt skip (force skip) #sming
         8- search #sming
         7- play_list_shuffle #sming
         7- play_list #sming
@@ -31,6 +31,7 @@ TODO:
         1- settings #nrn //after muliti server
     -other
         6- remove author's songs from queue when author leaves vc #sming
+        4- remove unneeded async defs
 
 
 
@@ -153,6 +154,7 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
 async def clean(id: int) -> None:
     await servers.get_player(id).vc.disconnect()
     servers.get_player(id).terminate_player()
+    # Maybe wait here to make sure __player has a chance to terminate before it's deleted since it's non-blocking
     servers.remove(id)
 
 
@@ -168,11 +170,10 @@ async def pretests(interaction: discord.Interaction) -> bool:
 
     return True
 
-
 async def ext_pretests(interaction: discord.Interaction) -> bool:
     if not pretests:
         return False
-
+    
     if not servers.get_player(interaction.guild.id).is_started():
         await interaction.response.send_message("This command can only be used while a song is playing", ephemeral=True)
         return False
@@ -219,7 +220,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
     # Exception to pretests() because it will join a voice channel
-
+    
     # If not already in VC, join
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
@@ -259,28 +260,28 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
 async def _skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
-
+    
+    player = servers.get_player(interaction.guild_id)
+    
     # Get a complex embed for votes
     async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
-        current_song = servers.get_player(
-            interaction.guild_id).queue.get(0)
-        embed = await get_embed(interaction, title, content, color=get_random_hex(current_song.id))
+        
+        embed = await get_embed(interaction, title, content, color=get_random_hex(player.song.id))
         if present_tense:
             song_message = "Song being voted on:"
         else:
             song_message = "Song that was voted on:"
         embed.add_field(name=song_message,
-                        value=current_song.title, inline=True)
-        embed.set_thumbnail(url=current_song.thumbnail)
+                        value=player.song.title, inline=True)
+        embed.set_thumbnail(url=player.song.thumbnail)
         users = ''
-        embed.add_field(name="Initiated by:", value=servers.get_skip_vote(
-            interaction.guild_id).initiator)
-        for user in servers.get_player(interaction.guild_id).song.vote.get():
+        embed.add_field(name="Initiated by:", value=player.song.vote.initiator)
+        for user in player.song.vote.get():
             users = f'{user.name}, {users}'
         users = users[:-2]
         if present_tense:
             # != 1 because if for whatever reason len(skip_vote) == 0 it will still make sense
-            voter_message = f"User{'s who have' if len(servers.get_player(interaction.guild_id).song.vote) != 1 else ' who has'} voted to skip:"
+            voter_message = f"User{'s who have' if len(player.song.vote) != 1 else ' who has'} voted to skip:"
         else:
             voter_message = f"Vote passed by:"
         embed.add_field(name=voter_message, value=users, inline=False)
@@ -288,40 +289,40 @@ async def _skip(interaction: discord.Interaction) -> None:
 
     # If there's enough people for it to make sense to call a vote in the first place
     # TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
-    if len(servers.get_player(interaction.guild_id).vc.channel.members) > 1:
-        votes_required = len(servers.get_player(
-            interaction.guild_id).vc.channel.members) // 2
+    if len(player.vc.channel.members) > 1:
+        votes_required = len(player.vc.channel.members) // 2
 
-        if servers.get_player(interaction.guild_id).song.vote is None:
+        if player.song.vote is None:
             # Create new Vote
-            servers.get_player(interaction.guild_id).song.create_vote(
-                interaction.user)
-            await skip_msg("Vote added.", f"{votes_required - len(servers.get_player(interaction.guild_id).song.vote)}/{votes_required} votes to skip.")
+            player.song.create_vote(interaction.user)
+            await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
             return
 
         # If user has already voted to skip
-        if interaction.user in servers.get_player(interaction.guild_id).song.vote.get():
+        if interaction.user in player.song.vote.get():
             await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
             return
 
         # Add vote
-        servers.get_skip_vote(
-            interaction.guild_id).add(interaction.user)
+        player.song.vote.add(interaction.user)
 
         # If vote succeeds
-        if len(servers.get_player(interaction.guild_id).song.vote) >= votes_required:
+        if len(player.song.vote) >= votes_required:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
-            # Kill and restart the player to queue the next song.
-            # TODO WILL NOT WORK BECAUSE PLAYER CANNOT BE UN-TERMINATED (at least not right now)
-            servers.get_player(interaction.guild_id).terminate_player()
-            servers.get_player(interaction.guild_id).vc.stop()
-            await servers.get_player(interaction.guild_id).start()
-            servers.get_player(interaction.guild_id).song.vote, = None
-            if not servers.get_player(interaction.guild_id).queue.get():
-                await clean()
-            return
+            player.song.vote = None
 
-        await skip_msg("Vote added.", f"{votes_required - len(servers.get_player(interaction.guild_id).song.vote)}/{votes_required} votes to skip.")
+            # Remove the current song from queue since __player is violently terminated
+            player.queue.remove(0)
+            # If this makes the queue empty, disconnect and pretend we skipped a song
+            if not player.queue.get():
+                await clean()
+                return
+            # Reset the player to begin playing the new song
+            player.vc.stop()
+            player.skip_player()
+            
+
+        await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
     # If there isn't just skip
     else:
         await _force_skip(interaction)
@@ -331,13 +332,17 @@ async def _skip(interaction: discord.Interaction) -> None:
 async def _force_skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
-    # Kill and restart the player to queue the next song.
-    # TODO WILL NOT WORK BECAUSE PLAYER CANNOT BE UN-TERMINATED (at least not right now)
-    servers.get_player(interaction.guild_id).terminate_player()
-    servers.get_player(interaction.guild_id).vc.stop()
-    await servers.get_player(interaction.guild_id).start()
-    if not servers.get_player(interaction.guild_id).queue.get():
+    
+    player = servers.get_player(interaction.guild.id)
+    # Remove the current song from queue since __player is violently terminated
+    player.queue.remove(0)
+    # If this makes the queue empty, disconnect and pretend we skipped a song
+    if not player.queue.get():
         await clean()
+        return
+    # Reset the player to begin playing the new song
+    player.vc.stop()
+    player.skip_player()
     await send(interaction, "Skipped!", ":white_check_mark:")
 
 
