@@ -46,13 +46,13 @@ class Song:
     @staticmethod
     def get_empty_song_dict():
         return {
-            'title' : None,
-            'uploader' : None,
-            'audio' : None,
-            'id' : None,
-            'thumbnail' : None,
-            'duration' : None,
-            'original_url' : None
+            'title': None,
+            'uploader': None,
+            'audio': None,
+            'id': None,
+            'thumbnail': None,
+            'duration': None,
+            'original_url': None
 
         }
 
@@ -91,7 +91,7 @@ class Song:
         return ':'.join(duration)
 
     def start(self) -> None:
-        print("Starting song.a")
+        print('Starting song timer')
         self.start_time = time.time()
         self.pause_time = 0
 

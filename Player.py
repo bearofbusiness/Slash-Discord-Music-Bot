@@ -16,7 +16,7 @@ class Player:
 
         self.queue = Queue()
 
-        self.song = None  # = self.queue.get(0)#this will 
+        self.song = None  # = self.queue.get(0)#this will
         # To avoid ^ erroring maybe force Player to be initialized with a Song or Queue?
 
         self.last_np_message = None
@@ -34,20 +34,20 @@ class Player:
         color = random.randint(0, 16777215)
         title_message = f'Now Playing:\t{":repeat: " if self.looping else ""}{":repeat_one: " if self.queue_looping else ""}'
         embed = discord.Embed(
-                            title=title_message,
-                            url=song.original_url,
-                            content=f'{song.title} -- {song.uploader}',
-                            color=color
-                            )
+            title=title_message,
+            url=song.original_url,
+            description=f'{song.title} -- {song.uploader}',
+            color=color
+        )
         embed.add_field(name='Duration:', value=song.parse_duration(
             song.duration), inline=True)
         embed.add_field(name='Requested by:', value=song.requester.mention)
         embed.set_image(url=song.thumbnail)
         embed.set_author(name=song.requester.display_name,
-                        icon_url=song.requester.display_avatar.url)
+                         icon_url=song.requester.display_avatar.url)
         # Delete last now_playing if there is one
         if self.last_np_message is not None:
-            self.last_np_message.delete()
+            await self.last_np_message.delete()
         self.last_np_message = await self.vc.channel.send(embed=embed)
 
     async def __player(self) -> None:
@@ -62,7 +62,7 @@ class Player:
 
             # Allows __player to terminate without "aborting"
             while not self.player_skip.is_set():
-                
+
                 # Get the top song in queue ready to play
                 await self.queue.get(0).populate()
 
@@ -77,15 +77,15 @@ class Player:
                 await self.__send_np(self.song)
 
                 # Begin playing audio into Discord
+
                 self.song.start()
+
                 self.vc.play(discord.FFmpegPCMAudio(
                     self.song.audio, **YTDLInterface.ffmpeg_options
                 ))
 
                 # Sleep player until song ends
                 await asyncio.sleep(self.song.duration)
-
-
                 # If song is looping, continue from top
                 if self.looping:
                     continue
@@ -108,7 +108,7 @@ class Player:
 
             self.player_skip.unset()
 
-        # Delete a to-be defunct now_playing message   
+        # Delete a to-be defunct now_playing message
         if self.last_np_message:
             await self.last_np_message.delete()
         # Signal to everything else that player has ended
@@ -125,7 +125,7 @@ class Player:
 
     def terminate_player(self) -> None:
         self.player_abort.set()
-    
+
     def skip_player(self) -> None:
         self.player_skip.set()
 
