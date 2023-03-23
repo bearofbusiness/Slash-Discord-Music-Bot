@@ -159,17 +159,18 @@ async def pretests(interaction: discord.Interaction) -> bool:
     if interaction.guild.voice_client is None:
         await interaction.response.send_message("MaBalls is not in a voice channel", ephemeral=True)
         return False
-    
+
     if interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
         return False
 
     return True
 
+
 async def ext_pretests(interaction: discord.Interaction) -> bool:
     if not pretests:
         return False
-    
+
     if not servers.get_player(interaction.guild.id).is_started():
         await interaction.response.send_message("This command can only be used while a song is playing", ephemeral=True)
         return False
@@ -196,7 +197,7 @@ async def _join(interaction: discord.Interaction) -> None:
     # Connect to the voice channel
     vc = await interaction.user.voice.channel.connect(self_deaf=True)
     servers.add(interaction.guild_id, Player(vc))
-    await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True)
+    await send(interaction, title='Joined!', content=':white_check_mark:', ephemeral=True, progress=False)
 
 
 @ tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
@@ -206,7 +207,7 @@ async def _leave(interaction: discord.Interaction) -> None:
 
     # Disconnect from the voice channel
     await clean(interaction.guild_id)
-    await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True)
+    await send(interaction, title='Left!', content=':white_check_mark:', ephemeral=True, progress=False)
 
 
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
@@ -216,7 +217,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
     # Exception to pretests() because it will join a voice channel
-    
+
     # If not already in VC, join
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
@@ -256,7 +257,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
 async def _skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
-    
+
     # Get a complex embed for votes
     async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
         current_song = servers.get_player(
@@ -309,7 +310,7 @@ async def _skip(interaction: discord.Interaction) -> None:
         if len(servers.get_player(interaction.guild_id).song.vote) >= votes_required:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
             # Kill and restart the player to queue the next song.
-            #TODO WILL NOT WORK BECAUSE PLAYER CANNOT BE UN-TERMINATED (at least not right now)
+            # TODO WILL NOT WORK BECAUSE PLAYER CANNOT BE UN-TERMINATED (at least not right now)
             servers.get_player(interaction.guild_id).terminate_player()
             servers.get_player(interaction.guild_id).vc.stop()
             await servers.get_player(interaction.guild_id).start()
@@ -328,8 +329,8 @@ async def _skip(interaction: discord.Interaction) -> None:
 async def _force_skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
-    # Kill and restart the player to queue the next song. 
-    #TODO WILL NOT WORK BECAUSE PLAYER CANNOT BE UN-TERMINATED (at least not right now)
+    # Kill and restart the player to queue the next song.
+    # TODO WILL NOT WORK BECAUSE PLAYER CANNOT BE UN-TERMINATED (at least not right now)
     servers.get_player(interaction.guild_id).terminate_player()
     servers.get_player(interaction.guild_id).vc.stop()
     await servers.get_player(interaction.guild_id).start()
