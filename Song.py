@@ -88,7 +88,7 @@ class Song:
         self.pause_start = 0
 
     async def get_elapsed_time(self) -> int:
-        return (time.time() + self.pause_time + (time.time() - self.pause_start)) - self.start_time
+        return (time.time()) - (self.start_time + self.pause_time + ((time.time() - self.pause_start)if self.pause_start else 0))
 
     def __str__(self) -> str:
         return f'{self.title} by {self.uploader}'
