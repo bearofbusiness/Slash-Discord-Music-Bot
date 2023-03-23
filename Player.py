@@ -74,7 +74,7 @@ class Player:
                 # Set the now-populated top song to the playing song
                 self.song = self.queue.get(0)
 
-                await __send_np(self.song)
+                await self.__send_np(self.song)
 
                 # Begin playing audio into Discord
                 self.song.start()
