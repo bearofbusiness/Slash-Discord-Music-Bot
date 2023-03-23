@@ -21,7 +21,7 @@ TODO:
     6- sync up whatever's in play vs play_top
     -make more commands
         9-fnt skip (force skip) #sming
-        8- search #sming
+        8-fnt search #sming
         7- play_list_shuffle #sming
         7-fnt play_list #sming
         7- remove user's songs from queue
