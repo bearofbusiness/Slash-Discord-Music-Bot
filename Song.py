@@ -75,19 +75,19 @@ class Song:
 
         return ':'.join(duration)
 
-    async def start(self) -> None:
+    def start(self) -> None:
         print("Starting song.a")
         self.start_time = time.time()
         self.pause_time = 0
 
-    async def pause(self) -> None:
+    def pause(self) -> None:
         self.pause_start = time.time()
 
-    async def resume(self) -> None:
+    def resume(self) -> None:
         self.pause_time += time.time() - self.pause_start
         self.pause_start = 0
 
-    async def get_elapsed_time(self) -> int:
+    def get_elapsed_time(self) -> int:
         return (time.time()) - (self.start_time + self.pause_time + ((time.time() - self.pause_start)if self.pause_start else 0))
 
     def __str__(self) -> str:

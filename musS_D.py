@@ -104,12 +104,12 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 
 
 # makes a ascii song progress bar
-async def get_progress_bar(song: Song) -> str:
+def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started ( - 100000 is an arbitrary number)
-    if song is None or await song.get_elapsed_time() > time.time() - 100000:
+    if song is None or song.get_elapsed_time() > time.time() - 100000:
         return ''
-    percent_duration = (await song.get_elapsed_time() / song.duration)*100
-    ret = f'{song.parse_duration_short_hand(math.floor(await song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
+    percent_duration = (song.get_elapsed_time() / song.duration)*100
+    ret = f'{song.parse_duration_short_hand(math.floor(song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
     ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
     return ret
 
@@ -121,7 +121,7 @@ def get_random_hex(seed) -> int:
 
 
 # Creates a standard Embed object
-async def get_embed(interaction, title='', content='', url=None, color='', progress: bool = True) -> discord.Embed:
+def get_embed(interaction, title='', content='', url=None, color='', progress: bool = True) -> discord.Embed:
     if color == '':
         color = get_random_hex(interaction.user.id)
     embed = discord.Embed(
@@ -137,7 +137,7 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
     if progress:
         player = servers.get_player(interaction.guild_id)
         if player is not None:
-            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{await get_progress_bar(player.queue.get(0))}'
+            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.get(0))}'
 
             embed.set_footer(text=footer_message,
                              icon_url=player.queue.get(0).thumbnail)
@@ -146,14 +146,15 @@ async def get_embed(interaction, title='', content='', url=None, color='', progr
 
 # Creates and sends an Embed message
 async def send(interaction: discord.Interaction, title='', content='', url='', color='', ephemeral: bool = False, progress: bool = True) -> None:
-    embed = await get_embed(interaction, title, content, url, color, progress)
+    embed = get_embed(interaction, title, content, url, color, progress)
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
+# Can probably make clean def if we give player control over terminating
 # Cleans up and closes the player
 async def clean(id: int) -> None:
-    await servers.get_player(id).vc.disconnect()
     servers.get_player(id).terminate_player()
+    await servers.get_player(id).vc.disconnect()
     # Maybe wait here to make sure __player has a chance to terminate before it's deleted since it's non-blocking
     servers.remove(id)
 
@@ -171,7 +172,7 @@ async def pretests(interaction: discord.Interaction) -> bool:
     return True
 
 async def ext_pretests(interaction: discord.Interaction) -> bool:
-    if not pretests:
+    if not await pretests:
         return False
     
     if not servers.get_player(interaction.guild.id).is_started():
@@ -238,7 +239,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
         servers.get_player(interaction.guild_id).queue.add(song)
-        embed = await get_embed(
+        embed = get_embed(
             interaction,
             title='Added to Queue:',
             url=song.original_url,
@@ -253,7 +254,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         if not servers.get_player(interaction.guild_id).is_started():
             await servers.get_player(interaction.guild_id).start()
     else:
-        await interaction.followup.send(await get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
+        await interaction.followup.send(get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
 
 
 @ tree.command(name="skip", description="Skips the currently playing song")
@@ -266,7 +267,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     # Get a complex embed for votes
     async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
         
-        embed = await get_embed(interaction, title, content, color=get_random_hex(player.song.id))
+        embed = get_embed(interaction, title, content, color=get_random_hex(player.song.id))
         if present_tense:
             song_message = "Song being voted on:"
         else:
@@ -353,7 +354,7 @@ async def _queue(interaction: discord.Interaction) -> None:
     if not servers.get_player(interaction.guild_id).queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = await get_embed(interaction, title='Queue', color=get_random_hex(servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
+    embed = get_embed(interaction, title='Queue', color=get_random_hex(servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
     for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get()):
         if (i >= 25):
             await send(interaction, title='Queue is too long to display all entries!', content="now is the time to fish this", ephemeral=True)
@@ -374,7 +375,7 @@ async def _now(interaction: discord.Interaction) -> None:
         await send(interaction, title='Error!', content='No song is playing', ephemeral=True)
         return
     title_message = f'Now Playing:\t{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}'
-    embed = await get_embed(interaction,
+    embed = get_embed(interaction,
                             title=title_message,
                             url=player.song.original_url,
                             content=f'{player.song.title} -- {player.song.uploader}',
@@ -431,7 +432,7 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
     if song.duration is not None:
         servers.get_player(interaction.guild_id).queue.add_at(song, 1)
 
-        embed = await get_embed(interaction,
+        embed = get_embed(interaction,
                                 title='Added to the top of the Queue:',
                                 url=song.original_url,
                                 color=get_random_hex(song.id)
@@ -469,7 +470,7 @@ async def _pause(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
     servers.get_player(interaction.guild_id).vc.pause()
-    await servers.get_player(interaction.guild_id).song.pause()
+    servers.get_player(interaction.guild_id).song.pause()
     await send(interaction, title='Paused')
 
 
@@ -478,7 +479,7 @@ async def _resume(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
     servers.get_player(interaction.guild_id).vc.resume()
-    await servers.get_player(interaction.guild_id).song.resume()
+    servers.get_player(interaction.guild_id).song.resume()
     await send(interaction, title='Resumed')
 
 
