@@ -16,7 +16,6 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    9- fix skip
     9- fix automatic now_playing messages
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
@@ -31,7 +30,8 @@ TODO:
         1- settings #nrn //after muliti server
     -other
         6- remove author's songs from queue when author leaves vc #sming
-        4- remove unneeded async defs
+        4- option to decide if __send_np goes into vc.channel or song.channel
+        3- queue.top() method to avoid get(0) (for readability)
 
 
 
@@ -57,6 +57,7 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
+        4-f remove unneeded async defs
         3-f make it multi server #bear
 
 '''
