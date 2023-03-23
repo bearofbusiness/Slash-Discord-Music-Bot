@@ -34,12 +34,29 @@ class YTDLInterface:
 
         with yt_dlp.YoutubeDL(YTDLInterface.options) as ytdlp:
             # Define ytdlp command within a partial to be able to run it within run_in_executor
-            partial = functools.partial(ytdlp.extract_info, link, download=False)
+            # process=False to disable searching, since we're working with a url (speedup)
+            partial = functools.partial(ytdlp.extract_info, link, download=False, process=False)
             query_result = await loop.run_in_executor(None, partial)
         
         # If yt-dlp threw an error
-        if query_result is None:
+        if not query_result.get('title'):
             raise YTDLError('Couldn\'t fetch `{}`'.format(link))
+        
+        return query_result
+    
+    # Searches for a provided string
+    @staticmethod
+    async def query_search(query: str) -> dict:
+        # Define asyncio loop
+        loop = asyncio.get_event_loop()
+
+        with yt_dlp.YoutubeDL(YTDLInterface.options) as ytdlp:
+            # Define ytdlp command within a partial to be able to run it within run_in_executor
+            partial = functools.partial(ytdlp.extract_info, f'ytsearch5:{query}', download=False)
+            query_result = await loop.run_in_executor(None, partial)
+
+        if not query_result.get('entries'):
+            raise YTDLError('No matches found for `{}`'.format(query))
         
         return query_result
         

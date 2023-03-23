@@ -138,7 +138,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = servers.get_player(interaction.guild_id)
-        if player is not None:
+        if player is not None and player.started():
             footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.get(0))}'
 
             embed.set_footer(text=footer_message,
@@ -183,6 +183,25 @@ async def ext_pretests(interaction: discord.Interaction) -> bool:
 
     return True
 
+async def join_pretests(interaction: discord.Integration) -> bool:
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+        return False
+    # Exception to pretests() because it will join a voice channel
+    
+    # If not already in VC, join
+    if interaction.guild.voice_client is None:
+        channel = interaction.user.voice.channel
+        vc = await channel.connect(self_deaf=True)
+        servers.add(interaction.guild_id, Player(vc))
+    # Otherwise, make sure the user is in the same channel
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+        return False
+    return True
+
+
 ## COMMANDS ##
 
 
@@ -218,22 +237,9 @@ async def _leave(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str) -> None:
-    # Check if author is in VC
-    if interaction.user.voice is None:
-        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+    if not await join_pretests(interaction):
         return
-    # Exception to pretests() because it will join a voice channel
     
-    # If not already in VC, join
-    if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
-        servers.add(interaction.guild_id, Player(vc))
-    # Otherwise, make sure the user is in the same channel
-    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
-        return
-
     await interaction.response.defer(ephemeral=True, thinking=True)
 
     song = Song.from_link(interaction, link)
@@ -416,17 +422,8 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
 
 @ tree.command(name="play_top", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play_top(interaction: discord.Interaction, link: str) -> None:
-
-    # Check if author is in VC
-    if interaction.user.voice is None:
-        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+    if not await join_pretests(interaction):
         return
-
-    # If not already in VC, join
-    if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
-        servers.add(interaction.guild_id, Player(vc))
 
     song = Song.from_link(interaction, link)
     await song.populate()
@@ -452,20 +449,7 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
 async def _playlist(interaction: discord.Interaction, link: str) -> None:
-    # Check if author is in VC
-    if interaction.user.voice is None:
-        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
-        return
-    # Exception to pretests() because it will join a voice channel
-    
-    # If not already in VC, join
-    if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
-        servers.add(interaction.guild_id, Player(vc))
-    # Otherwise, make sure the user is in the same channel
-    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+    if not await join_pretests(interaction):
         return
 
     await interaction.response.defer(ephemeral=True, thinking=True)
@@ -508,6 +492,72 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
     embed.set_thumbnail(url=playlist.get('thumbnails')[-1].get('url'))
 
     await interaction.followup.send(embed=embed)
+    
+    # If the player isn't already running, start it.
+    if not servers.get_player(interaction.guild_id).is_started():
+        await servers.get_player(interaction.guild_id).start()
+
+@ tree.command(name="search", description="Searches YouTube for a given query")
+async def _search(interaction: discord.Interaction, query: str, selection: int = None) -> None:
+    if selection and not await join_pretests(interaction):
+        return
+
+    await interaction.response.defer(ephemeral=True, thinking=True)
+
+    query_result = YTDLInterface.query_search(query)
+    
+    if selection:
+        # Break down the result into a dict Song
+        entry = query_result.get('entries')[selection]
+        dict = Song.get_empty_song_dict()
+        # setdefault() over update so a new dict doesn't need to be initialized for each
+        dict.setdefault('title', entry.get('title'))
+        dict.setdefault('uploader', entry.get('channel'))
+        dict.setdefault('audio', entry.get('url'))
+        dict.setdefault('id', entry.get('id'))
+        dict.setdefault('thumbnail', entry.get('thumbnail'))
+        dict.setdefault('duration', entry.get('duration'))
+        dict.setdefault('original_url', entry.get('webpage_url'))
+        
+        song = Song(interaction, dict, link=dict.get('original_url'))
+        
+        # Add song to queue
+        servers.get_player(interaction.guild_id).queue.add(song)
+        # Create embed to go along with it
+        embed = get_embed(
+            interaction,
+            title='Added to Queue:',
+            url=song.original_url,
+            color=get_random_hex(song.id)
+        )
+        embed.add_field(name=song.uploader, value=song.title)
+        embed.add_field(name='Requested by:', value=song.requester.mention)
+        embed.set_thumbnail(url=song.thumbnail)
+        await interaction.followup.send(embed=embed)
+
+        # If the player isn't already running, start it.
+        if not servers.get_player(interaction.guild_id).is_started():
+            await servers.get_player(interaction.guild_id).start()
+        return
+        
+    #player = servers.get_player(interaction.guild_id)
+    embeds = []
+    embeds.append(get_embed(interaction,
+                      title="Search results:",
+                      ))
+    for i, entry in enumerate(query_result.get('entries')):
+        embed = get_embed(interaction,
+                            title=f'`[{i}]`  {entry.get("title")} -- {entry.get("channel")}',
+                            url=entry.get('webpage_url'),
+                            color=get_random_hex(
+                                embed.get("id"))
+                            )
+        embed.add_field(name='Duration:', value=Song.parse_duration(
+            entry.get('duration')), inline=True)
+        embed.set_image(url=entry.get('thumbnail'))
+        embeds.append(embed)
+        
+    await interaction.followup.send(embeds=embeds)
 
 
 @ tree.command(name="clear", description="Clears the queue")
