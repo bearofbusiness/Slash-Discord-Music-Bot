@@ -238,7 +238,7 @@ async def _leave(interaction: discord.Interaction) -> None:
 
 
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
-async def _play(interaction: discord.Interaction, link: str) -> None:
+async def _play(interaction: discord.Interaction, link: str, top: bool = False) -> None:
     if not await join_pretests(interaction):
         return
 
@@ -248,7 +248,10 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
     await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
-        servers.get_player(interaction.guild_id).queue.add(song)
+        if top:
+            servers.get_player(interaction.guild_id).queue.add_at(song, 1)
+        else:
+            servers.get_player(interaction.guild_id).queue.add(song)
         embed = get_embed(
             interaction,
             title='Added to Queue:',
@@ -426,34 +429,6 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
         embed.set_author(name=removed_song.requester.display_name,
                          icon_url=removed_song.requester.display_avatar.url)
         await interaction.response.send_message(embed=embed)
-
-
-@ tree.command(name="playop", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
-async def _play_top(interaction: discord.Interaction, link: str) -> None:
-    if not await join_pretests(interaction):
-        return
-
-    song = Song.from_link(interaction, link)
-    await song.populate()
-    # Check if song.populated didnt fail (duration is just a random attribute to check)
-    if song.duration is not None:
-        servers.get_player(interaction.guild_id).queue.add_at(song, 1)
-
-        embed = get_embed(interaction,
-                          title='Added to the top of the Queue:',
-                          url=song.original_url,
-                          color=get_random_hex(song.id)
-                          )
-        embed.add_field(name=song.uploader, value=song.title)
-        embed.add_field(name='Requested by:', value=song.requester.mention)
-        embed.set_thumbnail(url=song.thumbnail)
-        await interaction.response.send_message(embed=embed)
-
-        # If the player isn't already running, start it.
-        if not servers.get_player(interaction.guild_id).is_started():
-            await servers.get_player(interaction.guild_id).start()
-    else:
-        await send(interaction, title='Error!', content='Invalid link', ephemeral=True)
 
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
