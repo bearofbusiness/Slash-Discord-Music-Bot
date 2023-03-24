@@ -279,7 +279,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild_id)
 
     # Get a complex embed for votes
-    async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
+    async def skip_msg(title: str='', content: str='', present_tense: bool=True, ephemeral: bool=False) -> None:
 
         embed = get_embed(interaction, title, content,
                           color=get_random_hex(player.song.id),

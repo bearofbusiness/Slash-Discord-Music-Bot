@@ -52,7 +52,8 @@ class Player:
         if self.last_np_message is not None:
             await self.last_np_message.delete()
         self.last_np_message = await self.vc.channel.send(embed=embed)
-
+        
+    # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
         if error:
             raise VoiceError(str(error))
