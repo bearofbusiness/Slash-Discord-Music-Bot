@@ -16,12 +16,10 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    9-fnt fix automatic now_playing messages
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
-        7- play_list_shuffle #sming
-        7-f play_list #sming
+        7-fnt play_list_shuffle #sming
         7- remove user's songs from queue
         1- help #bear
         1- volume #nrn
@@ -36,6 +34,7 @@ TODO:
 
 
 DONE:
+    9-f fix automatic now_playing messages
      - make more commands
         9-f pause #bear //vc.pause() and vc.resume()
         9-f resume #bear
@@ -458,7 +457,7 @@ async def _play_top(interaction: discord.Interaction, link: str) -> None:
 
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
-async def _playlist(interaction: discord.Interaction, link: str) -> None:
+async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
     if not await join_pretests(interaction):
         return
 
@@ -471,6 +470,10 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
     if playlist.get('_type') != "playlist":
         await send(interaction, "Not a playlist.", ephemeral=True)
         return
+
+    # Shuffle the entries[] within playlist before processing them
+    if shuffle:
+        random.shuffle(playlist.get("entries"))
 
     for entry in playlist.get("entries"):
         if entry.get("duration") is None:
@@ -613,7 +616,6 @@ async def _loop(interaction: discord.Interaction) -> None:
     player.set_loop(not player.looping)
     await send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
 
-
 @ tree.command(name="queueloop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
@@ -621,15 +623,5 @@ async def _queue_loop(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
     await send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
-
-
-@tree.context_menu()
-async def react(interaction: discord.Interaction, message: discord.Message):
-    await interaction.response.send_message('Very cool message!', ephemeral=True)
-
-
-@tree.context_menu()
-async def ban(interaction: discord.Interaction, user: discord.Member):
-    await interaction.response.send_message(f'Should I actually ban {user}...', ephemeral=True)
 
 bot.run(key)
