@@ -516,7 +516,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     query_result = await YTDLInterface.query_search(query)
 
     if selection:
-        selection -= 1
+        selection-=1
         # Break down the result into a dict Song
         entry = query_result.get('entries')[selection]
         dict = {
@@ -529,7 +529,8 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
             'original_url': entry.get('webpage_url')
         }
 
-        song = Song(interaction, dict, link=dict.get('original_url'))
+
+        song = Song(interaction, dict.get('original_url'), dict)
 
         # Add song to queue
         servers.get_player(interaction.guild_id).queue.add(song)
