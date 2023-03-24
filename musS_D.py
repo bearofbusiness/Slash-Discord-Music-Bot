@@ -506,7 +506,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         await servers.get_player(interaction.guild_id).start()
 
 
-# //@ tree.command(name="search", description="Searches YouTube for a given query")
+@ tree.command(name="search", description="Searches YouTube for a given query")
 async def _search(interaction: discord.Interaction, query: str, selection: int = None) -> None:
     if selection and not await join_pretests(interaction):
         return
@@ -516,17 +516,18 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     query_result = await YTDLInterface.query_search(query)
 
     if selection:
+        selection-=1
         # Break down the result into a dict Song
         entry = query_result.get('entries')[selection]
-        dict = Song.get_empty_song_dict()
-        # setdefault() over update so a new dict doesn't need to be initialized for each
-        dict.setdefault('title', entry.get('title'))
-        dict.setdefault('uploader', entry.get('channel'))
-        dict.setdefault('audio', entry.get('url'))
-        dict.setdefault('id', entry.get('id'))
-        dict.setdefault('thumbnail', entry.get('thumbnail'))
-        dict.setdefault('duration', entry.get('duration'))
-        dict.setdefault('original_url', entry.get('webpage_url'))
+        dict = {
+            'title': entry.get('title'),
+            'uploader': entry.get('channel'),
+            'audio': entry.get('url'),
+            'id': entry.get('id'),
+            'thumbnail': entry.get('thumbnail'),
+            'duration': entry.get('duration'),
+            'original_url': entry.get('webpage_url')
+        }
 
         song = Song(interaction, dict, link=dict.get('original_url'))
 
@@ -556,7 +557,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
                             ))
     for i, entry in enumerate(query_result.get('entries')):
         embed = get_embed(interaction,
-                          title=f'`[{i}]`  {entry.get("title")} -- {entry.get("channel")}',
+                          title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
                           url=entry.get('webpage_url'),
                           color=get_random_hex(
                                 embed.get("id"))
