@@ -472,7 +472,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         return
 
     for entry in playlist.get("entries"):
-        if entry.get('duration') is None:
+        if entry.get("duration") is None:
             continue
         dict = {
             'title': entry.get('title'),
@@ -485,12 +485,8 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         }
         print(dict)
 
-        # Not sure if we would even get playlist if a song failed to load but maybe check a value to be safe
         song = Song(interaction, link, dict)
         player.queue.add(song)
-
-    # Remove all of the entries once we're done with them to save on memory
-    playlist.pop('entries')
 
     embed = get_embed(
         interaction,
@@ -511,7 +507,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         await servers.get_player(interaction.guild_id).start()
 
 
-@ tree.command(name="search", description="Searches YouTube for a given query")
+# //@ tree.command(name="search", description="Searches YouTube for a given query")
 async def _search(interaction: discord.Interaction, query: str, selection: int = None) -> None:
     if selection and not await join_pretests(interaction):
         return
