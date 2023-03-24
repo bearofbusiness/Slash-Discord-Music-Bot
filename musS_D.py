@@ -457,7 +457,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         return
 
     for entry in playlist["entries"]:
-        if not entry:
+        if not entry.get("title") is None:
             continue
         dict = Song.get_empty_song_dict()
         # setdefault() over update so a new dict doesn't need to be initialized for each
