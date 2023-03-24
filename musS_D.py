@@ -457,6 +457,9 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         return
 
     for entry in playlist.get("entries"):
+        print(entry)
+        break
+
         dict = Song.get_empty_song_dict()
         # setdefault() over update so a new dict doesn't need to be initialized for each
         dict.setdefault('title', entry.get('title'))
@@ -466,7 +469,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         dict.setdefault('thumbnail', entry.get('thumbnail'))
         dict.setdefault('duration', entry.get('duration'))
         dict.setdefault('original_url', entry.get('webpage_url'))
-
+        # print(dict)
         # Not sure if we would even get playlist if a song failed to load but maybe check a value to be safe
         song = Song(interaction, link, dict)
         player.queue.add(song)
