@@ -44,19 +44,6 @@ class Song:
         self.vote = Vote(member)
 
     @staticmethod
-    def get_empty_song_dict():
-        return {
-            'title': None,
-            'uploader': None,
-            'audio': None,
-            'id': None,
-            'thumbnail': None,
-            'duration': None,
-            'original_url': None
-
-        }
-
-    @staticmethod
     def parse_duration(duration: int) -> str:
         minutes, seconds = divmod(duration, 60)
         hours, minutes = divmod(minutes, 60)
