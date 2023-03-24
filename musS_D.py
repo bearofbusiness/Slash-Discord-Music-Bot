@@ -20,10 +20,10 @@ TODO:
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
-        9-fnt skip (force skip) #sming
-        8-fnt search #sming
+        
+        
         7- play_list_shuffle #sming
-        7-fnt play_list #sming
+        7-f play_list #sming
         7- remove user's songs from queue
         1- help #bear
         1- volume #nrn
@@ -42,9 +42,12 @@ DONE:
         9-f pause #bear //vc.pause() and vc.resume()
         9-f resume #bear
         9-f now #bear
+        9-f skip (force skip) #sming
+        8-f search #sming
         8-f queue #bear
         8-f remove #bear
         8-f play_top #bear
+        7-f play_list #sming
         6-f clear #bear
         5-f shuffle #bear
         4-f loop (queue, song) #bear
