@@ -20,8 +20,6 @@ TODO:
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
-        
-        
         7- play_list_shuffle #sming
         7-f play_list #sming
         7- remove user's songs from queue
@@ -381,7 +379,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
         embed.add_field(name=f"`{i}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
     embed.set_footer(
-        text=f"Page {page}/{max_page} | {queue_len} songs in queue")
+        text=f"Page {page}/{max_page} | {queue_len} song{'s' if queue_len != 1 else ''} in queue")
     await interaction.response.send_message(embed=embed)
 
 
