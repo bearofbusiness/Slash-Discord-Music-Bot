@@ -347,18 +347,24 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not await pretests(interaction):
         return
+
     player = servers.get_player(interaction.guild_id)
+
     if not player.queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = get_embed(interaction, title='Queue', color=get_random_hex(
-        player.queue.get()[0].id), progress=False)
 
-    page_size = 25
+    embed = get_embed(interaction, title='Queue', color=get_random_hex(
+        player.queue.get(0).id), progress=False)
+
+    page_size = 5
     queue_len = len(player.queue)
     min_queue_index = page_size * (page - 1)
     max_queue_index = min_queue_index + page_size
     max_page = math.ceil(queue_len / page_size)
+
+    print(player.queue.__str__())
+
     if max_page < page:
         await interaction.response.send_message(
             "Page doesn't exist! :octagonal_sign:", ephemeral=True)
@@ -366,13 +372,13 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     # + 1 so it will start with the first song on the page you want
     for i, song in enumerate(player.queue.get(), min_queue_index):
         # keeps the amount of fields from going over the max amount of fields per page
-        if (i - min_queue_index >= page_size):
+        if (i >= max_queue_index):
             break
 
         embed.add_field(name=f"`{i}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
     embed.set_footer(
-        text=f"Page {page}/{math.ceil(player.queue.__len__()/page_size)}")
+        text=f"Page {page}/{max_page} | {queue_len} songs in queue")
     await interaction.response.send_message(embed=embed)
 
 
@@ -466,6 +472,8 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         return
 
     for entry in playlist.get("entries"):
+        if entry.get('duration') is None:
+            continue
         dict = {
             'title': entry.get('title'),
             'uploader': entry.get('channel'),
@@ -475,6 +483,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
             'duration': entry.get('duration'),
             'original_url': entry.get('webpage_url')
         }
+        print(dict)
 
         # Not sure if we would even get playlist if a song failed to load but maybe check a value to be safe
         song = Song(interaction, link, dict)

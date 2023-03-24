@@ -1,12 +1,12 @@
 import time
 
-from discord import Member
+from discord import Member, Interaction
 from Vote import Vote
 from YTDLInterface import YTDLInterface
 
 
 class Song:
-    def __init__(self, interaction, link, dict):
+    def __init__(self, interaction: Interaction, link: str, dict: dict):
         self.link = link
         self.requester = interaction.user
         self.channel = interaction.channel
@@ -26,8 +26,8 @@ class Song:
         self.pause_time = 0
 
     @classmethod
-    def from_link(cls, interaction, link):
-        return cls(interaction, link, Song.get_empty_song_dict())
+    def from_link(cls, interaction: Interaction, link: str):
+        return cls(interaction, link, {})
 
     # Populate all None fields
     async def populate(self) -> None:

@@ -29,3 +29,6 @@ class Queue:
 
     def __len__(self) -> int:
         return len(self.list)
+
+    def __str__(self) -> str:
+        return [str(song) for song in self.list]
