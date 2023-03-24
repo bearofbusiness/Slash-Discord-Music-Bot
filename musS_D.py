@@ -306,8 +306,7 @@ async def _skip(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
     # If there's enough people for it to make sense to call a vote in the first place
-    # TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
-    if len(player.vc.channel.members) > 1:
+    if len(player.vc.channel.members) > 3:
         votes_required = len(player.vc.channel.members) // 2
 
         if player.song.vote is None:
@@ -335,7 +334,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     # If there isn't just skip
     else:
         player.vc.stop()
-        player.skip_player()
+        await send(interaction, "Skipped!", ":white_check_mark:")
 
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote.")
