@@ -26,6 +26,7 @@ TODO:
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
+        1- move command #bear 
     -other
         8- perform link sanitization before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
