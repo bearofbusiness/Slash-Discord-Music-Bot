@@ -471,7 +471,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
     playlist = await YTDLInterface.query_link(link)
 
     if playlist.get('_type') != "playlist":
-        await send(interaction, "Not a playlist.")
+        await send(interaction, "Not a playlist.", ephemeral=True)
         return
 
     for entry in playlist.get("entries"):
@@ -519,7 +519,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     query_result = await YTDLInterface.query_search(query)
 
     if selection:
-        selection-=1
+        selection -= 1
         # Break down the result into a dict Song
         entry = query_result.get('entries')[selection]
         dict = {
@@ -531,7 +531,6 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
             'duration': entry.get('duration'),
             'original_url': entry.get('webpage_url')
         }
-
 
         song = Song(interaction, dict.get('original_url'), dict)
 
