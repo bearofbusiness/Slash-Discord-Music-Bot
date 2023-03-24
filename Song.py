@@ -27,7 +27,7 @@ class Song:
 
     @classmethod
     def from_link(cls, interaction: Interaction, link: str):
-        return cls(interaction, link, {})
+        return cls(interaction, link, {'original_url' : link})
 
     # Populate all None fields
     async def populate(self) -> None:
