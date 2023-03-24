@@ -123,9 +123,6 @@ class Player:
     def terminate_player(self) -> None:
         self.player_abort.set()
 
-    def skip_player(self) -> None:
-        self.player_song_end.set()
-
     def set_loop(self, state: bool) -> None:
         self.looping = state
 

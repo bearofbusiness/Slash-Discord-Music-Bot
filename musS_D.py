@@ -324,7 +324,6 @@ async def _skip(interaction: discord.Interaction) -> None:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
             player.song.vote = None
             player.vc.stop()
-            player.skip_player()
             return
 
         await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
@@ -340,7 +339,6 @@ async def _force_skip(interaction: discord.Interaction) -> None:
         return
 
     servers.get_player(interaction.guild_id).vc.stop()
-    servers.get_player(interaction.guild_id).skip_player()
     await send(interaction, "Skipped!", ":white_check_mark:")
 
 
