@@ -5,12 +5,15 @@ from Queue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
 
+# Class to make what caused the error more apparent
+class VoiceError(Exception):
+    pass
 
 class Player:
     def __init__(self, vc: discord.VoiceClient) -> None:
         self.player_event = asyncio.Event()
         self.player_abort = asyncio.Event()
-        self.player_skip = asyncio.Event()
+        self.player_song_end = asyncio.Event()
         self.player_task = asyncio.create_task(
             self.__player())  # self.player_event
 
@@ -52,6 +55,11 @@ class Player:
 
     async def __player(self) -> None:
         print("Initializing Player.")
+        def song_complete(self, error=None):
+            if error:
+                raise VoiceError(str(error))
+            self.player_song_end.set()
+
         await self.player_event.wait()
         print("Player has been given GO signal")
         # This while will immediately terminate when player_abort is set.
@@ -59,54 +67,41 @@ class Player:
 
         # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
         while not self.player_abort.is_set():
+            self.player_song_end.clear()
+            # Get the top song in queue ready to play
+            await self.queue.get(0).populate()
 
-            # Allows __player to terminate without "aborting"
-            while not self.player_skip.is_set():
+            # Set the now-populated top song to the playing song
+            self.song = self.queue.get(0)
 
-                # Get the top song in queue ready to play
-                await self.queue.get(0).populate()
+            await self.__send_np(self.song)
 
-                # Just to be safe and make sure we don't
-                # cut off anything early, do a quick is_playing loop
-                while self.vc.is_playing():
-                    await asyncio.sleep(1)
+            self.song.start()
 
-                # Set the now-populated top song to the playing song
-                self.song = self.queue.get(0)
+            # Begin playing audio into Discord
+            self.vc.play(discord.FFmpegPCMAudio(
+                self.song.audio, **YTDLInterface.ffmpeg_options
+            ), after=song_complete)
+                                 #() implicit parenthesis
 
-                await self.__send_np(self.song)
+            # Sleep player until song ends
+            await self.player_song_end.wait()
+            # If song is looping, continue from top
+            if self.looping:
+                continue
 
-                # Begin playing audio into Discord
+            self.queue.remove(0)
 
-                self.song.start()
+            # If we're queue looping, re-add the removed song to bottom of queue
+            if self.queue_looping:
+                self.queue.add(self.song)
+                continue
 
-                self.vc.play(discord.FFmpegPCMAudio(
-                    self.song.audio, **YTDLInterface.ffmpeg_options
-                ))
+            # Check if the queue is empty
+            if not self.queue.get():
+                # Abort the player
+                self.player_abort.set()
 
-                # Sleep player until song ends
-                await asyncio.sleep(self.song.duration)
-                # If song is looping, continue from top
-                if self.looping:
-                    continue
-
-                self.queue.remove(0)
-
-                # If we're queue looping, re-add the removed song to top of queue
-                if self.queue_looping:
-                    self.queue.add(self.song)
-                    continue
-
-                # Check if the queue is empty
-                if not self.queue.get():
-                    # Just to be safe and make sure we don't
-                    # cut off anything early, do a quick is_playing loop
-                    while self.vc.is_playing():
-                        await asyncio.sleep(1)
-                    # Abort the player
-                    self.player_abort.set()
-
-            self.player_skip.unset()
 
         # Delete a to-be defunct now_playing message
         if self.last_np_message:
@@ -127,7 +122,7 @@ class Player:
         self.player_abort.set()
 
     def skip_player(self) -> None:
-        self.player_skip.set()
+        self.player_song_end.set()
 
     def set_loop(self, state: bool) -> None:
         self.looping = state
