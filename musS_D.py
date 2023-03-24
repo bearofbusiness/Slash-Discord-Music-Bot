@@ -465,19 +465,17 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         await send(interaction, "Not a playlist.")
         return
 
-    for entry in playlist["entries"]:
-        if not entry.get("title") is None:
-            continue
-        dict = Song.get_empty_song_dict()
-        # setdefault() over update so a new dict doesn't need to be initialized for each
-        dict.setdefault('title', entry.get('title'))
-        dict.setdefault('uploader', entry.get('channel'))
-        dict.setdefault('audio', entry.get('url'))
-        dict.setdefault('id', entry.get('id'))
-        dict.setdefault('thumbnail', entry.get('thumbnail'))
-        dict.setdefault('duration', entry.get('duration'))
-        dict.setdefault('original_url', entry.get('webpage_url'))
-        # print(dict)
+    for entry in playlist.get("entries"):
+        dict = {
+            'title': entry.get('title'),
+            'uploader': entry.get('channel'),
+            'audio': entry.get('url'),
+            'id': entry.get('id'),
+            'thumbnail': entry.get('thumbnail'),
+            'duration': entry.get('duration'),
+            'original_url': entry.get('webpage_url')
+        }
+
         # Not sure if we would even get playlist if a song failed to load but maybe check a value to be safe
         song = Song(interaction, link, dict)
         player.queue.add(song)
