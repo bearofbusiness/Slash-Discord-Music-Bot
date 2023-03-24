@@ -455,7 +455,9 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         await send(interaction, "Not a playlist.")
         return
 
-    for entry in playlist.get("entries"):
+    for entry in playlist["entries"]:
+        if not entry:
+            continue
         dict = Song.get_empty_song_dict()
         # setdefault() over update so a new dict doesn't need to be initialized for each
         dict.setdefault('title', entry.get('title'))
