@@ -516,7 +516,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     query_result = await YTDLInterface.query_search(query)
 
     if selection:
-        selection-=1
+        selection -= 1
         # Break down the result into a dict Song
         entry = query_result.get('entries')[selection]
         dict = {
@@ -560,7 +560,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
                           title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
                           url=entry.get('webpage_url'),
                           color=get_random_hex(
-                                embed.get("id"))
+                                entry.get("id"))
                           )
         embed.add_field(name='Duration:', value=Song.parse_duration(
             entry.get('duration')), inline=True)
