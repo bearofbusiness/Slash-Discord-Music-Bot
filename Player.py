@@ -53,12 +53,14 @@ class Player:
             await self.last_np_message.delete()
         self.last_np_message = await self.vc.channel.send(embed=embed)
 
+    def song_complete(self, error=None):
+        if error:
+            raise VoiceError(str(error))
+        self.player_song_end.set()
+        
     async def __player(self) -> None:
         print("Initializing Player.")
-        def song_complete(self, error=None):
-            if error:
-                raise VoiceError(str(error))
-            self.player_song_end.set()
+
 
         await self.player_event.wait()
         print("Player has been given GO signal")
