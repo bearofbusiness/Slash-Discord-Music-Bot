@@ -76,7 +76,7 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         super().__init__(intents=intents)
 
     async def on_ready(self):
-        await tree.sync()  # please dont remove just in case i need to sync
+        # await tree.sync()  # please dont remove just in case i need to sync
         pront("Bot is ready", lvl="OKGREEN")
         await self.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
@@ -327,7 +327,7 @@ async def _skip(interaction: discord.Interaction) -> None:
             player.queue.remove(0)
             # If this makes the queue empty, disconnect and pretend we skipped a song
             if not player.queue.get():
-                await clean()
+                await clean(interaction.guild_id)
                 return
             # Reset the player to begin playing the new song
             player.vc.stop()
@@ -359,7 +359,7 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 
 
 @ tree.command(name="queue", description="Shows the current queue")
-async def _queue(interaction: discord.Interaction, page=0) -> None:
+async def _queue(interaction: discord.Interaction, page: int = 0) -> None:
     if not await ext_pretests(interaction):
         return
     if not servers.get_player(interaction.guild_id).queue.get():
@@ -370,7 +370,7 @@ async def _queue(interaction: discord.Interaction, page=0) -> None:
     page_size = 25
     if servers.get_player(interaction.guild_id).queue.get().__len__() > (page - 1) * 25:
         interaction.response.send_message(
-            "Page doesn't exist!", ":octagonal_sign:", ephemeral=True)
+            "Page doesn't exist! :octagonal_sign:", ephemeral=True)
     for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get(), page * page_size):
         if (i + (page * page_size) >= page_size):
             await send(interaction, title='Queue is too long to display all entries!', content="now is the time to fish this", ephemeral=True)
