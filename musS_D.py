@@ -278,7 +278,8 @@ async def _skip(interaction: discord.Interaction) -> None:
     async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
 
         embed = get_embed(interaction, title, content,
-                          color=get_random_hex(player.song.id))
+                          color=get_random_hex(player.song.id),
+                          progress=present_tense)
         if present_tense:
             song_message = "Song being voted on:"
         else:
@@ -287,7 +288,7 @@ async def _skip(interaction: discord.Interaction) -> None:
                         value=player.song.title, inline=True)
         embed.set_thumbnail(url=player.song.thumbnail)
         users = ''
-        embed.add_field(name="Initiated by:", value=player.song.vote.initiator)
+        embed.add_field(name="Initiated by:", value=player.song.vote.initiator.mention)
         for user in player.song.vote.get():
             users = f'{user.name}, {users}'
         users = users[:-2]
@@ -322,13 +323,6 @@ async def _skip(interaction: discord.Interaction) -> None:
         if len(player.song.vote) >= votes_required:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
             player.song.vote = None
-
-
-            # If this makes the queue empty, disconnect and pretend we skipped a song
-            if not player.queue.get():
-                await clean(interaction.guild_id)
-                return
-            # Reset the player to begin playing the new song
             player.vc.stop()
             player.skip_player()
             return
@@ -336,7 +330,8 @@ async def _skip(interaction: discord.Interaction) -> None:
         await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
     # If there isn't just skip
     else:
-        await _force_skip(interaction)
+        player.vc.stop()
+        player.skip_player()
 
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote.")
@@ -344,16 +339,8 @@ async def _force_skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
 
-    player = servers.get_player(interaction.guild.id)
-    # Remove the current song from queue since __player is violently terminated
-    player.queue.remove(0)
-    # If this makes the queue empty, disconnect and pretend we skipped a song
-    if not player.queue.get():
-        await clean()
-        return
-    # Reset the player to begin playing the new song
-    player.vc.stop()
-    player.skip_player()
+    servers.get_player(interaction.guild_id).vc.stop()
+    servers.get_player(interaction.guild_id).skip_player()
     await send(interaction, "Skipped!", ":white_check_mark:")
 
 
