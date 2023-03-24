@@ -57,7 +57,7 @@ class Player:
         if error:
             raise VoiceError(str(error))
         self.player_song_end.set()
-        
+
     async def __player(self) -> None:
         print("Initializing Player.")
 
@@ -83,7 +83,7 @@ class Player:
             # Begin playing audio into Discord
             self.vc.play(discord.FFmpegPCMAudio(
                 self.song.audio, **YTDLInterface.ffmpeg_options
-            ), after=song_complete)
+            ), after=self.song_complete)
                                  #() implicit parenthesis
 
             # Sleep player until song ends
