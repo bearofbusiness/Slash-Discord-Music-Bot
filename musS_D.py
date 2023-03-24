@@ -288,7 +288,8 @@ async def _skip(interaction: discord.Interaction) -> None:
                         value=player.song.title, inline=True)
         embed.set_thumbnail(url=player.song.thumbnail)
         users = ''
-        embed.add_field(name="Initiated by:", value=player.song.vote.initiator.mention)
+        embed.add_field(name="Initiated by:",
+                        value=player.song.vote.initiator.mention)
         for user in player.song.vote.get():
             users = f'{user.name}, {users}'
         users = users[:-2]
@@ -353,7 +354,7 @@ async def _queue(interaction: discord.Interaction, page: int = 0) -> None:
         servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
     page_size = 25
     if servers.get_player(interaction.guild_id).queue.get().__len__() > (page - 1) * 25:
-        interaction.response.send_message(
+        await interaction.response.send_message(
             "Page doesn't exist! :octagonal_sign:", ephemeral=True)
     for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get(), page * page_size):
         if (i + (page * page_size) >= page_size):
@@ -467,7 +468,7 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
         dict.setdefault('thumbnail', entry.get('thumbnail'))
         dict.setdefault('duration', entry.get('duration'))
         dict.setdefault('original_url', entry.get('webpage_url'))
-
+        # print(dict)
         # Not sure if we would even get playlist if a song failed to load but maybe check a value to be safe
         song = Song(interaction, link, dict)
         player.queue.add(song)

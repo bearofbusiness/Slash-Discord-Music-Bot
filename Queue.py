@@ -24,5 +24,8 @@ class Queue:
     def remove(self, index: int) -> Song:
         return self.list.pop(index)
 
+    def clear(self) -> None:
+        self.list.clear()
+
     def __len__(self) -> int:
         return len(self.list)
