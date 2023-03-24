@@ -264,7 +264,7 @@ async def _play(interaction: discord.Interaction, link: str) -> None:
         if not servers.get_player(interaction.guild_id).is_started():
             await servers.get_player(interaction.guild_id).start()
     else:
-        await interaction.followup.send(get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
+        await interaction.followup.send(embed=get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
 
 
 @ tree.command(name="skip", description="Skips the currently playing song")
@@ -344,26 +344,35 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 
 
 @ tree.command(name="queue", description="Shows the current queue")
-async def _queue(interaction: discord.Interaction, page: int = 0) -> None:
-    if not await ext_pretests(interaction):
+async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
+    if not await pretests(interaction):
         return
-    if not servers.get_player(interaction.guild_id).queue.get():
+    player = servers.get_player(interaction.guild_id)
+    if not player.queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
     embed = get_embed(interaction, title='Queue', color=get_random_hex(
-        servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
+        player.queue.get()[0].id), progress=False)
+
     page_size = 25
-    if servers.get_player(interaction.guild_id).queue.get().__len__() > (page - 1) * 25:
+    queue_len = len(player.queue)
+    min_queue_index = page_size * (page - 1)
+    max_queue_index = min_queue_index + page_size
+    max_page = math.ceil(queue_len / page_size)
+    if max_page < page:
         await interaction.response.send_message(
             "Page doesn't exist! :octagonal_sign:", ephemeral=True)
-    for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get(), page * page_size):
-        if (i + (page * page_size) >= page_size):
-            await send(interaction, title='Queue is too long to display all entries!', content="now is the time to fish this", ephemeral=True)
+        return
+    # + 1 so it will start with the first song on the page you want
+    for i, song in enumerate(player.queue.get(), min_queue_index):
+        # keeps the amount of fields from going over the max amount of fields per page
+        if (i - min_queue_index >= page_size):
             break
 
         embed.add_field(name=f"`{i}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
-
+    embed.set_footer(
+        text=f"Page {page}/{math.ceil(player.queue.__len__()/page_size)}")
     await interaction.response.send_message(embed=embed)
 
 
