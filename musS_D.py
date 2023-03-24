@@ -138,7 +138,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = servers.get_player(interaction.guild_id)
-        if player is not None and player.is_started() and player.queue.get(0) is not None:
+        if player is not None and player.is_started() and player.queue.get():
             footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.get(0))}'
 
             embed.set_footer(text=footer_message,
@@ -323,8 +323,7 @@ async def _skip(interaction: discord.Interaction) -> None:
             await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
             player.song.vote = None
 
-            # Remove the current song from queue since __player is violently terminated
-            player.queue.remove(0)
+
             # If this makes the queue empty, disconnect and pretend we skipped a song
             if not player.queue.get():
                 await clean(interaction.guild_id)
