@@ -26,7 +26,7 @@ TODO:
         1- settings #nrn //after muliti server
         1- move command #bear 
     -other
-        8- perform link sanitization before being sent to yt-dlp
+        8- perform link saniti*zation before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
         4- option to decide if __send_np goes into vc.channel or song.channel
         3- queue.top() method to avoid get(0) (for readability)
@@ -77,7 +77,7 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         super().__init__(intents=intents)
 
     async def on_ready(self):
-        # await tree.sync()  # please dont remove just in case i need to sync
+        await tree.sync()  # please dont remove just in case i need to sync
         pront("Bot is ready", lvl="OKGREEN")
         await self.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
@@ -368,7 +368,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
     print(player.queue.__str__())
 
-    if max_page < page:
+    if max_page < page or page < 1:
         await interaction.response.send_message(
             "Page doesn't exist! :octagonal_sign:", ephemeral=True)
         return
@@ -590,6 +590,7 @@ async def _loop(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild.id)
     player.set_loop(not player.looping)
     await send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
+
 
 @ tree.command(name="queueloop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
