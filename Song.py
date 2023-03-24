@@ -31,7 +31,7 @@ class Song:
 
     # Populate all None fields
     async def populate(self) -> None:
-        data = await YTDLInterface.query_link(self.link)
+        data = await YTDLInterface.query_link(self.original_url)
         self.title = data.get('title')
         self.uploader = data.get('channel')
         self.audio = data.get('url')

@@ -483,7 +483,6 @@ async def _playlist(interaction: discord.Interaction, link: str) -> None:
             'duration': entry.get('duration'),
             'original_url': entry.get('webpage_url')
         }
-        print(dict)
 
         song = Song(interaction, link, dict)
         player.queue.add(song)
