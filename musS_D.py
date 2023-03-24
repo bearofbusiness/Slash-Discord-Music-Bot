@@ -359,7 +359,7 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 
 
 @ tree.command(name="queue", description="Shows the current queue")
-async def _queue(interaction: discord.Interaction) -> None:
+async def _queue(interaction: discord.Interaction, page=0) -> None:
     if not await ext_pretests(interaction):
         return
     if not servers.get_player(interaction.guild_id).queue.get():
@@ -367,8 +367,12 @@ async def _queue(interaction: discord.Interaction) -> None:
         return
     embed = get_embed(interaction, title='Queue', color=get_random_hex(
         servers.get_player(interaction.guild_id).queue.get()[0].id), progress=False)
-    for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get()):
-        if (i >= 25):
+    page_size = 25
+    if servers.get_player(interaction.guild_id).queue.get().__len__() > (page - 1) * 25:
+        interaction.response.send_message(
+            "Page doesn't exist!", ":octagonal_sign:", ephemeral=True)
+    for i, song in enumerate(servers.get_player(interaction.guild_id).queue.get(), page * page_size):
+        if (i + (page * page_size) >= page_size):
             await send(interaction, title='Queue is too long to display all entries!', content="now is the time to fish this", ephemeral=True)
             break
 
