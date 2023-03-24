@@ -544,7 +544,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
                           )
         embed.add_field(name='Duration:', value=Song.parse_duration(
             entry.get('duration')), inline=True)
-        embed.set_image(url=entry.get('thumbnail'))
+        embed.set_thumbnail(url=entry.get('thumbnail'))
         embeds.append(embed)
 
     await interaction.followup.send(embeds=embeds)
