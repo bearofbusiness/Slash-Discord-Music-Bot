@@ -16,6 +16,7 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
+    9- make listener for player.start returning to call clean()
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
