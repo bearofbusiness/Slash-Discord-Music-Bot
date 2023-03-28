@@ -361,6 +361,8 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 @pretests
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
+    if not await pretests(interaction):
+        return
 
     # Convert page into non-user friendly (woah scary it starts at 0)
     page -= 1
