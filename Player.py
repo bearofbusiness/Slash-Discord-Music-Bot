@@ -6,8 +6,11 @@ from Song import Song
 from YTDLInterface import YTDLInterface
 
 # Class to make what caused the error more apparent
+
+
 class VoiceError(Exception):
     pass
+
 
 class Player:
     def __init__(self, vc: discord.VoiceClient) -> None:
@@ -61,7 +64,6 @@ class Player:
     async def __player(self) -> None:
         print("Initializing Player.")
 
-
         await self.player_event.wait()
         print("Player has been given GO signal")
         # This while will immediately terminate when player_abort is set.
@@ -84,7 +86,7 @@ class Player:
             self.vc.play(discord.FFmpegPCMAudio(
                 self.song.audio, **YTDLInterface.ffmpeg_options
             ), after=self.song_complete)
-                                 #() implicit parenthesis
+            # () implicit parenthesis
 
             # Sleep player until song ends
             await self.player_song_end.wait()
@@ -103,7 +105,6 @@ class Player:
             if not self.queue.get():
                 # Abort the player
                 self.player_abort.set()
-
 
         # Delete a to-be defunct now_playing message
         if self.last_np_message:

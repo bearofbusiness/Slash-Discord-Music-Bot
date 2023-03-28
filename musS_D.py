@@ -267,6 +267,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         # If the player isn't already running, start it.
         if not servers.get_player(interaction.guild_id).is_started():
             await servers.get_player(interaction.guild_id).start()
+
     else:
         await interaction.followup.send(embed=get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
 
@@ -600,5 +601,12 @@ async def _queue_loop(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
     await send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
+
+
+@ bot.event
+async def on_error(event, *args, **kwargs) -> None:
+    discord.embed(
+        title='Error', description=f'```{event}\n{args}\n{kwargs}```')
+
 
 bot.run(key)
