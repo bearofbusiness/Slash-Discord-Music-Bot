@@ -174,6 +174,7 @@ async def pretests(interaction: discord.Interaction) -> bool:
     if interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
         return False
+    return True
 
 
 async def ext_pretests(interaction: discord.Interaction) -> bool:
@@ -352,19 +353,14 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not await pretests(interaction):
         return
-
-    # Convert page into non-user friendly (woah scary it starts at 0)
+    # Convert page into non-user friendly (woah scary it starts at 0)(if only we were using lua)
     page -= 1
-
     player = servers.get_player(interaction.guild_id)
-
     if not player.queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-
     embed = get_embed(interaction, title='Queue', color=get_random_hex(
         player.queue.get(0).id), progress=False)
-
     page_size = 5
     queue_len = len(player.queue)
     min_queue_index = page_size * (page - 1)
@@ -385,6 +381,8 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
     # Loop through the region of songs in this page
     for i in range(min_queue_index, max_queue_index):
+        if i >= queue_len:
+            break
         song = player.queue.get()[i]
 
         embed.add_field(name=f"`{i}`: {song.title}",
