@@ -10,7 +10,7 @@ class Queue:
     def add(self, song: Song) -> None:
         self.list.append(song)
 
-    def add_at(self, song: Song, index) -> None:
+    def add_at(self, song: Song, index: int) -> None:
         self.list.insert(index, song)
 
     def get(self, index: int | None = None) -> Song:

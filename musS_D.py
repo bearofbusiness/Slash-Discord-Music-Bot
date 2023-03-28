@@ -16,6 +16,7 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
+    9- make listener for player.start returning to call clean()
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
@@ -280,7 +281,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild_id)
 
     # Get a complex embed for votes
-    async def skip_msg(title='', content='', present_tense=True, ephemeral=False):
+    async def skip_msg(title: str='', content: str='', present_tense: bool=True, ephemeral: bool=False) -> None:
 
         embed = get_embed(interaction, title, content,
                           color=get_random_hex(player.song.id),
@@ -307,8 +308,7 @@ async def _skip(interaction: discord.Interaction) -> None:
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
     # If there's enough people for it to make sense to call a vote in the first place
-    # TODO SET THIS BACK TO 3, SET TO 1 FOR TESTING
-    if len(player.vc.channel.members) > 1:
+    if len(player.vc.channel.members) > 3:
         votes_required = len(player.vc.channel.members) // 2
 
         if player.song.vote is None:
@@ -336,7 +336,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     # If there isn't just skip
     else:
         player.vc.stop()
-        player.skip_player()
+        await send(interaction, "Skipped!", ":white_check_mark:")
 
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote.")
@@ -352,38 +352,45 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not await pretests(interaction):
         return
+    
+    # Convert page into non-user friendly (woah scary it starts at 0)
+    page -= 1
 
     player = servers.get_player(interaction.guild_id)
 
     if not player.queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-
-    embed = get_embed(interaction, title='Queue', color=get_random_hex(
-        player.queue.get(0).id), progress=False)
-
-    page_size = 5
-    queue_len = len(player.queue)
-    min_queue_index = page_size * (page - 1)
-    max_queue_index = min_queue_index + page_size
+    
+    # The highest page value accepted
     max_page = math.ceil(queue_len / page_size)
 
-    print(player.queue.__str__())
-
-    if max_page < page or page < 1:
+    if max_page < page or page < 0:
         await interaction.response.send_message(
             "Page doesn't exist! :octagonal_sign:", ephemeral=True)
         return
-    # + 1 so it will start with the first song on the page you want
-    for i, song in enumerate(player.queue.get(), min_queue_index):
-        # keeps the amount of fields from going over the max amount of fields per page
-        if (i >= max_queue_index):
-            break
+
+    # How many Songs can fit on one page
+    page_size = 5
+    queue_len = len(player.queue)
+    # The index to start reading from Queue
+    min_queue_index = page_size * (page)
+    # The index to stop reading from Queue 
+    max_queue_index = min_queue_index + page_size
+    
+    embed = get_embed(interaction, title='Queue', color=get_random_hex(
+        player.song.id), progress=False)
+
+    # Loop through the region of songs in this page
+    for i in range(min_queue_index, max_queue_index):
+        song = player.queue.get()[i]
 
         embed.add_field(name=f"`{i}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
+    
     embed.set_footer(
-        text=f"Page {page}/{max_page} | {queue_len} song{'s' if queue_len != 1 else ''} in queue")
+        text=f"Page {page + 1}/{max_page} | {queue_len} song{'s' if queue_len != 1 else ''} in queue")
+    
     await interaction.response.send_message(embed=embed)
 
 
