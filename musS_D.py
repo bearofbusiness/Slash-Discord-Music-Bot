@@ -362,17 +362,17 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
 
+    # How many Songs can fit on one page
+    page_size = 5
+    queue_len = len(player.queue)
+
     # The highest page value accepted
     max_page = math.ceil(queue_len / page_size)
-
+    # check for highest page
     if max_page < page or page < 0:
         await interaction.response.send_message(
             "Page doesn't exist! :octagonal_sign:", ephemeral=True)
         return
-
-    # How many Songs can fit on one page
-    page_size = 5
-    queue_len = len(player.queue)
     # The index to start reading from Queue
     min_queue_index = page_size * (page)
     # The index to stop reading from Queue
