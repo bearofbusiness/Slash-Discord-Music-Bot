@@ -1,4 +1,3 @@
-import asyncio
 import discord
 import os
 import random
@@ -6,9 +5,6 @@ import math
 import time
 from datetime import datetime
 from dotenv import load_dotenv
-
-
-# GoFuck
 
 # importing other classes from other files
 from Song import Song
@@ -30,7 +26,6 @@ TODO:
         1- volume #nrn
         1- settings #nrn //after muliti server
         1- move command #bear 
-        3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
@@ -169,59 +164,46 @@ async def clean(id: int) -> None:
 
 
 # Runs various tests to make sure a command is OK to run
-def pretests(func):  # i dont think i can have a return type here
-    """args[0] mush be the interaction object """
-    def wrapper_pretests(*args, **kwargs):
-        interaction = args[0]
-        if interaction.guild.voice_client is None:
-            asyncio.run(interaction.response.send_message(
-                "MaBalls is not in a voice channel", ephemeral=True))
-            return
+async def pretests(interaction: discord.Interaction) -> bool:
+    if interaction.guild.voice_client is None:
+        await interaction.response.send_message("MaBalls is not in a voice channel", ephemeral=True)
+        return False
 
-        if interaction.user.voice.channel != interaction.guild.voice_client.channel:
-            asyncio.run(interaction.response.send_message(
-                "You must be connected to the same voice channel as MaBalls", ephemeral=True))
-            return
-        return func(*args, **kwargs)
-    return wrapper_pretests
+    if interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
+        return False
+
+    return True
 
 
-@pretests
-def ext_pretests(func):
-    def wrapper_ext_pretests(*args, **kwargs):
-        interaction = args[0]
-        if not servers.get_player(interaction.guild_id).is_started():
-            asyncio.run(interaction.response.send_message(
-                "This command can only be used while a song is playing", ephemeral=True))
-            return
+async def ext_pretests(interaction: discord.Interaction) -> bool:
+    if not await pretests(interaction):
+        return False
 
-        return func(*args, **kwargs)
-    return wrapper_ext_pretests
+    if not servers.get_player(interaction.guild_id).is_started():
+        await interaction.response.send_message("This command can only be used while a song is playing", ephemeral=True)
+        return False
+
+    return True
 
 
-def join_pretests(func):
-    def wrapper_join_pretests(*args, **kwargs):
-        interaction = args[0]
-        # Check if author is in VC
-        if interaction.guild.voice_client is None:
-            asyncio.run(interaction.response.send_message(
-                'You are not in a voice channel', ephemeral=True))
-            return
-
+async def join_pretests(interaction: discord.Integration) -> bool:
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+        return False
     # Exception to pretests() because it will join a voice channel
 
-        # If not already in VC, join
-        if interaction.guild.voice_client is None:
-            channel = interaction.user.voice.channel
-            vc = asyncio.run(channel.connect(self_deaf=True))
-            servers.add(interaction.guild_id, Player(vc))
-        # Otherwise, make sure the user is in the same channel
-        elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
-            asyncio.run(interaction.response.send_message(
-                "You must be in the same voice channel in order to use MaBalls", ephemeral=True))
-            return
-        return func(*args, **kwargs)
-    return wrapper_join_pretests
+    # If not already in VC, join
+    if interaction.guild.voice_client is None:
+        channel = interaction.user.voice.channel
+        vc = await channel.connect(self_deaf=True)
+        servers.add(interaction.guild_id, Player(vc))
+    # Otherwise, make sure the user is in the same channel
+    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+        return False
+    return True
 
 
 ## COMMANDS ##
@@ -248,16 +230,19 @@ async def _join(interaction: discord.Interaction) -> None:
 
 
 @ tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
-@pretests
 async def _leave(interaction: discord.Interaction) -> None:
+    if not await pretests(interaction):
+        return
+
     # Disconnect from the voice channel
     await clean(interaction.guild_id)
     await send(interaction, title='Left!', content=':white_check_mark:', progress=False)
 
 
-@join_pretests
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str, top: bool = False) -> None:
+    if not await join_pretests(interaction):
+        return
 
     await interaction.response.defer(thinking=True)
 
@@ -288,9 +273,10 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         await interaction.followup.send(embed=get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
 
 
-@ext_pretests
 @ tree.command(name="skip", description="Skips the currently playing song")
 async def _skip(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
 
     player = servers.get_player(interaction.guild_id)
 
@@ -353,15 +339,15 @@ async def _skip(interaction: discord.Interaction) -> None:
         await send(interaction, "Skipped!", ":white_check_mark:")
 
 
-@ext_pretests
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote.")
 async def _force_skip(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
 
     servers.get_player(interaction.guild_id).vc.stop()
     await send(interaction, "Skipped!", ":white_check_mark:")
 
 
-@pretests
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not await pretests(interaction):
@@ -408,9 +394,10 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     await interaction.response.send_message(embed=embed)
 
 
-@ext_pretests
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     player = servers.get_player(interaction.guild_id)
     if player.song is None:
         await send(interaction, title='Error!', content='No song is playing', ephemeral=True)
@@ -432,9 +419,10 @@ async def _now(interaction: discord.Interaction) -> None:
     await interaction.response.send_message(embed=embed, ephemeral=True)
 
 
-@ext_pretests
 @ tree.command(name="remove", description="Removes a song from the queue")
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
+    if not await ext_pretests(interaction):
+        return
     removed_song = servers.get_player(
         interaction.guild_id).queue.remove(number_in_queue + 1)
     if removed_song is not None:
@@ -452,9 +440,10 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
         await interaction.response.send_message(embed=embed)
 
 
-@join_pretests
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
 async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
+    if not await join_pretests(interaction):
+        return
 
     await interaction.response.defer(thinking=True)
 
@@ -505,9 +494,10 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         await servers.get_player(interaction.guild_id).start()
 
 
-@join_pretests
 @ tree.command(name="search", description="Searches YouTube for a given query")
 async def _search(interaction: discord.Interaction, query: str, selection: int = None) -> None:
+    if selection and not await join_pretests(interaction):
+        return
 
     await interaction.response.defer(thinking=True)
 
@@ -568,47 +558,53 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     await interaction.followup.send(embeds=embeds)
 
 
-@ext_pretests
 @ tree.command(name="clear", description="Clears the queue")
 async def _clear(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     servers.get_player(interaction.guild_id).queue.clear()
     await interaction.response.send_message('Queue cleared')
 
 
-@ext_pretests
 @ tree.command(name="shuffle", description="Shuffles the queue")
 async def _shuffle(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     servers.get_player(interaction.guild_id).queue.shuffle()
     await interaction.response.send_message('Queue shuffled')
 
 
-@ext_pretests
 @ tree.command(name="pause", description="Pauses the current song")
 async def _pause(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     servers.get_player(interaction.guild_id).vc.pause()
     servers.get_player(interaction.guild_id).song.pause()
     await send(interaction, title='Paused')
 
 
-@ext_pretests
 @ tree.command(name="resume", description="Resumes the current song")
 async def _resume(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     servers.get_player(interaction.guild_id).vc.resume()
     servers.get_player(interaction.guild_id).song.resume()
     await send(interaction, title='Resumed')
 
 
-@ext_pretests
 @ tree.command(name="loop", description="Loops the current song")
 async def _loop(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     player = servers.get_player(interaction.guild.id)
     player.set_loop(not player.looping)
     await send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
 
 
-@ext_pretests
 @ tree.command(name="queueloop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
+    if not await ext_pretests(interaction):
+        return
     player = servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
     await send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
