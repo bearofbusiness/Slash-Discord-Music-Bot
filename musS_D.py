@@ -20,14 +20,15 @@ TODO:
     8- make forceskip admin-only
     6- sync up whatever's in play vs play_top
     -make more commands
-        7-fnt play_list_shuffle #sming
         7- remove user's songs from queue
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
         1- move command #bear 
+        3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
+        8- auto-leave VC if bot is alone
         6- remove author's songs from queue when author leaves vc #sming
         4- option to decide if __send_np goes into vc.channel or song.channel
         3- queue.top() method to avoid get(0) (for readability)
@@ -47,6 +48,7 @@ DONE:
         8-f remove #bear
         8-f play_top #bear
         7-f play_list #sming
+        7-f play_list_shuffle #sming
         6-f clear #bear
         5-f shuffle #bear
         4-f loop (queue, song) #bear
@@ -173,7 +175,6 @@ async def pretests(interaction: discord.Interaction) -> bool:
         await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
         return False
 
-    return True
 
 
 async def ext_pretests(interaction: discord.Interaction) -> bool:
@@ -362,7 +363,13 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
 
-    # The highest page value accepted
+    embed = get_embed(interaction, title='Queue', color=get_random_hex(
+        player.queue.get(0).id), progress=False)
+
+    page_size = 5
+    queue_len = len(player.queue)
+    min_queue_index = page_size * (page - 1)
+    max_queue_index = min_queue_index + page_size
     max_page = math.ceil(queue_len / page_size)
 
     if max_page < page or page < 0:
