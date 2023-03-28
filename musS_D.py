@@ -26,6 +26,7 @@ TODO:
         1- volume #nrn
         1- settings #nrn //after muliti server
         1- move command #bear 
+        3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
@@ -281,7 +282,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild_id)
 
     # Get a complex embed for votes
-    async def skip_msg(title: str='', content: str='', present_tense: bool=True, ephemeral: bool=False) -> None:
+    async def skip_msg(title: str = '', content: str = '', present_tense: bool = True, ephemeral: bool = False) -> None:
 
         embed = get_embed(interaction, title, content,
                           color=get_random_hex(player.song.id),
@@ -352,7 +353,7 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not await pretests(interaction):
         return
-    
+
     # Convert page into non-user friendly (woah scary it starts at 0)
     page -= 1
 
@@ -361,7 +362,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not player.queue.get():
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    
+
     # The highest page value accepted
     max_page = math.ceil(queue_len / page_size)
 
@@ -375,9 +376,9 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     queue_len = len(player.queue)
     # The index to start reading from Queue
     min_queue_index = page_size * (page)
-    # The index to stop reading from Queue 
+    # The index to stop reading from Queue
     max_queue_index = min_queue_index + page_size
-    
+
     embed = get_embed(interaction, title='Queue', color=get_random_hex(
         player.song.id), progress=False)
 
@@ -387,10 +388,10 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
         embed.add_field(name=f"`{i}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
-    
+
     embed.set_footer(
         text=f"Page {page + 1}/{max_page} | {queue_len} song{'s' if queue_len != 1 else ''} in queue")
-    
+
     await interaction.response.send_message(embed=embed)
 
 
