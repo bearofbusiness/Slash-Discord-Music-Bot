@@ -156,12 +156,10 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 
-# # an probably make clean def if we give player control over terminating
 # Cleans up and closes the player
 async def clean(id: int) -> None:
     servers.get_player(id).terminate_player()
-    await servers.get_player(id).vc.disconnect()
-    # Maybe wait here to make sure __player has a chance to terminate before it's deleted since it's non-blocking
+    await servers.get_player(id).wait_until_termination()
     servers.remove(id)
 
 

@@ -112,11 +112,11 @@ class Player:
             await self.last_np_message.delete()
         # Signal to everything else that player has ended
         self.player_abort.set()
+        self.vc.disconnect()
 
-    # Start player and return upon it's death
+    # Raise flag to start the player
     async def start(self) -> None:
         self.player_event.set()
-        await self.player_abort.wait()
         return
 
     def is_started(self) -> bool:
@@ -124,6 +124,9 @@ class Player:
 
     def terminate_player(self) -> None:
         self.player_abort.set()
+
+    async def wait_until_termination(self) -> True:
+        return await self.player_abort.wait()
 
     def set_loop(self, state: bool) -> None:
         self.looping = state
