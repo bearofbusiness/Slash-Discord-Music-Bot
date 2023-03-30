@@ -18,7 +18,7 @@ XX = '''
 TODO:
     9- make listener for player.start returning to call clean()
     8- make forceskip admin-only
-    6- sync up whatever's in play vs play_top
+    6- alert user when songs were unable to be added inside _playlist()
     -make more commands
         7- remove user's songs from queue
         1- help #bear
@@ -248,7 +248,6 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     await interaction.response.defer(thinking=True)
 
     song = Song.from_link(interaction, link)
-    await song.populate()
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
         if top:
@@ -460,19 +459,11 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         random.shuffle(playlist.get("entries"))
 
     for entry in playlist.get("entries"):
+        # If entry didn't populate properly, skip it.
         if entry.get("duration") is None:
             continue
-        dict = {
-            'title': entry.get('title'),
-            'uploader': entry.get('channel'),
-            'audio': entry.get('url'),
-            'id': entry.get('id'),
-            'thumbnail': entry.get('thumbnail'),
-            'duration': entry.get('duration'),
-            'original_url': entry.get('webpage_url')
-        }
-
-        song = Song(interaction, link, dict)
+        # Feed the Song the entire entry, saves time by not needing to create and fill a dict
+        song = Song(interaction, link, entry)
         player.queue.add(song)
 
     embed = get_embed(

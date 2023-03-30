@@ -13,12 +13,12 @@ class Song:
         self.vote = None
 
         self.title = dict.get('title')
-        self.uploader = dict.get('uploader')
-        self.audio = dict.get('audio')
+        self.uploader = dict.get('channel')
+        self.audio = dict.get('url')
         self.id = dict.get('id')
         self.thumbnail = dict.get('thumbnail')
         self.duration = dict.get('duration')
-        self.original_url = dict.get('original_url')
+        self.original_url = dict.get('webpage_url')
 
         # Delta time handling variables
         self.start_time = 0
@@ -27,7 +27,7 @@ class Song:
 
     @classmethod
     def from_link(cls, interaction: Interaction, link: str):
-        return cls(interaction, link, {'original_url' : link})
+        return cls(interaction, link, {'webpage_url' : link}).populate()
 
     # Populate all None fields
     async def populate(self) -> None:
