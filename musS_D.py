@@ -21,6 +21,7 @@ TODO:
     6- alert user when songs were unable to be added inside _playlist()
     -make more commands
         7- remove user's songs from queue
+        5- create add-at (merge with playtop? ask for int instead of bool?)
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
@@ -28,7 +29,6 @@ TODO:
         3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
-        8- auto-leave VC if bot is alone
         6- remove author's songs from queue when author leaves vc #sming
         4- option to decide if __send_np goes into vc.channel or song.channel
         3- queue.top() method to avoid get(0) (for readability)
@@ -62,6 +62,7 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
+        8- auto-leave VC if bot is alone #sming
         4-f remove unneeded async defs
         3-f make it multi server #bear
 
@@ -158,9 +159,12 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
 
 # Cleans up and closes the player
 async def clean(id: int) -> None:
-    servers.get_player(id).terminate_player()
-    await servers.get_player(id).wait_until_termination()
+    player = servers.get_player(id)
+    player.terminate_player()
+    await player.wait_until_termination()
+    await player.vc.disconnect()
     servers.remove(id)
+    
 
 
 # Runs various tests to make sure a command is OK to run
@@ -203,6 +207,24 @@ async def join_pretests(interaction: discord.Integration) -> bool:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
         return False
     return True
+
+
+## EVENT LISTENERS ##
+
+
+@bot.event
+async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
+    # If we don't care that a voice state was updated
+    if member.guild.voice_client is None:
+        return
+    
+    # If the user was in the same VC as the bot
+    if before.channel == member.guild.voice_client.channel:
+        # If the bot is now alone
+        if len(before.channel.members) == 1:
+            await clean(member.guild.id)
+
+    
 
 
 ## COMMANDS ##

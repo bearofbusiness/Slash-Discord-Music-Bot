@@ -112,7 +112,6 @@ class Player:
             await self.last_np_message.delete()
         # Signal to everything else that player has ended
         self.player_abort.set()
-        self.vc.disconnect()
 
     # Raise flag to start the player
     async def start(self) -> None:
