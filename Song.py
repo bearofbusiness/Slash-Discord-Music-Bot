@@ -26,8 +26,8 @@ class Song:
         self.pause_time = 0
 
     @classmethod
-    def from_link(cls, interaction: Interaction, link: str):
-        return cls(interaction, link, {'webpage_url' : link}).populate()
+    async def from_link(cls, interaction: Interaction, link: str):
+        return await cls(interaction, link, {'webpage_url' : link}).populate()
 
     # Populate all None fields
     async def populate(self) -> None:

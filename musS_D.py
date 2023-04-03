@@ -267,7 +267,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
 
     await interaction.response.defer(thinking=True)
 
-    song = Song.from_link(interaction, link)
+    song = await Song.from_link(interaction, link)
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is not None:
         if top:
