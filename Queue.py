@@ -21,6 +21,9 @@ class Queue:
         if index is None:
             return self.list
         return self.list[index]
+    
+    def top(self) -> Song:
+        self.get(0)
 
     def shuffle(self) -> None:
         random.shuffle(self.list)
@@ -36,7 +39,7 @@ class Queue:
     def clear(self) -> None:
         self.list.clear()
 
-    async def wait_until_has_songs(self):
+    async def wait_until_has_songs(self) -> True:
         return await self.has_songs.wait()
 
     def __len__(self) -> int:

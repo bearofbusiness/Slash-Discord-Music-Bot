@@ -16,7 +16,6 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    9- make listener for player.start returning to call clean()
     8- make YTDLInterface select the first result in the event that there are multiple within query_link
     8- likewise, make query_search able to handle a lack of entries[]
     8-fnt make forceskip admin-only
@@ -32,13 +31,14 @@ TODO:
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
-        4- option to decide if __send_np goes into vc.channel or song.channel
         3- queue.top() method to avoid get(0) (for readability)
+        1- option to decide if __send_np goes into vc.channel or song.channel
 
 
 
 
 DONE:
+    9-f make listener for player.start returning to call clean() // found alternative that probably works better
     9-f fix automatic now_playing messages
      - make more commands
         9-f pause #bear //vc.pause() and vc.resume()
@@ -146,10 +146,10 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     if progress:
         player = servers.get_player(interaction.guild_id)
         if player is not None and player.is_started() and player.queue.get():
-            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.get(0))}'
+            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.top())}'
 
             embed.set_footer(text=footer_message,
-                             icon_url=player.queue.get(0).thumbnail)
+                             icon_url=player.queue.top().thumbnail)
     return embed
 
 
@@ -388,7 +388,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
         await send(interaction, title='Queue is empty!', ephemeral=True)
         return
     embed = get_embed(interaction, title='Queue', color=get_random_hex(
-        player.queue.get(0).id), progress=False)
+        player.queue.top().id), progress=False)
     page_size = 5
     queue_len = len(player.queue)
     min_queue_index = page_size * (page - 1)

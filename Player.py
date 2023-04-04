@@ -74,10 +74,10 @@ class Player:
         while not self.player_abort.is_set():
             self.player_song_end.clear()
             # Get the top song in queue ready to play
-            await self.queue.get(0).populate()
+            await self.queue.top().populate()
 
             # Set the now-populated top song to the playing song
-            self.song = self.queue.get(0)
+            self.song = self.queue.top()
 
             await self.__send_np(self.song)
 
