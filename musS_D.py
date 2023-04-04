@@ -19,7 +19,7 @@ TODO:
     9- make listener for player.start returning to call clean()
     8- make YTDLInterface select the first result in the event that there are multiple within query_link
     8- likewise, make query_search able to handle a lack of entries[]
-    8- make forceskip admin-only
+    8-fnt make forceskip admin-only
     6- alert user when songs were unable to be added inside _playlist()
     -make more commands
         7- remove user's songs from queue
@@ -296,7 +296,6 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         await servers.get_player(interaction.guild_id).start()
         
 
-
 @ tree.command(name="skip", description="Skips the currently playing song")
 async def _skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
@@ -310,63 +309,69 @@ async def _skip(interaction: discord.Interaction) -> None:
         embed = get_embed(interaction, title, content,
                           color=get_random_hex(player.song.id),
                           progress=present_tense)
-        if present_tense:
-            song_message = "Song being voted on:"
-        else:
-            song_message = "Song that was voted on:"
-        embed.add_field(name=song_message,
-                        value=player.song.title, inline=True)
         embed.set_thumbnail(url=player.song.thumbnail)
+        
         users = ''
-        embed.add_field(name="Initiated by:",
-                        value=player.song.vote.initiator.mention)
         for user in player.song.vote.get():
             users = f'{user.name}, {users}'
         users = users[:-2]
         if present_tense:
             # != 1 because if for whatever reason len(skip_vote) == 0 it will still make sense
             voter_message = f"User{'s who have' if len(player.song.vote) != 1 else ' who has'} voted to skip:"
+            song_message = "Song being voted on:"
         else:
             voter_message = f"Vote passed by:"
+            song_message = "Song that was voted on:"
+
+        embed.add_field(name="Initiated by:", value=player.song.vote.initiator.mention)
+        embed.add_field(name=song_message, value=player.song.title, inline=True)
         embed.add_field(name=voter_message, value=users, inline=False)
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
-    # If there's enough people for it to make sense to call a vote in the first place
-    if len(player.vc.channel.members) > 3:
-        votes_required = len(player.vc.channel.members) // 2
-
-        if player.song.vote is None:
-            # Create new Vote
-            player.song.create_vote(interaction.user)
-            await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
-            return
-
-        # If user has already voted to skip
-        if interaction.user in player.song.vote.get():
-            await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
-            return
-
-        # Add vote
-        player.song.vote.add(interaction.user)
-
-        # If vote succeeds
-        if len(player.song.vote) >= votes_required:
-            await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
-            player.song.vote = None
-            player.vc.stop()
-            return
-
-        await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
-    # If there isn't just skip
-    else:
+    # If there's not enough people for it to make sense to call a vote in the first place
+    if len(player.vc.channel.members) <= 3:
         player.vc.stop()
         await send(interaction, "Skipped!", ":white_check_mark:")
+        return
+
+    votes_required = len(player.vc.channel.members) // 2
+
+    if player.song.vote is None:
+        # Create new Vote
+        player.song.create_vote(interaction.user)
+        await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
+        return
+
+    # If user has already voted to skip
+    if interaction.user in player.song.vote.get():
+        await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
+        return
+
+    # Add vote
+    player.song.vote.add(interaction.user)
+
+    # If vote succeeds
+    if len(player.song.vote) >= votes_required:
+        await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
+        player.song.vote = None
+        player.vc.stop()
+        return
+
+    await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
+        
 
 
-@ tree.command(name="forceskip", description="Skips the currently playing song without having a vote.")
+@ tree.command(name="forceskip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
 async def _force_skip(interaction: discord.Interaction) -> None:
     if not await ext_pretests(interaction):
         return
+
+    # If user doesn't have the permissions
+    if not interaction.user.guild_permissions.manage_channels:
+        # If there's enough users in vc for it to make sense to enforce the perms
+        if len(servers.get_player(interaction.guild.id).vc.channel.members) > 3:
+            await send(interaction, "Insufficient Permissions!", 'This command requires the "Manage Channels" permission!', ephemeral=True)
+            return
 
     servers.get_player(interaction.guild_id).vc.stop()
     await send(interaction, "Skipped!", ":white_check_mark:")
