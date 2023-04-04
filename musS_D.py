@@ -17,6 +17,8 @@ XX = '''
 #-f is just finished
 TODO:
     9- make listener for player.start returning to call clean()
+    8- make YTDLInterface select the first result in the event that there are multiple within query_link
+    8- likewise, make query_search able to handle a lack of entries[]
     8- make forceskip admin-only
     6- alert user when songs were unable to be added inside _playlist()
     -make more commands
