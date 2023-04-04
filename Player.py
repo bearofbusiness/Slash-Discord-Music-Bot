@@ -104,9 +104,10 @@ class Player:
 
             # Check if the queue is empty
             if not self.queue.get():
-                # Abort the player
-                self.player_abort.set()
+                # Wait until it has a song inside it again
+                await self.queue.wait_until_has_songs()
 
+        # PLAYER HAS BEEN TERMINATED
         # Delete a to-be defunct now_playing message
         if self.last_np_message:
             await self.last_np_message.delete()
