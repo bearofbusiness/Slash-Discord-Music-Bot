@@ -17,13 +17,13 @@ class Queue:
         self.list.insert(index, song)
         self.has_songs.set()
 
-    def get(self, index: int | None = None) -> Song:
+    def get(self, index: int | None = None) -> Song | list:
         if index is None:
             return self.list
         return self.list[index]
     
     def top(self) -> Song:
-        self.get(0)
+        return self.get(0)
 
     def shuffle(self) -> None:
         random.shuffle(self.list)
