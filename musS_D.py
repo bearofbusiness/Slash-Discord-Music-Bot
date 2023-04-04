@@ -16,12 +16,13 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
+    9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
     8- make YTDLInterface select the first result in the event that there are multiple within query_link
     8- likewise, make query_search able to handle a lack of entries[]
     8-fnt make forceskip admin-only
+    7- create general on_error event method
     6- alert user when songs were unable to be added inside _playlist()
     -make more commands
-        7- remove user's songs from queue
         5- create add-at (merge with playtop? ask for int instead of bool?)
         1- help #bear
         1- volume #nrn
@@ -31,7 +32,6 @@ TODO:
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         6- remove author's songs from queue when author leaves vc #sming
-        3- queue.top() method to avoid get(0) (for readability)
         1- option to decide if __send_np goes into vc.channel or song.channel
 
 
@@ -49,6 +49,7 @@ DONE:
         8-f queue #bear
         8-f remove #bear
         8-f play_top #bear
+        7-f remove user's songs from queue
         7-f play_list #sming
         7-f play_list_shuffle #sming
         6-f clear #bear
@@ -64,7 +65,7 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
-        8- auto-leave VC if bot is alone #sming
+        8-f auto-leave VC if bot is alone #sming
         4-f remove unneeded async defs
         3-f make it multi server #bear
 
@@ -467,6 +468,28 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
                          icon_url=removed_song.requester.display_avatar.url)
         await interaction.response.send_message(embed=embed)
 
+
+@ tree.command(name="removeuser", description="Removes all of the songs added by a specific user")
+async def _remove_user(interaction: discord.Interaction, member: discord.Member):
+    if not await ext_pretests(interaction):
+        return
+    
+    queue = servers.get_player(interaction.guild.id).queue
+
+    # TODO either make this an int or fill out the send embed more
+    removed = []
+    i = 1
+    while i < len(queue.get()):
+        if queue.get(i).requester == member:
+            removed.append(queue.remove(i))
+            continue
+
+        # Only increment i when song.requester != member
+        i+=1
+
+    await send(interaction,
+                      title=f'Removed {len(removed)} songs.')
+    
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
 async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
