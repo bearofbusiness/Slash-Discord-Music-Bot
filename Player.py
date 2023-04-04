@@ -68,7 +68,6 @@ class Player:
         await self.player_event.wait()
         print("Player has been given GO signal")
         # This while will immediately terminate when player_abort is set.
-        # If it doesn't abort, swap back to threading.Event instead of asyncio
 
         # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
         while not self.player_abort.is_set():
@@ -127,6 +126,9 @@ class Player:
 
     async def wait_until_termination(self) -> True:
         return await self.player_abort.wait()
+
+    def is_playing(self) -> bool:
+        return not self.player_song_end.is_set()
 
     def set_loop(self, state: bool) -> None:
         self.looping = state
