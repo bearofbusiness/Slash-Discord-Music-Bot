@@ -46,4 +46,4 @@ class Queue:
         return len(self.list)
 
     def __str__(self) -> str:
-        return [str(song) for song in self.list]
+        return str([str(song) for song in self.list])
