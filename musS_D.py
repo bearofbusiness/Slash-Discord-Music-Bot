@@ -282,8 +282,9 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
             url=song.original_url,
             color=get_random_hex(song.id)
         )
-        embed.add_field(name=song.uploader, value=song.title)
+        embed.add_field(name=song.uploader, value=song.title, inline=False)
         embed.add_field(name='Requested by:', value=song.requester.mention)
+        embed.add_field(name='Duration:', value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
         await interaction.followup.send(embed=embed)
 
@@ -452,9 +453,9 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
             url=removed_song.original_url,
             color=get_random_hex(removed_song.id)
         )
-        embed.add_field(name=removed_song.uploader, value=removed_song.title)
-        embed.add_field(name='Requested by:',
-                        value=removed_song.requester.mention)
+        embed.add_field(name=removed_song.uploader, value=removed_song.title, inline=False)
+        embed.add_field(name='Requested by:', value=removed_song.requester.mention)
+        embed.add_field(name='Duration:', value=Song.parse_duration(removed_song.duration))
         embed.set_thumbnail(url=removed_song.thumbnail)
         embed.set_author(name=removed_song.requester.display_name,
                          icon_url=removed_song.requester.display_avatar.url)
@@ -541,8 +542,9 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
             url=song.original_url,
             color=get_random_hex(song.id)
         )
-        embed.add_field(name=song.uploader, value=song.title)
+        embed.add_field(name=song.uploader, value=song.title, inline=False)
         embed.add_field(name='Requested by:', value=song.requester.mention)
+        embed.add_field(name='Duration:', value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
         await interaction.followup.send(embed=embed)
 
