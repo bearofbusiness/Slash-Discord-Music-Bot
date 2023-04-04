@@ -271,29 +271,30 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
 
     song = await Song.from_link(interaction, link)
     # Check if song.populated didnt fail (duration is just a random attribute to check)
-    if song.duration is not None:
-        if top:
-            servers.get_player(interaction.guild_id).queue.add_at(song, 1)
-        else:
-            servers.get_player(interaction.guild_id).queue.add(song)
-        embed = get_embed(
-            interaction,
-            title='Added to Queue:',
-            url=song.original_url,
-            color=get_random_hex(song.id)
-        )
-        embed.add_field(name=song.uploader, value=song.title, inline=False)
-        embed.add_field(name='Requested by:', value=song.requester.mention)
-        embed.add_field(name='Duration:', value=Song.parse_duration(song.duration))
-        embed.set_thumbnail(url=song.thumbnail)
-        await interaction.followup.send(embed=embed)
-
-        # If the player isn't already running, start it.
-        if not servers.get_player(interaction.guild_id).is_started():
-            await servers.get_player(interaction.guild_id).start()
-
-    else:
+    if song.duration is None:
         await interaction.followup.send(embed=get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
+        return
+    
+    if top:
+        servers.get_player(interaction.guild_id).queue.add_at(song, 1)
+    else:
+        servers.get_player(interaction.guild_id).queue.add(song)
+    embed = get_embed(
+        interaction,
+        title='Added to Queue:',
+        url=song.original_url,
+        color=get_random_hex(song.id)
+    )
+    embed.add_field(name=song.uploader, value=song.title, inline=False)
+    embed.add_field(name='Requested by:', value=song.requester.mention)
+    embed.add_field(name='Duration:', value=Song.parse_duration(song.duration))
+    embed.set_thumbnail(url=song.thumbnail)
+    await interaction.followup.send(embed=embed)
+
+    # If the player isn't already running, start it.
+    if not servers.get_player(interaction.guild_id).is_started():
+        await servers.get_player(interaction.guild_id).start()
+        
 
 
 @ tree.command(name="skip", description="Skips the currently playing song")
