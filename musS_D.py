@@ -167,7 +167,6 @@ async def clean(id: int) -> None:
     await player.wait_until_termination()
     await player.vc.disconnect()
     servers.remove(id)
-    
 
 
 # Runs various tests to make sure a command is OK to run
@@ -220,14 +219,12 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     # If we don't care that a voice state was updated
     if member.guild.voice_client is None:
         return
-    
+
     # If the user was in the same VC as the bot
     if before.channel == member.guild.voice_client.channel:
         # If the bot is now alone
         if len(before.channel.members) == 1:
             await clean(member.guild.id)
-
-    
 
 
 ## COMMANDS ##
@@ -275,7 +272,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     if song.duration is None:
         await interaction.followup.send(embed=get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
         return
-    
+
     if top:
         servers.get_player(interaction.guild_id).queue.add_at(song, 1)
     else:
@@ -295,7 +292,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     # If the player isn't already running, start it.
     if not servers.get_player(interaction.guild_id).is_started():
         await servers.get_player(interaction.guild_id).start()
-        
+
 
 @ tree.command(name="skip", description="Skips the currently playing song")
 async def _skip(interaction: discord.Interaction) -> None:
@@ -311,7 +308,7 @@ async def _skip(interaction: discord.Interaction) -> None:
                           color=get_random_hex(player.song.id),
                           progress=present_tense)
         embed.set_thumbnail(url=player.song.thumbnail)
-        
+
         users = ''
         for user in player.song.vote.get():
             users = f'{user.name}, {users}'
@@ -324,8 +321,10 @@ async def _skip(interaction: discord.Interaction) -> None:
             voter_message = f"Vote passed by:"
             song_message = "Song that was voted on:"
 
-        embed.add_field(name="Initiated by:", value=player.song.vote.initiator.mention)
-        embed.add_field(name=song_message, value=player.song.title, inline=True)
+        embed.add_field(name="Initiated by:",
+                        value=player.song.vote.initiator.mention)
+        embed.add_field(name=song_message,
+                        value=player.song.title, inline=True)
         embed.add_field(name=voter_message, value=users, inline=False)
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
@@ -359,7 +358,6 @@ async def _skip(interaction: discord.Interaction) -> None:
         return
 
     await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
-        
 
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
@@ -460,9 +458,12 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
             url=removed_song.original_url,
             color=get_random_hex(removed_song.id)
         )
-        embed.add_field(name=removed_song.uploader, value=removed_song.title, inline=False)
-        embed.add_field(name='Requested by:', value=removed_song.requester.mention)
-        embed.add_field(name='Duration:', value=Song.parse_duration(removed_song.duration))
+        embed.add_field(name=removed_song.uploader,
+                        value=removed_song.title, inline=False)
+        embed.add_field(name='Requested by:',
+                        value=removed_song.requester.mention)
+        embed.add_field(name='Duration:',
+                        value=Song.parse_duration(removed_song.duration))
         embed.set_thumbnail(url=removed_song.thumbnail)
         embed.set_author(name=removed_song.requester.display_name,
                          icon_url=removed_song.requester.display_avatar.url)
@@ -473,7 +474,7 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
 async def _remove_user(interaction: discord.Interaction, member: discord.Member):
     if not await ext_pretests(interaction):
         return
-    
+
     queue = servers.get_player(interaction.guild.id).queue
 
     # TODO either make this an int or fill out the send embed more
@@ -485,11 +486,11 @@ async def _remove_user(interaction: discord.Interaction, member: discord.Member)
             continue
 
         # Only increment i when song.requester != member
-        i+=1
+        i += 1
 
     await send(interaction,
-                      title=f'Removed {len(removed)} songs.')
-    
+               title=f'Removed {len(removed)} songs.')
+
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
 async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
@@ -550,7 +551,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
         selection -= 1
         entry = query_result.get('entries')[selection]
 
-        song = Song(interaction, selection.get('original_url'), entry)
+        song = Song(interaction, entry.get('original_url'), entry)
 
         # Add song to queue
         servers.get_player(interaction.guild_id).queue.add(song)
@@ -563,7 +564,8 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
         )
         embed.add_field(name=song.uploader, value=song.title, inline=False)
         embed.add_field(name='Requested by:', value=song.requester.mention)
-        embed.add_field(name='Duration:', value=Song.parse_duration(song.duration))
+        embed.add_field(name='Duration:',
+                        value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
         await interaction.followup.send(embed=embed)
 
