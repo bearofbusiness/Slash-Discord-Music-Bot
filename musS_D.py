@@ -31,7 +31,7 @@ TODO:
         3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
-        6- remove author's songs from queue when author leaves vc #sming
+        6- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- option to decide if __send_np goes into vc.channel or song.channel
 
 
@@ -548,19 +548,9 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
     if selection:
         selection -= 1
-        # Break down the result into a dict Song
         entry = query_result.get('entries')[selection]
-        dict = {
-            'title': entry.get('title'),
-            'uploader': entry.get('channel'),
-            'audio': entry.get('url'),
-            'id': entry.get('id'),
-            'thumbnail': entry.get('thumbnail'),
-            'duration': entry.get('duration'),
-            'original_url': entry.get('webpage_url')
-        }
 
-        song = Song(interaction, dict.get('original_url'), dict)
+        song = Song(interaction, selection.get('original_url'), entry)
 
         # Add song to queue
         servers.get_player(interaction.guild_id).queue.add(song)
