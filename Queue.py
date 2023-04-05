@@ -21,12 +21,15 @@ class Queue:
         if index is None:
             return self.list
         return self.list[index]
-    
+
     def top(self) -> Song:
         return self.get(0)
 
     def shuffle(self) -> None:
-        random.shuffle(self.list)
+        temp_list = self.list.copy()
+        temp_list.pop(0)
+        random.shuffle(temp_list)
+        self.list = [self.list[0]] + temp_list
 
     def remove(self, index: int) -> Song:
         song = self.list.pop(index)
