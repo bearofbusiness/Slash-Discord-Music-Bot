@@ -1,7 +1,5 @@
 # imports for classes from other files
 from Player import Player
-from Vote import Vote
-
 
 class Servers():
     def __init__(self):
