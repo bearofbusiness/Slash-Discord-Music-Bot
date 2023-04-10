@@ -18,7 +18,6 @@ XX = '''
 TODO:
     9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
     8-fnt make forceskip admin-only
-    7- create general on_error event method
     6- alert user when songs were unable to be added inside _playlist()
     -make more commands
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
@@ -42,6 +41,7 @@ DONE:
     9-f fix automatic now_playing messages
     8-f make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
     8-f likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
+    7-fnt create general on_error event method
      - make more commands
         9-f pause #bear //vc.pause() and vc.resume()
         9-f resume #bear
@@ -228,6 +228,13 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         if len(before.channel.members) == 1:
             await clean(member.guild.id)
 
+
+# Error handler
+@bot.event
+async def on_error(interaction, error):
+    # Send generic error string
+    await send(interaction, "MaBalls ran into a problem.", error)
+    raise error
 
 ## COMMANDS ##
 
