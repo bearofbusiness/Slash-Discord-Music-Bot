@@ -40,8 +40,8 @@ TODO:
 DONE:
     9-f make listener for player.start returning to call clean() // found alternative that probably works better
     9-f fix automatic now_playing messages
-    8- make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
-    8- likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
+    8-f make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
+    8-f likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
      - make more commands
         9-f pause #bear //vc.pause() and vc.resume()
         9-f resume #bear
