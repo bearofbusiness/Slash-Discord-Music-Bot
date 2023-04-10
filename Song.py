@@ -34,6 +34,10 @@ class Song:
     # Populate all None fields
     async def populate(self) -> None:
         data = await YTDLInterface.query_link(self.original_url)
+        # If there's an unexpected list of entries
+        if data.get('entries') is not None:
+            # Get the first result and continue as normal
+            data = data.get('entries')[0]
         self.title = data.get('title')
         self.uploader = data.get('channel')
         self.audio = data.get('url')

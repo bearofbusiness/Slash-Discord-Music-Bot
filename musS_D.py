@@ -17,22 +17,22 @@ XX = '''
 #-f is just finished
 TODO:
     9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
-    8- make YTDLInterface select the first result in the event that there are multiple within query_link
-    8- likewise, make query_search able to handle a lack of entries[]
     8-fnt make forceskip admin-only
     7- create general on_error event method
     6- alert user when songs were unable to be added inside _playlist()
     -make more commands
-        5- create add-at (merge with playtop? ask for int instead of bool?)
+        1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
+            1- option to decide if __send_np goes into vc.channel or song.channel
+            1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
+
         1- move command #bear 
         3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
-        6- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
-        1- option to decide if __send_np goes into vc.channel or song.channel
+        
 
 
 
@@ -40,6 +40,8 @@ TODO:
 DONE:
     9-f make listener for player.start returning to call clean() // found alternative that probably works better
     9-f fix automatic now_playing messages
+    8- make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
+    8- likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
      - make more commands
         9-f pause #bear //vc.pause() and vc.resume()
         9-f resume #bear
@@ -506,6 +508,10 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if playlist.get('_type') != "playlist":
         await send(interaction, "Not a playlist.", ephemeral=True)
         return
+    
+    # Make sure entries[] exists
+    if playlist.get('entries') is None:
+        await send(interaction, "Something went wrong...", "Expected entries[] recieved NoneType, try again with a different link?")
 
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
