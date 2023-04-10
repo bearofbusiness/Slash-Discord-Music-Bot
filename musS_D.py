@@ -18,7 +18,7 @@ XX = '''
 TODO:
     9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
     8-fnt make forceskip admin-only
-    6- alert user when songs were unable to be added inside _playlist()
+    6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear
@@ -524,17 +524,29 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if shuffle:
         random.shuffle(playlist.get("entries"))
 
-    for entry in playlist.get("entries"):
-        # If entry didn't populate properly, skip it.
+    errored_song_positions = []
+
+    for i, entry in enumerate(playlist.get("entries")):
+        # If entry didn't populate properly, take note and skip it.
         if entry.get("duration") is None:
+            # Convert to human-readable count
+            errored_song_positions.append(i+1)
             continue
         # Feed the Song the entire entry, saves time by not needing to create and fill a dict
         song = Song(interaction, link, entry)
         player.queue.add(song)
 
+    
     embed = get_embed(
         interaction,
         title='Added playlist to Queue:',
+        # Sorry for this being a bit of a mess
+        # If there were errored songs, generate a content that describes them
+        content=None if len(errored_song_positions) == 0 else f'''
+        The {'song at position' if len(errored_song_positions) == 1 else 'songs at positions'}
+        {str(errored_song_positions)[1:-1]}
+        failed to load properly, please try with a different URL.
+        ''',
         url=playlist.get('original_url'),
         color=get_random_hex(playlist.get('id'))
     )
