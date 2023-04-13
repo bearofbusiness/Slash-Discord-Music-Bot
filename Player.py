@@ -1,13 +1,12 @@
 import asyncio
 import discord
-import random
+
+# Our imports
+import Utils
 from Queue import Queue
-from Song import Song
 from YTDLInterface import YTDLInterface
 
 # Class to make what caused the error more apparent
-
-
 class VoiceError(Exception):
     pass
 
@@ -31,30 +30,6 @@ class Player:
         self.queue_looping = False
 
         self.vc = vc
-
-    # Private method to generate and send a now_playing message
-    # Yes, I know this is a bunch of code from musS_D but it would have
-    # been so much harder to implement a listener than to do this
-    async def __send_np(self, song: Song) -> None:
-        random.seed(song.id)
-        color = random.randint(0, 16777215)
-        title_message = f'Now Playing:\t{":repeat: " if self.looping else ""}{":repeat_one: " if self.queue_looping else ""}'
-        embed = discord.Embed(
-            title=title_message,
-            url=song.original_url,
-            description=f'{song.title} -- {song.uploader}',
-            color=color
-        )
-        embed.add_field(name='Duration:', value=song.parse_duration(
-            song.duration), inline=True)
-        embed.add_field(name='Requested by:', value=song.requester.mention)
-        embed.set_image(url=song.thumbnail)
-        embed.set_author(name=song.requester.display_name,
-                         icon_url=song.requester.display_avatar.url)
-        # Delete last now_playing if there is one
-        if self.last_np_message is not None:
-            await self.last_np_message.delete()
-        self.last_np_message = await self.vc.channel.send(embed=embed)
         
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
@@ -78,7 +53,14 @@ class Player:
             # Set the now-populated top song to the playing song
             self.song = self.queue.top()
 
-            await self.__send_np(self.song)
+
+            embed = Utils.get_now_playing_embed(self)
+
+            # Delete last now_playing if there is one
+            if self.last_np_message is not None:
+                await self.last_np_message.delete()
+            self.last_np_message = await self.vc.channel.send(embed=embed)
+
 
             self.song.start()
 
