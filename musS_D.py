@@ -99,8 +99,6 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         Utils.pront("Bot is ready", lvl="OKGREEN")
         await self.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} Servers."))
-    
-    
 
 
 # Global Variables
@@ -209,8 +207,8 @@ async def _skip(interaction: discord.Interaction) -> None:
     async def skip_msg(title: str = '', content: str = '', present_tense: bool = True, ephemeral: bool = False) -> None:
 
         embed = Utils.get_embed(interaction, title, content,
-                          color=Utils.get_random_hex(player.song.id),
-                          progress=present_tense)
+                                color=Utils.get_random_hex(player.song.id),
+                                progress=present_tense)
         embed.set_thumbnail(url=player.song.thumbnail)
 
         users = ''
@@ -316,7 +314,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
             break
         song = player.queue.get()[i]
 
-        embed.add_field(name=f"`{i}`: {song.title}",
+        embed.add_field(name=f"`{i }`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
 
     embed.set_footer(
@@ -328,6 +326,9 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
     if not await Utils.ext_pretests(interaction):
+        return
+    if (Servers.get_player(interaction.guild_id).song is None):
+        await Utils.send(interaction, title="Nothing is playing", content="You should add something")
         return
     await interaction.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(interaction.guild_id), progress=True))
 
@@ -375,7 +376,7 @@ async def _remove_user(interaction: discord.Interaction, member: discord.Member)
         i += 1
 
     await Utils.send(interaction,
-               title=f'Removed {len(removed)} songs.')
+                     title=f'Removed {len(removed)} songs.')
 
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
@@ -392,8 +393,6 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if playlist.get('_type') != "playlist" or playlist.get('thumbnails') is None:
         await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
-
-    
 
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
@@ -477,15 +476,15 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     # player = Servers.get_player(interaction.guild_id)
     embeds = []
     embeds.append(Utils.get_embed(interaction,
-                            title="Search results:",
-                            ))
+                                  title="Search results:",
+                                  ))
     for i, entry in enumerate(query_result.get('entries')):
         embed = Utils.get_embed(interaction,
-                          title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
-                          url=entry.get('webpage_url'),
-                          color=Utils.get_random_hex(
-                                entry.get("id"))
-                          )
+                                title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
+                                url=entry.get('webpage_url'),
+                                color=Utils.get_random_hex(
+                                    entry.get("id"))
+                                )
         embed.add_field(name='Duration:', value=Song.parse_duration(
             entry.get('duration')), inline=True)
         embed.set_thumbnail(url=entry.get('thumbnail'))
@@ -587,9 +586,11 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 # Custom error handler
+
+
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-        await interaction.channel.send(embed = Utils.get_embed(interaction, title="MaBalls ran into an issue.", content=f'```ansi\n{error}```'))
-        traceback.print_exc()
+    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into an issue.", content=f'```ansi\n{error}```'))
+    traceback.print_exc()
 tree.on_error = on_tree_error
 
 bot.run(key)
