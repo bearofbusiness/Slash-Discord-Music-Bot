@@ -2,6 +2,7 @@ import discord
 import math
 import os
 import random
+import traceback
 from dotenv import load_dotenv
 
 # importing other classes from other files
@@ -587,8 +588,8 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
 
 # Custom error handler
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-        await interaction.channel.send(embed = Utils.get_embed(interaction, title="MaBalls ran into an issue.", content=error))
-        raise error
+        await interaction.channel.send(embed = Utils.get_embed(interaction, title="MaBalls ran into an issue.", content=f'```ansi\n{error}```'))
+        traceback.print_exc()
 tree.on_error = on_tree_error
 
 bot.run(key)
