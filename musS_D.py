@@ -11,6 +11,7 @@ from Song import Song
 from Servers import Servers
 from Player import Player
 from YTDLInterface import YTDLInterface
+from Pages import Pages
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
@@ -20,15 +21,15 @@ TODO:
     8-fnt make forceskip admin-only
     6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
+        3- merge play and playlist
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear
         1- volume #nrn
         1- settings #nrn //after muliti server
-            1- option to decide if __send_np goes into vc.channel or song.channel
-            1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
+        1- option to decide if __send_np goes into vc.channel or song.channel
+        1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
 
         1- move command #bear 
-        3- merge play and playlist
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         
@@ -515,7 +516,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if playlist.get('_type') != "playlist":
         await send(interaction, "Not a playlist.", ephemeral=True)
         return
-    
+
     # Make sure entries[] exists
     if playlist.get('entries') is None:
         await send(interaction, "Something went wrong...", "Expected entries[] recieved NoneType, try again with a different link?")
@@ -536,7 +537,6 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         song = Song(interaction, link, entry)
         player.queue.add(song)
 
-    
     embed = get_embed(
         interaction,
         title='Added playlist to Queue:',
@@ -669,6 +669,47 @@ async def _queue_loop(interaction: discord.Interaction) -> None:
     player = servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
     await send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
+
+
+@ tree.command(name="help", description="Shows the help menu")
+@ discord.app_commands.describe(commands="choose a command to see more info")
+@ discord.app_commands.choices(commands=[
+    # discord.app_commands.Choice(name="none", value=""),
+    discord.app_commands.Choice(name="ping", value="ping"),
+    discord.app_commands.Choice(name="help", value="help"),
+    discord.app_commands.Choice(name="join", value="join"),
+    discord.app_commands.Choice(name="leave", value="leave"),
+    discord.app_commands.Choice(name="play", value="play"),
+    discord.app_commands.Choice(name="skip", value="skip"),
+    discord.app_commands.Choice(name="forceskip", value="forceskip"),
+    discord.app_commands.Choice(name="queue", value="queue"),
+    discord.app_commands.Choice(name="now", value="now"),
+    discord.app_commands.Choice(name="remove", value="remove"),
+    discord.app_commands.Choice(name="removeuser", value="removeuser"),
+    discord.app_commands.Choice(name="playlist", value="playlist"),
+    discord.app_commands.Choice(name="search", value="search"),
+    discord.app_commands.Choice(name="clear", value="clear"),
+    discord.app_commands.Choice(name="shuffle", value="shuffle"),
+    discord.app_commands.Choice(name="pause", value="pause"),
+    discord.app_commands.Choice(name="resume", value="resume"),
+    discord.app_commands.Choice(name="loop", value="loop"),
+    discord.app_commands.Choice(name="queueloop", value="queueloop")
+])
+async def _help(interaction: discord.Interaction, commands: discord.app_commands.Choice[str] = "") -> None:
+    if not commands:
+        main_embed = Pages.main_page
+        embed = get_embed(
+            interaction, title=main_embed["title"], content=main_embed["description"])
+        for field in main_embed["fields"]:
+            embed.add_field(name=field["name"], value=field["value"])
+        await interaction.response.send_message(embed=embed)
+        return
+    command_embed_dict = Pages.get_page(commands.value)
+    embed = get_embed(
+        interaction, title=command_embed_dict["title"], content=command_embed_dict["description"])
+    for field in command_embed_dict["fields"]:
+        embed.add_field(name=field["name"], value=field["value"])
+    await interaction.response.send_message(embed=embed)
 
 
 @ bot.event
