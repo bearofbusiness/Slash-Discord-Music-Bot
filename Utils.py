@@ -99,6 +99,7 @@ async def clean(id: int) -> None:
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
         await player.last_np_message.delete()
+    player.queue.clear()
     await player.vc.disconnect()
     Servers.remove(id)
 
