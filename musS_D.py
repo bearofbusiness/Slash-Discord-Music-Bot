@@ -25,12 +25,10 @@ TODO:
     -make more commands
         3- merge play and playlist
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
-        1- help #bear
-        1- volume #nrn
-        1- settings #nrn //after muliti server
+        1- help #bear //done but needs to be updated
+        1- settings #bear
         1- option to decide if __send_np goes into vc.channel or song.channel
         1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
-
         1- move command #bear 
     -other
         8- perform link saniti*zation before being sent to yt-dlp
@@ -589,7 +587,7 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
 
 
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into an issue.", content=f'```ansi\n{error}```'))
+    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
     traceback.print_exc()
 tree.on_error = on_tree_error
 
