@@ -35,6 +35,8 @@ TODO:
         7- only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
         5- rename get_embed's content argument to description
         5- access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
+        ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
+        ^^^ it's likely fine but still, race conditions.
         
 
 

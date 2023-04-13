@@ -96,7 +96,9 @@ def get_now_playing_embed(player: Player, progress: bool=False) -> discord.Embed
 async def clean(id: int) -> None:
     player = Servers.get_player(id)
     player.terminate_player()
-    await player.wait_until_termination()
+    # Delete a to-be defunct now_playing message
+    if player.last_np_message:
+        await player.last_np_message.delete()
     await player.vc.disconnect()
     Servers.remove(id)
 

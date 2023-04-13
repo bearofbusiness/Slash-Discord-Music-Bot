@@ -15,7 +15,6 @@ class Player:
     def __init__(self, vc: discord.VoiceClient) -> None:
         self.player_event = asyncio.Event()
         self.player_abort = asyncio.Event()
-        self.player_abort_finished = asyncio.Event()
         self.player_song_end = asyncio.Event()
         self.player_task = asyncio.create_task(
             self.__player())  # self.player_event
@@ -89,13 +88,6 @@ class Player:
                 # Wait until it has a song inside it again
                 await self.queue.wait_until_has_songs()
 
-        # PLAYER HAS BEEN TERMINATED
-        # Delete a to-be defunct now_playing message
-        if self.last_np_message:
-            await self.last_np_message.delete()
-        # Signal to everything else that player has ended
-        self.player_abort_finished.set()
-
     # Raise flag to start the player
     async def start(self) -> None:
         self.player_event.set()
@@ -107,8 +99,6 @@ class Player:
     def terminate_player(self) -> None:
         self.player_abort.set()
 
-    async def wait_until_termination(self) -> True:
-        return await self.player_abort_finished.wait()
 
     def is_playing(self) -> bool:
         return not self.player_song_end.is_set()
