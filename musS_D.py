@@ -585,13 +585,10 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
         embed.add_field(name=field["name"], value=field["value"])
     await interaction.response.send_message(embed=embed)
 
+# Custom error handler
+async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+        await interaction.channel.send(embed = discord.Embed(title="MaBalls ran into an issue.", description=error))
 
-async def on_tree_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
-        # get the original exception
-        error = getattr(error, 'original', error)
-        
-        send(interaction, title="Error" content=error)
-
-bot.tree.on_error = on_tree_error
+tree.on_error = on_tree_error
 
 bot.run(key)
