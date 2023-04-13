@@ -587,7 +587,7 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
 
 # Custom error handler
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-        await interaction.channel.send(embed = discord.Embed(title="MaBalls ran into an issue.", description=error))
+        await interaction.channel.send(embed = Utils.get_embed(interaction, title="MaBalls ran into an issue.", content=error))
 
 tree.on_error = on_tree_error
 
