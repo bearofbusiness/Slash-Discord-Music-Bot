@@ -2,17 +2,20 @@
 from Player import Player
 
 class Servers():
-    def __init__(self):
-        self.dict = {}
+    dict = {}
 
-    def add(self, server: str | int, player: Player) -> None:
-        self.dict[str(server)] = player
+    @staticmethod
+    def add(server: str | int, player: Player) -> None:
+        Servers.dict[str(server)] = player
 
-    def get_player(self, server: str | int) -> Player:
-        return self.dict.get(str(server))
+    @staticmethod
+    def get_player(server: str | int) -> Player:
+        return Servers.dict.get(str(server))
 
-    def set_player(self, server: str | int, player: Player):
-        self.dict.update({server : player})
+    @staticmethod
+    def set_player(server: str | int, player: Player):
+        Servers.dict.update({server : player})
 
-    def remove(self, server: str) -> None:
-        del self.dict[str(server)]
+    @staticmethod
+    def remove(server: str) -> None:
+        del Servers.dict[str(server)]
