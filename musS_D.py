@@ -91,6 +91,8 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
         pront("Bot is ready", lvl="OKGREEN")
         await self.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} Servers."))
+    
+    
 
 
 # Global Variables
@@ -712,10 +714,12 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 
-@ bot.event
-async def on_error(event, *args, **kwargs) -> None:
-    discord.embed(
-        title='Error', description=f'```{event}\n{args}\n{kwargs}```')
+async def on_tree_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+        # get the original exception
+        error = getattr(error, 'original', error)
+        
+        send(interaction, title="Error" content=error)
 
+bot.tree.on_error = on_tree_error
 
 bot.run(key)
