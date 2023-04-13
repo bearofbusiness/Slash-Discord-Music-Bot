@@ -7,6 +7,8 @@ from Queue import Queue
 from YTDLInterface import YTDLInterface
 
 # Class to make what caused the error more apparent
+
+
 class VoiceError(Exception):
     pass
 
@@ -30,7 +32,7 @@ class Player:
         self.queue_looping = False
 
         self.vc = vc
-        
+
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
         if error:
@@ -53,14 +55,12 @@ class Player:
             # Set the now-populated top song to the playing song
             self.song = self.queue.top()
 
-
             embed = Utils.get_now_playing_embed(self)
 
             # Delete last now_playing if there is one
             if self.last_np_message is not None:
                 await self.last_np_message.delete()
             self.last_np_message = await self.vc.channel.send(embed=embed)
-
 
             self.song.start()
 
@@ -83,6 +83,8 @@ class Player:
                 self.queue.add(self.song)
                 continue
 
+            self.song = None
+
             # Check if the queue is empty
             if not self.queue.get():
                 # Wait until it has a song inside it again
@@ -98,7 +100,6 @@ class Player:
 
     def terminate_player(self) -> None:
         self.player_abort.set()
-
 
     def is_playing(self) -> bool:
         return not self.player_song_end.is_set()
