@@ -18,6 +18,7 @@ XX = '''
 #-f is just finished
 TODO:
     9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
+    8- make play and playlist only join VC if the provided queries are valid (prevents bot from joining to just do nothing)
     8-fnt make forceskip admin-only
     6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
@@ -387,13 +388,11 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
     playlist = await YTDLInterface.query_link(link)
 
-    if playlist.get('_type') != "playlist":
-        await Utils.send(interaction, "Not a playlist.", ephemeral=True)
+    if playlist.get('_type') != "playlist" or playlist.get('thumbnails') is None:
+        await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
 
-    # Make sure entries[] exists
-    if playlist.get('entries') is None:
-        await Utils.send(interaction, "Something went wrong...", "Expected entries[] recieved NoneType, try again with a different link?")
+    
 
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
@@ -428,6 +427,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     embed.add_field(
         name='Length:', value=f'{playlist.get("playlist_count")} songs')
     embed.add_field(name='Requested by:', value=interaction.user.mention)
+    # Get the highest resolution thumbnail available
     embed.set_thumbnail(url=playlist.get('thumbnails')[-1].get('url'))
 
     await interaction.followup.send(embed=embed)
