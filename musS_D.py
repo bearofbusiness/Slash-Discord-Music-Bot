@@ -32,7 +32,7 @@ TODO:
         1- move command #bear 
     -other
         8- perform link saniti*zation before being sent to yt-dlp
-        8- fix auto now playing messages not deleting
+        7- only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
         5- rename get_embed's content argument to description
         5- access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
         
@@ -71,6 +71,7 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
+        8-f fix auto now playing messages not deleting //found why, it's because the player.wait_until_termination() returns instantly once we tell the player to close
         8-f auto-leave VC if bot is alone #sming
         4-f remove unneeded async defs
         3-f make it multi server #bear
