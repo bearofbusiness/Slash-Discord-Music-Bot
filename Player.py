@@ -89,7 +89,7 @@ class Player:
                 await self.queue.wait_until_has_songs()
 
     # Raise flag to start the player
-    async def start(self) -> None:
+    def start(self) -> None:
         self.player_event.set()
         return
 
