@@ -191,7 +191,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
 
     # If the player isn't already running, start it.
     if not Servers.get_player(interaction.guild_id).is_started():
-        await Servers.get_player(interaction.guild_id).start()
+        Servers.get_player(interaction.guild_id).start()
 
 
 @ tree.command(name="skip", description="Skips the currently playing song")
@@ -432,7 +432,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
     # If the player isn't already running, start it.
     if not Servers.get_player(interaction.guild_id).is_started():
-        await Servers.get_player(interaction.guild_id).start()
+        Servers.get_player(interaction.guild_id).start()
 
 
 @ tree.command(name="search", description="Searches YouTube for a given query")
@@ -468,7 +468,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
         # If the player isn't already running, start it.
         if not Servers.get_player(interaction.guild_id).is_started():
-            await Servers.get_player(interaction.guild_id).start()
+            Servers.get_player(interaction.guild_id).start()
         return
 
     # player = Servers.get_player(interaction.guild_id)
