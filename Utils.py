@@ -92,9 +92,8 @@ def get_now_playing_embed(player: Player, progress: bool=False) -> discord.Embed
         return embed
 
 
-# Cleans up and closes the player
-async def clean(id: int) -> None:
-    player = Servers.get_player(id)
+# Cleans up and closes a player
+async def clean(player: Player) -> None:
     player.terminate_player()
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
@@ -119,7 +118,7 @@ async def pretests(interaction: discord.Interaction) -> bool:
 async def ext_pretests(interaction: discord.Interaction) -> bool:
     if not await pretests(interaction):
         return False
-
+    # TODO This does not actually check if audio is playing at this exact moment, things can still be populating
     if not Servers.get_player(interaction.guild_id).is_started():
         await interaction.response.send_message("This command can only be used while a song is playing", ephemeral=True)
         return False
