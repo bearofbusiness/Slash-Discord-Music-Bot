@@ -21,11 +21,11 @@ class Player:
         self.player_song_end = asyncio.Event()
         # Immediately set the Event because audio is not currently playing
         self.player_song_end.set()
-        
+
         self.queue = Queue()
         self.queue.add(song)
 
-        self.song = song
+        self.song = None
 
         self.last_np_message = None
 
@@ -51,7 +51,7 @@ class Player:
         while not self.player_abort.is_set():
             
             # Get the top song in queue ready to play
-            await self.queue.top().populate()
+            await self.queue.get(0).populate()
 
             # Set the now-populated top song to the playing song
             self.song = self.queue.remove(0)
