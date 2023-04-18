@@ -117,7 +117,11 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     if before.channel == member.guild.voice_client.channel:
         # If the bot is now alone
         if len(before.channel.members) == 1:
-            await Utils.clean(member.guild.id)
+            player = Servers.get_player(member.guild.id)
+            if player is None:
+                member.guild.voice_client.disconnect()
+            else:
+                await Utils.clean(player)
 
 
 ## COMMANDS ##

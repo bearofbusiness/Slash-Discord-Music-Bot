@@ -48,7 +48,7 @@ class Player:
 
         # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
         while not self.player_abort.is_set():
-            self.player_song_end.clear()
+            
             # Get the top song in queue ready to play
             await self.queue.top().populate()
 
@@ -61,6 +61,9 @@ class Player:
             if self.last_np_message is not None:
                 await self.last_np_message.delete()
             self.last_np_message = await self.vc.channel.send(embed=embed)
+
+            # Clear player_song_end here because this is when we start playing audio again
+            self.player_song_end.clear()
 
             self.song.start()
 
@@ -87,8 +90,8 @@ class Player:
 
             # Check if the queue is empty
             if not self.queue.get():
-                # Wait until it has a song inside it again
-                await self.queue.wait_until_has_songs()
+                # Clean up and delete player
+                Utils.clean(self)
 
     # Raise flag to start the player
     def start(self) -> None:
