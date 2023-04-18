@@ -19,7 +19,10 @@ class Servers():
     @staticmethod
     def remove(server: int | Player) -> None:
         if type(server) == Player:
-            # Use a dict comprehension to remove the Player from the dict
-            Servers.dict.items = {key:val for key, val in Servers.dict.items() if val != server}
+            for key, value in Servers.dict.items():
+                if value == server:
+                    del Servers.dict[key]
+                    return
+            print("Something went wrong, attempted to delete nonexistent Player.")
             return
         del Servers.dict[str(server)]
