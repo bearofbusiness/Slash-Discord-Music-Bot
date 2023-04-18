@@ -61,10 +61,10 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     if progress:
         player = Servers.get_player(interaction.guild_id)
         if player is not None and player.queue.get():
-            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.top())}'
+            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,
-                             icon_url=player.queue.top().thumbnail)
+                             icon_url=player.song.thumbnail)
     return embed
 
 

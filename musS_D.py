@@ -292,7 +292,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
         await Utils.send(interaction, title='Queue is empty!', ephemeral=True)
         return
     embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
-        player.queue.top().id), progress=False)
+        player.song.id), progress=False)
     page_size = 5
     queue_len = len(player.queue)
     min_queue_index = page_size * (page - 1)

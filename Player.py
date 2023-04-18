@@ -52,7 +52,7 @@ class Player:
             await self.queue.top().populate()
 
             # Set the now-populated top song to the playing song
-            self.song = self.queue.top()
+            self.song = self.queue.remove(0)
 
             embed = Utils.get_now_playing_embed(self)
 
@@ -74,11 +74,9 @@ class Player:
 
             # Sleep player until song ends
             await self.player_song_end.wait()
-            # If song is looping, continue from top
+            # If song is looping, re-add song to the top of queue
             if self.looping:
-                continue
-
-            self.queue.remove(0)
+                self.queue.add_at(self.song, 0)
 
             # If we're queue looping, re-add the removed song to bottom of queue
             if self.queue_looping:

@@ -22,9 +22,6 @@ class Queue:
             return self.list
         return self.list[index]
 
-    def top(self) -> Song:
-        return self.get(0)
-
     def shuffle(self) -> None:
         temp_list = self.list.copy()
         temp_list.pop(0)
