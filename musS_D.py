@@ -317,7 +317,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
             break
         song = player.queue.get()[i]
 
-        embed.add_field(name=f"`{i }`: {song.title}",
+        embed.add_field(name=f"`{i + 1}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
 
     embed.set_footer(
