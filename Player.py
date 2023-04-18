@@ -4,6 +4,7 @@ import discord
 # Our imports
 import Utils
 from Queue import Queue
+from Song import Song
 from YTDLInterface import YTDLInterface
 
 # Class to make what caused the error more apparent
@@ -14,17 +15,15 @@ class VoiceError(Exception):
 
 
 class Player:
-    def __init__(self, vc: discord.VoiceClient) -> None:
+    def __init__(self, vc: discord.VoiceClient, song: Song) -> None:
         self.player_event = asyncio.Event()
         self.player_abort = asyncio.Event()
         self.player_song_end = asyncio.Event()
-        self.player_task = asyncio.create_task(
-            self.__player())  # self.player_event
 
         self.queue = Queue()
+        self.queue.add(song)
 
-        self.song = None  # = self.queue.get(0)#this will
-        # To avoid ^ erroring maybe force Player to be initialized with a Song or Queue?
+        self.song = song
 
         self.last_np_message = None
 
@@ -33,6 +32,10 @@ class Player:
 
         self.vc = vc
 
+        # Create task to run __player
+        self.player_task = asyncio.create_task(
+            self.__player())  # self.player_event
+
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
         if error:
@@ -40,12 +43,8 @@ class Player:
         self.player_song_end.set()
 
     async def __player(self) -> None:
-        print("Initializing Player.")
-
-        await self.player_event.wait()
-        print("Player has been given GO signal")
+        Utils.pront("Player initialized.", "OKGREEN")
         # This while will immediately terminate when player_abort is set.
-
         # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
         while not self.player_abort.is_set():
             
@@ -92,14 +91,6 @@ class Player:
             if not self.queue.get():
                 # Clean up and delete player
                 Utils.clean(self)
-
-    # Raise flag to start the player
-    def start(self) -> None:
-        self.player_event.set()
-        return
-
-    def is_started(self) -> bool:
-        return self.player_event.is_set()
 
     def terminate_player(self) -> None:
         self.player_abort.set()

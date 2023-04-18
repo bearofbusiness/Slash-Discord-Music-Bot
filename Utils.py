@@ -60,7 +60,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = Servers.get_player(interaction.guild_id)
-        if player is not None and player.is_started() and player.queue.get():
+        if player is not None and player.queue.get():
             footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.top())}'
 
             embed.set_footer(text=footer_message,
@@ -102,44 +102,34 @@ async def clean(player: Player) -> None:
     await player.vc.disconnect()
     Servers.remove(id)
 
+# Makes things more organized by being able to access Utils.Pretests.[name of pretest]
+class Pretests:
 
-# Runs various tests to make sure a command is OK to run
-async def pretests(interaction: discord.Interaction) -> bool:
-    if interaction.guild.voice_client is None:
-        await interaction.response.send_message("MaBalls is not in a voice channel", ephemeral=True)
-        return False
+    # Checks if voice channel states are right
+    async def voice_channel(interaction: discord.Interaction) -> bool:
+        if interaction.guild.voice_client is None:
+            await interaction.response.send_message("MaBalls is not in a voice channel", ephemeral=True)
+            return False
 
-    if interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
-        return False
-    return True
+        if interaction.user.voice.channel != interaction.guild.voice_client.channel:
+            await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
+            return False
+        return True
 
-
-async def ext_pretests(interaction: discord.Interaction) -> bool:
-    if not await pretests(interaction):
-        return False
-    # TODO This does not actually check if audio is playing at this exact moment, things can still be populating
-    if not Servers.get_player(interaction.guild_id).is_started():
-        await interaction.response.send_message("This command can only be used while a song is playing", ephemeral=True)
-        return False
-
-    return True
-
-
-async def join_pretests(interaction: discord.Integration) -> bool:
-    # Check if author is in VC
-    if interaction.user.voice is None:
-        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
-        return False
-    # Exception to pretests() because it will join a voice channel
-
-    # If not already in VC, join
-    if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
-        Servers.add(interaction.guild_id, Player(vc))
-    # Otherwise, make sure the user is in the same channel
-    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
-        return False
-    return True
+    # Expanded test for if a Player exists
+    async def player_exists(interaction: discord.Interaction) -> bool:
+        if not await Player.voice_channel(interaction):
+            return False
+        if Servers.get_player(interaction.guild_id) is None:
+            await interaction.response.send_message("This command can only be used while a queue exists", ephemeral=True)
+            return False
+        return True
+    
+    # Expanded test for if audio is currently playing from a Player
+    async def playing_audio(interaction: discord.Interaction) -> bool:
+        if not await Player.player_exists(interaction):
+            return False
+        if not Servers.get_player(interaction.guild_id).is_playing():
+            await interaction.response.send_message("This command can only be used while a song is playing.")
+            return False
+        return True
