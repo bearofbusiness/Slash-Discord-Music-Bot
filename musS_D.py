@@ -148,8 +148,12 @@ async def _leave(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.voice_channel(interaction):
         return
 
-    # Disconnect from the voice channel
-    await Utils.clean(interaction.guild_id)
+    # Clean up if needed
+    if Servers.get_player(interaction.guild_id) is not None:
+        await Utils.clean(Servers.get_player(interaction.guild_id))
+    # Otherwise, just leave VC
+    else:
+        await interaction.guild.voice_client.disconnect()
     await Utils.send(interaction, title='Left!', content=':white_check_mark:', progress=False)
 
 
