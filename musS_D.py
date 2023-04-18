@@ -173,17 +173,19 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         await interaction.followup.send(embed=Utils.get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
         return
     
-    # If not in a VC
+    # If not in a VC, join
     if interaction.guild.voice_client is None:
         channel = interaction.user.voice.channel
         vc = await channel.connect(self_deaf=True)
+
+    # If player does not exist, create one.
+    if Servers.get_player(interaction.guild_id) is None:
         Servers.add(interaction.guild_id, Player(vc, song))
+    # If it does, add the song to queue
+    elif top:
+        Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
     else:
-        # If we already are it means a Queue already exists, so add the song to it
-        if top:
-            Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
-        else:
-            Servers.get_player(interaction.guild_id).queue.add(song)
+        Servers.get_player(interaction.guild_id).queue.add(song)
 
 
     embed = Utils.get_embed(
@@ -402,6 +404,11 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
 
+    # If not in a VC, join
+    if interaction.guild.voice_client is None:
+        channel = interaction.user.voice.channel
+        vc = await channel.connect(self_deaf=True)
+
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
         random.shuffle(playlist.get("entries"))
@@ -417,11 +424,10 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         # Feed the Song the entire entry, saves time by not needing to create and fill a dict
         song = Song(interaction, link, entry)
 
-        # Add song to Player, create it if it doesn't exist
-        if interaction.guild.voice_client is None:
-            channel = interaction.user.voice.channel
-            vc = await channel.connect(self_deaf=True)
+        # If player does not exist, create one.
+        if Servers.get_player(interaction.guild_id) is None:
             Servers.add(interaction.guild_id, Player(vc, song))
+        # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
 
@@ -471,11 +477,15 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
         song = Song(interaction, entry.get('original_url'), entry)
 
-        # Add song to Player, create it if it doesn't exist
+        # If not in a VC, join
         if interaction.guild.voice_client is None:
             channel = interaction.user.voice.channel
             vc = await channel.connect(self_deaf=True)
+
+        # If player does not exist, create one.
+        if Servers.get_player(interaction.guild_id) is None:
             Servers.add(interaction.guild_id, Player(vc, song))
+        # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
 
