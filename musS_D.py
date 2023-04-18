@@ -379,7 +379,7 @@ async def _remove_user(interaction: discord.Interaction, member: discord.Member)
 
     # TODO either make this an int or fill out the send embed more
     removed = []
-    i = 1
+    i = 0
     while i < len(queue.get()):
         if queue.get(i).requester == member:
             removed.append(queue.remove(i))
