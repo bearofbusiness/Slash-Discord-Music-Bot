@@ -179,12 +179,11 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     
     # If not in a VC, join
     if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
+        await interaction.user.voice.channel.connect(self_deaf=True)
 
     # If player does not exist, create one.
     if Servers.get_player(interaction.guild_id) is None:
-        Servers.add(interaction.guild_id, Player(vc, song))
+        Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
     # If it does, add the song to queue
     elif top:
         Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
@@ -410,8 +409,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
     # If not in a VC, join
     if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
+        await interaction.user.voice.channel.connect(self_deaf=True)
 
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
@@ -430,7 +428,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
         # If player does not exist, create one.
         if Servers.get_player(interaction.guild_id) is None:
-            Servers.add(interaction.guild_id, Player(vc, song))
+            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
         # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
@@ -483,12 +481,11 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
         # If not in a VC, join
         if interaction.guild.voice_client is None:
-            channel = interaction.user.voice.channel
-            vc = await channel.connect(self_deaf=True)
+            await interaction.user.voice.channel.connect(self_deaf=True)
 
         # If player does not exist, create one.
         if Servers.get_player(interaction.guild_id) is None:
-            Servers.add(interaction.guild_id, Player(vc, song))
+            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
         # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
