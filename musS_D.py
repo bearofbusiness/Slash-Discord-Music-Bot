@@ -122,28 +122,20 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 await Utils.clean(player)
 
 
-# Error handler
-@bot.event
-async def on_error(interaction, error):
-    # Send generic error string
-    await Utils.send(interaction, "MaBalls ran into a problem.", error)
-    raise error
-
 ## COMMANDS ##
 
 
 @ tree.command(name="ping", description="The ping command (^-^)")
 async def _ping(interaction: discord.Interaction) -> None:
-    # await send(interaction, title='Pong!', content=':ping_pong:')
     await interaction.response.send_message('Pong!', ephemeral=True)
 
 
 @ tree.command(name="join", description="Adds the MaBalls to the voice channel you are in")
 async def _join(interaction: discord.Interaction) -> None:
-    if interaction.user.voice is None:
+    if interaction.user.voice is None:  # checks if the user is in a voice channel
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    if interaction.guild.voice_client is not None:
+    if interaction.guild.voice_client is not None:  # checks if the bot is in a voice channel
         await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
         return
     # Connect to the voice channel
@@ -174,7 +166,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         return
 
     await interaction.response.defer(thinking=True)
-
+    # create song
     song = await Song.from_link(interaction, link)
     # Check if song.populated didnt fail (duration is just a random attribute to check)
     if song.duration is None:
