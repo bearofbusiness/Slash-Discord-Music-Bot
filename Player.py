@@ -19,7 +19,9 @@ class Player:
         self.player_event = asyncio.Event()
         self.player_abort = asyncio.Event()
         self.player_song_end = asyncio.Event()
-
+        # Immediately set the Event because audio is not currently playing
+        self.player_song_end.set()
+        
         self.queue = Queue()
         self.queue.add(song)
 
