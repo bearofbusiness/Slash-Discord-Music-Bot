@@ -25,7 +25,8 @@ class Player:
         self.queue = Queue()
         self.queue.add(song)
 
-        self.song = None
+        # Shouldn't be set but it fixes a race condition
+        self.song = song
 
         self.last_np_message = None
 
