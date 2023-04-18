@@ -1,44 +1,45 @@
 import discord
+import math
 import os
 import random
-import math
-import time
-from datetime import datetime
+import traceback
 from dotenv import load_dotenv
 
 # importing other classes from other files
-from Song import Song
-from Servers import Servers
+import Utils
+from Pages import Pages
 from Player import Player
+from Servers import Servers
+from Song import Song
 from YTDLInterface import YTDLInterface
+
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
-    8-fnt make forceskip admin-only
     6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
-        1- create add-at(?) (merge with playtop? ask for int instead of bool?)
-        1- help #bear
-        1- volume #nrn
-        1- settings #nrn //after muliti server
-            1- option to decide if __send_np goes into vc.channel or song.channel
-            1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
-
-        1- move command #bear 
         3- merge play and playlist
+        1- create add-at(?) (merge with playtop? ask for int instead of bool?)
+        1- help #bear //done but needs to be updated
+        1- settings #bear
+        1- option to decide if __send_np goes into vc.channel or song.channel
+        1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
+        1- move command #bear 
     -other
         8- perform link saniti*zation before being sent to yt-dlp
+        5- rename get_embed's content argument to description
+        ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
+        ^^^ it's likely fine but still, race conditions.
         
-
-
 
 
 DONE:
     9-f make listener for player.start returning to call clean() // found alternative that probably works better
     9-f fix automatic now_playing messages
+    8-f make forceskip admin-only
+    8-f make play and playlist only join VC if the provided queries are valid (prevents bot from joining to just do nothing)
     8-f make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
     8-f likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
     7-fnt create general on_error event method
@@ -67,7 +68,10 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
+        8-f fix auto now playing messages not deleting //found why, it's because the player.wait_until_termination() returns instantly once we tell the player to close
         8-f auto-leave VC if bot is alone #sming
+        7-f only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
+        5-f access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
         4-f remove unneeded async defs
         3-f make it multi server #bear
 
@@ -87,130 +91,14 @@ class Bot(discord.Client):  # initiates the bots intents and on_ready event
 
     async def on_ready(self):
         await tree.sync()  # please dont remove just in case i need to sync
-        pront("Bot is ready", lvl="OKGREEN")
+        Utils.pront("Bot is ready", lvl="OKGREEN")
         await self.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
+            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} Servers."))
 
 
 # Global Variables
 bot = Bot()
 tree = discord.app_commands.CommandTree(bot)
-servers = Servers()
-
-
-def pront(content, lvl="DEBUG", end="\n") -> None:
-    colors = {
-        "LOG": "",
-        "DEBUG": "\033[1;95m",
-        "OKBLUE": "\033[94m",
-        "OKCYAN": "\033[96m",
-        "OKGREEN": "\033[92m",
-        "WARNING": "\033[93m",
-        "ERROR": "\033[91m",
-        "NONE": "\033[0m"
-    }
-    # if type(content) != str and type(content) != int and type(content) != float:
-    #    content = sep.join(content)
-    print(colors[lvl] + "{" + datetime.now().strftime("%x %X") +
-          "} " + lvl + ": " + str(content) + colors["NONE"], end=end)  # sep.join(list())
-
-
-# makes a ascii song progress bar
-def get_progress_bar(song: Song) -> str:
-    # if the song is None or the song has been has not been started ( - 100000 is an arbitrary number)
-    if song is None or song.get_elapsed_time() > time.time() - 100000:
-        return ''
-    percent_duration = (song.get_elapsed_time() / song.duration)*100
-    ret = f'{song.parse_duration_short_hand(math.floor(song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
-    ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
-    return ret
-
-
-# Returns a random hex code
-def get_random_hex(seed) -> int:
-    random.seed(seed)
-    return random.randint(0, 16777215)
-
-
-# Creates a standard Embed object
-def get_embed(interaction, title='', content='', url=None, color='', progress: bool = True) -> discord.Embed:
-    if color == '':
-        color = get_random_hex(interaction.user.id)
-    embed = discord.Embed(
-        title=title,
-        description=content,
-        url=url,
-        color=color
-    )
-    embed.set_author(name=interaction.user.display_name,
-                     icon_url=interaction.user.display_avatar.url)
-
-    # If the calling method wants the progress bar
-    if progress:
-        player = servers.get_player(interaction.guild_id)
-        if player is not None and player.is_started() and player.queue.get():
-            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.queue.top())}'
-
-            embed.set_footer(text=footer_message,
-                             icon_url=player.queue.top().thumbnail)
-    return embed
-
-
-# Creates and sends an Embed message
-async def send(interaction: discord.Interaction, title='', content='', url='', color='', ephemeral: bool = False, progress: bool = True) -> None:
-    embed = get_embed(interaction, title, content, url, color, progress)
-    await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
-
-
-# Cleans up and closes the player
-async def clean(id: int) -> None:
-    player = servers.get_player(id)
-    player.terminate_player()
-    await player.wait_until_termination()
-    await player.vc.disconnect()
-    servers.remove(id)
-
-
-# Runs various tests to make sure a command is OK to run
-async def pretests(interaction: discord.Interaction) -> bool:
-    if interaction.guild.voice_client is None:
-        await interaction.response.send_message("MaBalls is not in a voice channel", ephemeral=True)
-        return False
-
-    if interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be connected to the same voice channel as MaBalls", ephemeral=True)
-        return False
-    return True
-
-
-async def ext_pretests(interaction: discord.Interaction) -> bool:
-    if not await pretests(interaction):
-        return False
-
-    if not servers.get_player(interaction.guild_id).is_started():
-        await interaction.response.send_message("This command can only be used while a song is playing", ephemeral=True)
-        return False
-
-    return True
-
-
-async def join_pretests(interaction: discord.Integration) -> bool:
-    # Check if author is in VC
-    if interaction.user.voice is None:
-        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
-        return False
-    # Exception to pretests() because it will join a voice channel
-
-    # If not already in VC, join
-    if interaction.guild.voice_client is None:
-        channel = interaction.user.voice.channel
-        vc = await channel.connect(self_deaf=True)
-        servers.add(interaction.guild_id, Player(vc))
-    # Otherwise, make sure the user is in the same channel
-    elif interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
-        return False
-    return True
 
 
 ## EVENT LISTENERS ##
@@ -226,71 +114,84 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     if before.channel == member.guild.voice_client.channel:
         # If the bot is now alone
         if len(before.channel.members) == 1:
-            await clean(member.guild.id)
+            player = Servers.get_player(member.guild.id)
+            if player is None:
+                member.guild.voice_client.disconnect()
+            else:
+                await Utils.clean(player)
 
-
-# Error handler
-@bot.event
-async def on_error(interaction, error):
-    # Send generic error string
-    await send(interaction, "MaBalls ran into a problem.", error)
-    raise error
 
 ## COMMANDS ##
 
 
 @ tree.command(name="ping", description="The ping command (^-^)")
 async def _ping(interaction: discord.Interaction) -> None:
-    # await send(interaction, title='Pong!', content=':ping_pong:')
     await interaction.response.send_message('Pong!', ephemeral=True)
 
 
 @ tree.command(name="join", description="Adds the MaBalls to the voice channel you are in")
 async def _join(interaction: discord.Interaction) -> None:
-    if interaction.user.voice is None:
+    if interaction.user.voice is None:  # checks if the user is in a voice channel
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    if interaction.guild.voice_client is not None:
+    if interaction.guild.voice_client is not None:  # checks if the bot is in a voice channel
         await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
         return
     # Connect to the voice channel
-    vc = await interaction.user.voice.channel.connect(self_deaf=True)
-    servers.add(interaction.guild_id, Player(vc))
-    await send(interaction, title='Joined!', content=':white_check_mark:', progress=False)
+    await interaction.user.voice.channel.connect(self_deaf=True)
+    await Utils.send(interaction, title='Joined!', content=':white_check_mark:', progress=False)
 
 
 @ tree.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
 async def _leave(interaction: discord.Interaction) -> None:
-    if not await pretests(interaction):
+    if not await Utils.Pretests.voice_channel(interaction):
         return
 
-    # Disconnect from the voice channel
-    await clean(interaction.guild_id)
-    await send(interaction, title='Left!', content=':white_check_mark:', progress=False)
+    # Clean up if needed
+    if Servers.get_player(interaction.guild_id) is not None:
+        await Utils.clean(Servers.get_player(interaction.guild_id))
+    # Otherwise, just leave VC
+    else:
+        await interaction.guild.voice_client.disconnect()
+    await Utils.send(interaction, title='Left!', content=':white_check_mark:', progress=False)
 
 
 @ tree.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
 async def _play(interaction: discord.Interaction, link: str, top: bool = False) -> None:
-    if not await join_pretests(interaction):
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+        return
+    
+    # Check if author is in the *right* vc if it applies
+    if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
         return
 
     await interaction.response.defer(thinking=True)
-
+    # create song
     song = await Song.from_link(interaction, link)
-    # Check if song.populated didnt fail (duration is just a random attribute to check)
-    if song.duration is None:
-        await interaction.followup.send(embed=get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
-        return
 
-    if top:
-        servers.get_player(interaction.guild_id).queue.add_at(song, 1)
+    
+    # If not in a VC, join
+    if interaction.guild.voice_client is None:
+        await interaction.user.voice.channel.connect(self_deaf=True)
+
+    # If player does not exist, create one.
+    if Servers.get_player(interaction.guild_id) is None:
+        Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+    # If it does, add the song to queue
+    elif top:
+        Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
     else:
-        servers.get_player(interaction.guild_id).queue.add(song)
-    embed = get_embed(
+        Servers.get_player(interaction.guild_id).queue.add(song)
+
+
+    embed = Utils.get_embed(
         interaction,
         title='Added to Queue:',
         url=song.original_url,
-        color=get_random_hex(song.id)
+        color=Utils.get_random_hex(song.id)
     )
     embed.add_field(name=song.uploader, value=song.title, inline=False)
     embed.add_field(name='Requested by:', value=song.requester.mention)
@@ -298,24 +199,20 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     embed.set_thumbnail(url=song.thumbnail)
     await interaction.followup.send(embed=embed)
 
-    # If the player isn't already running, start it.
-    if not servers.get_player(interaction.guild_id).is_started():
-        await servers.get_player(interaction.guild_id).start()
-
 
 @ tree.command(name="skip", description="Skips the currently playing song")
 async def _skip(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.playing_audio(interaction):
         return
 
-    player = servers.get_player(interaction.guild_id)
+    player = Servers.get_player(interaction.guild_id)
 
     # Get a complex embed for votes
     async def skip_msg(title: str = '', content: str = '', present_tense: bool = True, ephemeral: bool = False) -> None:
 
-        embed = get_embed(interaction, title, content,
-                          color=get_random_hex(player.song.id),
-                          progress=present_tense)
+        embed = Utils.get_embed(interaction, title, content,
+                                color=Utils.get_random_hex(player.song.id),
+                                progress=present_tense)
         embed.set_thumbnail(url=player.song.thumbnail)
 
         users = ''
@@ -340,7 +237,7 @@ async def _skip(interaction: discord.Interaction) -> None:
     # If there's not enough people for it to make sense to call a vote in the first place
     if len(player.vc.channel.members) <= 3:
         player.vc.stop()
-        await send(interaction, "Skipped!", ":white_check_mark:")
+        await Utils.send(interaction, "Skipped!", ":white_check_mark:")
         return
 
     votes_required = len(player.vc.channel.members) // 2
@@ -371,32 +268,32 @@ async def _skip(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
 async def _force_skip(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.playing_audio(interaction):
         return
 
     # If user doesn't have the permissions
     if not interaction.user.guild_permissions.manage_channels:
         # If there's enough users in vc for it to make sense to enforce the perms
-        if len(servers.get_player(interaction.guild.id).vc.channel.members) > 3:
-            await send(interaction, "Insufficient Permissions!", 'This command requires the "Manage Channels" permission!', ephemeral=True)
+        if len(Servers.get_player(interaction.guild.id).vc.channel.members) > 3:
+            await Utils.send(interaction, "Insufficient Permissions!", 'This command requires the "Manage Channels" permission!', ephemeral=True)
             return
 
-    servers.get_player(interaction.guild_id).vc.stop()
-    await send(interaction, "Skipped!", ":white_check_mark:")
+    Servers.get_player(interaction.guild_id).vc.stop()
+    await Utils.send(interaction, "Skipped!", ":white_check_mark:")
 
 
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
-    if not await pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
     # Convert page into non-user friendly (woah scary it starts at 0)(if only we were using lua)
     page -= 1
-    player = servers.get_player(interaction.guild_id)
+    player = Servers.get_player(interaction.guild_id)
     if not player.queue.get():
-        await send(interaction, title='Queue is empty!', ephemeral=True)
+        await Utils.send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = get_embed(interaction, title='Queue', color=get_random_hex(
-        player.queue.top().id), progress=False)
+    embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
+        player.song.id), progress=False)
     page_size = 5
     queue_len = len(player.queue)
     min_queue_index = page_size * (page - 1)
@@ -412,7 +309,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     # The index to stop reading from Queue
     max_queue_index = min_queue_index + page_size
 
-    embed = get_embed(interaction, title='Queue', color=get_random_hex(
+    embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
         player.song.id), progress=False)
 
     # Loop through the region of songs in this page
@@ -421,7 +318,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
             break
         song = player.queue.get()[i]
 
-        embed.add_field(name=f"`{i}`: {song.title}",
+        embed.add_field(name=f"`{i + 1}`: {song.title}",
                         value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
 
     embed.set_footer(
@@ -432,40 +329,30 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    player = servers.get_player(interaction.guild_id)
-    if player.song is None:
-        await send(interaction, title='Error!', content='No song is playing', ephemeral=True)
+    if (Servers.get_player(interaction.guild_id).song is None):
+        await Utils.send(interaction, title="Nothing is playing", content="You should add something")
         return
-    title_message = f'Now Playing:\t{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}'
-    embed = get_embed(interaction,
-                      title=title_message,
-                      url=player.song.original_url,
-                      content=f'{player.song.title} -- {player.song.uploader}',
-                      color=get_random_hex(
-                          player.song.id)
-                      )
-    embed.add_field(name='Duration:', value=player.song.parse_duration(
-        player.song.duration), inline=True)
-    embed.add_field(name='Requested by:', value=player.song.requester.mention)
-    embed.set_image(url=player.song.thumbnail)
-    embed.set_author(name=player.song.requester.display_name,
-                     icon_url=player.song.requester.display_avatar.url)
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(interaction.guild_id), progress=True))
 
 
 @ tree.command(name="remove", description="Removes a song from the queue")
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    removed_song = servers.get_player(
-        interaction.guild_id).queue.remove(number_in_queue + 1)
+    # Convert to non-human-readable
+    number_in_queue-=1
+    if Servers.get_player(interaction.guild_id).queue.get(number_in_queue) is None:
+        await Utils.send(interaction, "Queue index does not exist.")
+        return
+    removed_song = Servers.get_player(
+        interaction.guild_id).queue.remove(number_in_queue)
     if removed_song is not None:
         embed = discord.Embed(
             title='Removed from Queue:',
             url=removed_song.original_url,
-            color=get_random_hex(removed_song.id)
+            color=Utils.get_random_hex(removed_song.id)
         )
         embed.add_field(name=removed_song.uploader,
                         value=removed_song.title, inline=False)
@@ -481,14 +368,14 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
 
 @ tree.command(name="removeuser", description="Removes all of the songs added by a specific user")
 async def _remove_user(interaction: discord.Interaction, member: discord.Member):
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
 
-    queue = servers.get_player(interaction.guild.id).queue
+    queue = Servers.get_player(interaction.guild.id).queue
 
     # TODO either make this an int or fill out the send embed more
     removed = []
-    i = 1
+    i = 0
     while i < len(queue.get()):
         if queue.get(i).requester == member:
             removed.append(queue.remove(i))
@@ -497,28 +384,33 @@ async def _remove_user(interaction: discord.Interaction, member: discord.Member)
         # Only increment i when song.requester != member
         i += 1
 
-    await send(interaction,
-               title=f'Removed {len(removed)} songs.')
+    await Utils.send(interaction,
+                     title=f'Removed {len(removed)} songs.')
 
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
 async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
-    if not await join_pretests(interaction):
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-
+    
+    # Check if author is in the *right* vc if it applies
+    if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+        return
+    
     await interaction.response.defer(thinking=True)
-
-    player = servers.get_player(interaction.guild_id)
 
     playlist = await YTDLInterface.query_link(link)
 
-    if playlist.get('_type') != "playlist":
-        await send(interaction, "Not a playlist.", ephemeral=True)
+    if playlist.get('_type') != "playlist" or playlist.get('thumbnails') is None:
+        await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
-    
-    # Make sure entries[] exists
-    if playlist.get('entries') is None:
-        await send(interaction, "Something went wrong...", "Expected entries[] recieved NoneType, try again with a different link?")
+
+    # If not in a VC, join
+    if interaction.guild.voice_client is None:
+        await interaction.user.voice.channel.connect(self_deaf=True)
 
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
@@ -534,10 +426,16 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
             continue
         # Feed the Song the entire entry, saves time by not needing to create and fill a dict
         song = Song(interaction, link, entry)
-        player.queue.add(song)
 
-    
-    embed = get_embed(
+        # If player does not exist, create one.
+        if Servers.get_player(interaction.guild_id) is None:
+            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+        # If it does, add the song to queue
+        else:
+            Servers.get_player(interaction.guild_id).queue.add(song)
+
+
+    embed = Utils.get_embed(
         interaction,
         title='Added playlist to Queue:',
         # Sorry for this being a bit of a mess
@@ -548,24 +446,28 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         failed to load properly, please try with a different URL.
         ''',
         url=playlist.get('original_url'),
-        color=get_random_hex(playlist.get('id'))
+        color=Utils.get_random_hex(playlist.get('id'))
     )
     embed.add_field(name=playlist.get('uploader'), value=playlist.get('title'))
     embed.add_field(
         name='Length:', value=f'{playlist.get("playlist_count")} songs')
     embed.add_field(name='Requested by:', value=interaction.user.mention)
+    # Get the highest resolution thumbnail available
     embed.set_thumbnail(url=playlist.get('thumbnails')[-1].get('url'))
 
     await interaction.followup.send(embed=embed)
 
-    # If the player isn't already running, start it.
-    if not servers.get_player(interaction.guild_id).is_started():
-        await servers.get_player(interaction.guild_id).start()
-
 
 @ tree.command(name="search", description="Searches YouTube for a given query")
 async def _search(interaction: discord.Interaction, query: str, selection: int = None) -> None:
-    if selection and not await join_pretests(interaction):
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
+        return
+    
+    # Check if author is in the *right* vc if it applies
+    if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
         return
 
     await interaction.response.defer(thinking=True)
@@ -578,14 +480,23 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
         song = Song(interaction, entry.get('original_url'), entry)
 
-        # Add song to queue
-        servers.get_player(interaction.guild_id).queue.add(song)
+        # If not in a VC, join
+        if interaction.guild.voice_client is None:
+            await interaction.user.voice.channel.connect(self_deaf=True)
+
+        # If player does not exist, create one.
+        if Servers.get_player(interaction.guild_id) is None:
+            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+        # If it does, add the song to queue
+        else:
+            Servers.get_player(interaction.guild_id).queue.add(song)
+
         # Create embed to go along with it
-        embed = get_embed(
+        embed = Utils.get_embed(
             interaction,
             title='Added to Queue:',
             url=song.original_url,
-            color=get_random_hex(song.id)
+            color=Utils.get_random_hex(song.id)
         )
         embed.add_field(name=song.uploader, value=song.title, inline=False)
         embed.add_field(name='Requested by:', value=song.requester.mention)
@@ -593,24 +504,20 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
                         value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
         await interaction.followup.send(embed=embed)
-
-        # If the player isn't already running, start it.
-        if not servers.get_player(interaction.guild_id).is_started():
-            await servers.get_player(interaction.guild_id).start()
         return
 
-    # player = servers.get_player(interaction.guild_id)
+    # player = Servers.get_player(interaction.guild_id)
     embeds = []
-    embeds.append(get_embed(interaction,
-                            title="Search results:",
-                            ))
+    embeds.append(Utils.get_embed(interaction,
+                                  title="Search results:",
+                                  ))
     for i, entry in enumerate(query_result.get('entries')):
-        embed = get_embed(interaction,
-                          title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
-                          url=entry.get('webpage_url'),
-                          color=get_random_hex(
-                                entry.get("id"))
-                          )
+        embed = Utils.get_embed(interaction,
+                                title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
+                                url=entry.get('webpage_url'),
+                                color=Utils.get_random_hex(
+                                    entry.get("id"))
+                                )
         embed.add_field(name='Duration:', value=Song.parse_duration(
             entry.get('duration')), inline=True)
         embed.set_thumbnail(url=entry.get('thumbnail'))
@@ -621,60 +528,102 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
 @ tree.command(name="clear", description="Clears the queue")
 async def _clear(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    servers.get_player(interaction.guild_id).queue.clear()
+    Servers.get_player(interaction.guild_id).queue.clear()
     await interaction.response.send_message('Queue cleared')
 
 
 @ tree.command(name="shuffle", description="Shuffles the queue")
 async def _shuffle(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    servers.get_player(interaction.guild_id).queue.shuffle()
+    Servers.get_player(interaction.guild_id).queue.shuffle()
     await interaction.response.send_message('Queue shuffled')
 
 
 @ tree.command(name="pause", description="Pauses the current song")
 async def _pause(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    servers.get_player(interaction.guild_id).vc.pause()
-    servers.get_player(interaction.guild_id).song.pause()
-    await send(interaction, title='Paused')
+    Servers.get_player(interaction.guild_id).vc.pause()
+    Servers.get_player(interaction.guild_id).song.pause()
+    await Utils.send(interaction, title='Paused')
 
 
 @ tree.command(name="resume", description="Resumes the current song")
 async def _resume(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.playing_audio(interaction):
         return
-    servers.get_player(interaction.guild_id).vc.resume()
-    servers.get_player(interaction.guild_id).song.resume()
-    await send(interaction, title='Resumed')
+    Servers.get_player(interaction.guild_id).vc.resume()
+    Servers.get_player(interaction.guild_id).song.resume()
+    await Utils.send(interaction, title='Resumed')
 
 
 @ tree.command(name="loop", description="Loops the current song")
 async def _loop(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    player = servers.get_player(interaction.guild.id)
+    player = Servers.get_player(interaction.guild.id)
     player.set_loop(not player.looping)
-    await send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
+    await Utils.send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
 
 
 @ tree.command(name="queueloop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
-    if not await ext_pretests(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
-    player = servers.get_player(interaction.guild.id)
+    player = Servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
-    await send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
+    await Utils.send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
 
 
-@ bot.event
-async def on_error(event, *args, **kwargs) -> None:
-    discord.embed(
-        title='Error', description=f'```{event}\n{args}\n{kwargs}```')
+@ tree.command(name="help", description="Shows the help menu")
+@ discord.app_commands.describe(commands="choose a command to see more info")
+@ discord.app_commands.choices(commands=[
+    # discord.app_commands.Choice(name="none", value=""),
+    discord.app_commands.Choice(name="ping", value="ping"),
+    discord.app_commands.Choice(name="help", value="help"),
+    discord.app_commands.Choice(name="join", value="join"),
+    discord.app_commands.Choice(name="leave", value="leave"),
+    discord.app_commands.Choice(name="play", value="play"),
+    discord.app_commands.Choice(name="skip", value="skip"),
+    discord.app_commands.Choice(name="forceskip", value="forceskip"),
+    discord.app_commands.Choice(name="queue", value="queue"),
+    discord.app_commands.Choice(name="now", value="now"),
+    discord.app_commands.Choice(name="remove", value="remove"),
+    discord.app_commands.Choice(name="removeuser", value="removeuser"),
+    discord.app_commands.Choice(name="playlist", value="playlist"),
+    discord.app_commands.Choice(name="search", value="search"),
+    discord.app_commands.Choice(name="clear", value="clear"),
+    discord.app_commands.Choice(name="shuffle", value="shuffle"),
+    discord.app_commands.Choice(name="pause", value="pause"),
+    discord.app_commands.Choice(name="resume", value="resume"),
+    discord.app_commands.Choice(name="loop", value="loop"),
+    discord.app_commands.Choice(name="queueloop", value="queueloop")
+])
+async def _help(interaction: discord.Interaction, commands: discord.app_commands.Choice[str] = "") -> None:
+    if not commands:
+        main_embed = Pages.main_page
+        embed = Utils.get_embed(
+            interaction, title=main_embed["title"], content=main_embed["description"])
+        for field in main_embed["fields"]:
+            embed.add_field(name=field["name"], value=field["value"])
+        await interaction.response.send_message(embed=embed)
+        return
+    command_embed_dict = Pages.get_page(commands.value)
+    embed = Utils.get_embed(
+        interaction, title=command_embed_dict["title"], content=command_embed_dict["description"])
+    for field in command_embed_dict["fields"]:
+        embed.add_field(name=field["name"], value=field["value"])
+    await interaction.response.send_message(embed=embed)
 
+# Custom error handler
+
+
+async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+    traceback.print_exc()
+tree.on_error = on_tree_error
 
 bot.run(key)

@@ -50,7 +50,9 @@ class Song:
         self.vote = Vote(member)
 
     @staticmethod
-    def parse_duration(duration: int) -> str:
+    def parse_duration(duration: int | None) -> str:
+        if duration is None:
+            return 'Unknown'
         minutes, seconds = divmod(duration, 60)
         hours, minutes = divmod(minutes, 60)
         days, hours = divmod(hours, 24)
@@ -68,7 +70,9 @@ class Song:
         return ', '.join(duration)
 
     @staticmethod
-    def parse_duration_short_hand(duration: int) -> str:
+    def parse_duration_short_hand(duration: int | None) -> str:
+        if duration is None:
+            return '0'
         minutes, seconds = divmod(duration, 60)
         hours, minutes = divmod(minutes, 60)
         days, hours = divmod(hours, 24)

@@ -41,7 +41,7 @@ class YTDLInterface:
             query_result = await loop.run_in_executor(None, partial)
 
         # If yt-dlp threw an error
-        if not query_result.get('title'):
+        if query_result is None:
             raise YTDLError('Couldn\'t fetch `{}`'.format(link))
 
         return query_result
@@ -58,7 +58,8 @@ class YTDLInterface:
                 ytdlp.extract_info, f'ytsearch5:{query}', download=False)
             query_result = await loop.run_in_executor(None, partial)
 
-        if not query_result.get('entries'):
-            raise YTDLError('No matches found for `{}`'.format(query))
+        # If yt-dlp threw an error
+        if query_result is None:
+            raise YTDLError('Couldn\'t fetch `{}`'.format(query))
 
         return query_result

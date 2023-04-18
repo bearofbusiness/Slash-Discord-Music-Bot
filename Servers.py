@@ -2,17 +2,27 @@
 from Player import Player
 
 class Servers():
-    def __init__(self):
-        self.dict = {}
+    dict = {}
 
-    def add(self, server: str | int, player: Player) -> None:
-        self.dict[str(server)] = player
+    @staticmethod
+    def add(server: int, player: Player) -> None:
+        Servers.dict[server] = player
 
-    def get_player(self, server: str | int) -> Player:
-        return self.dict.get(str(server))
+    @staticmethod
+    def get_player(server: int) -> Player:
+        return Servers.dict.get(server)
 
-    def set_player(self, server: str | int, player: Player):
-        self.dict.update({server : player})
+    @staticmethod
+    def set_player(server: int, player: Player):
+        Servers.dict.update({server : player})
 
-    def remove(self, server: str) -> None:
-        del self.dict[str(server)]
+    @staticmethod
+    def remove(server: int | Player) -> None:
+        if type(server) == Player:
+            for key, value in Servers.dict.items():
+                if value == server:
+                    del Servers.dict[key]
+                    return
+            print("Something went wrong, attempted to delete nonexistent Player.")
+            return
+        del Servers.dict[str(server)]
