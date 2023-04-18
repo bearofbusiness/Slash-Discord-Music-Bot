@@ -118,7 +118,7 @@ class Pretests:
 
     # Expanded test for if a Player exists
     async def player_exists(interaction: discord.Interaction) -> bool:
-        if not await Player.voice_channel(interaction):
+        if not await Pretests.voice_channel(interaction):
             return False
         if Servers.get_player(interaction.guild_id) is None:
             await interaction.response.send_message("This command can only be used while a queue exists", ephemeral=True)
@@ -127,7 +127,7 @@ class Pretests:
     
     # Expanded test for if audio is currently playing from a Player
     async def playing_audio(interaction: discord.Interaction) -> bool:
-        if not await Player.player_exists(interaction):
+        if not await Pretests.player_exists(interaction):
             return False
         if not Servers.get_player(interaction.guild_id).is_playing():
             await interaction.response.send_message("This command can only be used while a song is playing.")
