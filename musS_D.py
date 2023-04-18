@@ -345,8 +345,13 @@ async def _now(interaction: discord.Interaction) -> None:
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
+    # Convert to non-human-readable
+    number_in_queue-=1
+    if Servers.get_player(interaction.guild_id).queue.get(number_in_queue) is None:
+        await Utils.send(interaction, "Queue index does not exist.")
+        return
     removed_song = Servers.get_player(
-        interaction.guild_id).queue.remove(number_in_queue + 1)
+        interaction.guild_id).queue.remove(number_in_queue)
     if removed_song is not None:
         embed = discord.Embed(
             title='Removed from Queue:',
