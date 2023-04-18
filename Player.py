@@ -88,7 +88,7 @@ class Player:
             # Check if the queue is empty
             if not self.queue.get():
                 # Clean up and delete player
-                Utils.clean(self)
+                await Utils.clean(self)
 
     def terminate_player(self) -> None:
         self.player_abort.set()
