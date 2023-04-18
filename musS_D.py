@@ -283,7 +283,7 @@ async def _force_skip(interaction: discord.Interaction) -> None:
 
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
-    if not await Utils.Pretests.voice_channel(interaction):
+    if not await Utils.Pretests.player_exists(interaction):
         return
     # Convert page into non-user friendly (woah scary it starts at 0)(if only we were using lua)
     page -= 1
