@@ -100,7 +100,7 @@ async def clean(player: Player) -> None:
         await player.last_np_message.delete()
     player.queue.clear()
     await player.vc.disconnect()
-    Servers.remove(id)
+    Servers.remove(player)
 
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
 class Pretests:
