@@ -18,9 +18,6 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    9- figure out what broke now that player can be silent for long periods while the queue is empty (like skip being able to run while queue is empty)
-    8- make play and playlist only join VC if the provided queries are valid (prevents bot from joining to just do nothing)
-    8-fnt make forceskip admin-only
     6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
         3- merge play and playlist
@@ -32,9 +29,7 @@ TODO:
         1- move command #bear 
     -other
         8- perform link saniti*zation before being sent to yt-dlp
-        7- only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
         5- rename get_embed's content argument to description
-        5- access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
         ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
         ^^^ it's likely fine but still, race conditions.
         
@@ -43,6 +38,8 @@ TODO:
 DONE:
     9-f make listener for player.start returning to call clean() // found alternative that probably works better
     9-f fix automatic now_playing messages
+    8-f make forceskip admin-only
+    8-f make play and playlist only join VC if the provided queries are valid (prevents bot from joining to just do nothing)
     8-f make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
     8-f likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
     7-fnt create general on_error event method
@@ -73,6 +70,8 @@ DONE:
         9-f footer that states the progress of the song #bear
         8-f fix auto now playing messages not deleting //found why, it's because the player.wait_until_termination() returns instantly once we tell the player to close
         8-f auto-leave VC if bot is alone #sming
+        7-f only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
+        5-f access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
         4-f remove unneeded async defs
         3-f make it multi server #bear
 
@@ -172,10 +171,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     await interaction.response.defer(thinking=True)
     # create song
     song = await Song.from_link(interaction, link)
-    # Check if song.populated didnt fail (duration is just a random attribute to check)
-    #if song.duration is None:
-    #    await interaction.followup.send(embed=Utils.get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
-    #    return
+
     
     # If not in a VC, join
     if interaction.guild.voice_client is None:
