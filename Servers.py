@@ -18,7 +18,7 @@ class Servers():
 
     @staticmethod
     def remove(server: int | Player) -> None:
-        if type(server) == "Player":
+        if type(server) == Player:
             # Use a dict comprehension to remove the Player from the dict
             Servers.dict.items = {key:val for key, val in Servers.dict.items() if val != server}
             return
