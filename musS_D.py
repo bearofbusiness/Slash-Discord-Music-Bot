@@ -173,9 +173,9 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     # create song
     song = await Song.from_link(interaction, link)
     # Check if song.populated didnt fail (duration is just a random attribute to check)
-    if song.duration is None:
-        await interaction.followup.send(embed=Utils.get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
-        return
+    #if song.duration is None:
+    #    await interaction.followup.send(embed=Utils.get_embed(interaction, title='Error!', content='Invalid link', progress=False), ephemeral=True)
+    #    return
     
     # If not in a VC, join
     if interaction.guild.voice_client is None:
