@@ -27,6 +27,7 @@ TODO:
         1- option to decide if __send_np goes into vc.channel or song.channel
         1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- move command #bear 
+        1- fix queue emojis being backwards
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         5- rename get_embed's content argument to description
@@ -162,7 +163,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
+
     # Check if author is in the *right* vc if it applies
     if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
@@ -172,20 +173,19 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     # create song
     song = await Song.from_link(interaction, link)
 
-    
     # If not in a VC, join
     if interaction.guild.voice_client is None:
         await interaction.user.voice.channel.connect(self_deaf=True)
 
     # If player does not exist, create one.
     if Servers.get_player(interaction.guild_id) is None:
-        Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+        Servers.add(interaction.guild_id, Player(
+            interaction.guild.voice_client, song))
     # If it does, add the song to queue
     elif top:
         Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
     else:
         Servers.get_player(interaction.guild_id).queue.add(song)
-
 
     embed = Utils.get_embed(
         interaction,
@@ -342,7 +342,7 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
     if not await Utils.Pretests.player_exists(interaction):
         return
     # Convert to non-human-readable
-    number_in_queue-=1
+    number_in_queue -= 1
     if Servers.get_player(interaction.guild_id).queue.get(number_in_queue) is None:
         await Utils.send(interaction, "Queue index does not exist.")
         return
@@ -394,12 +394,12 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
+
     # Check if author is in the *right* vc if it applies
     if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
         return
-    
+
     await interaction.response.defer(thinking=True)
 
     playlist = await YTDLInterface.query_link(link)
@@ -429,11 +429,11 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
         # If player does not exist, create one.
         if Servers.get_player(interaction.guild_id) is None:
-            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+            Servers.add(interaction.guild_id, Player(
+                interaction.guild.voice_client, song))
         # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
-
 
     embed = Utils.get_embed(
         interaction,
@@ -464,7 +464,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
+
     # Check if author is in the *right* vc if it applies
     if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
@@ -486,7 +486,8 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
         # If player does not exist, create one.
         if Servers.get_player(interaction.guild_id) is None:
-            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+            Servers.add(interaction.guild_id, Player(
+                interaction.guild.voice_client, song))
         # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
