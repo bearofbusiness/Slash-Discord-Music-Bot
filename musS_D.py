@@ -27,7 +27,6 @@ TODO:
         1- option to decide if __send_np goes into vc.channel or song.channel
         1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- move command #bear 
-        1- fix queue emojis being backwards
         1- remove_duplicates #bear
     -other
         8- perform link saniti*zation before being sent to yt-dlp
@@ -60,6 +59,8 @@ DONE:
         6-f clear #bear
         5-f shuffle #bear
         4-f loop (queue, song) #bear
+        1-f fix queue emojis being backwards
+
      - Be able to play music from youtube
         - play music
         - stop music

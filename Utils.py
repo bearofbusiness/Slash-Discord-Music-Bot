@@ -61,7 +61,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     if progress:
         player = Servers.get_player(interaction.guild_id)
         if player is not None and player.queue.get():
-            footer_message = f'{"🔁 " if player.looping else ""}{"🔂 " if player.queue_looping else ""}\n{get_progress_bar(player.song)}'
+            footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,
                              icon_url=player.song.thumbnail)
@@ -74,7 +74,7 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
 def get_now_playing_embed(player: Player, progress: bool=False) -> discord.Embed:
-        title_message = f'Now Playing:\t{":repeat: " if player.looping else ""}{":repeat_one: " if player.queue_looping else ""}'
+        title_message = f'Now Playing:\t{":repeat_one: " if player.looping else ""}{":repeat: " if player.queue_looping else ""}'
         embed = discord.Embed(
             title=title_message,
             url=player.song.original_url,
