@@ -28,6 +28,7 @@ TODO:
         1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- move command #bear 
         1- fix queue emojis being backwards
+        1- remove_duplicates #bear
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         5- rename get_embed's content argument to description
