@@ -184,7 +184,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
             interaction.guild.voice_client, song))
     # If it does, add the song to queue
     elif top:
-        Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
+        Servers.get_player(interaction.guild_id).queue.add_at(song, 0)
     else:
         Servers.get_player(interaction.guild_id).queue.add(song)
 
