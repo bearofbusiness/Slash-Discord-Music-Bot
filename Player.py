@@ -52,7 +52,14 @@ class Player:
         while not self.player_abort.is_set():
             
             # Get the top song in queue ready to play
-            await self.queue.get(0).populate()
+            try:
+                await self.queue.get(0).populate()
+            # If anything goes wrong, just skip it.
+            except:
+                errored_song = self.queue.get(0)
+                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load and was skipped.")
+                self.queue.remove(0)
+                continue
 
             # Set the now-populated top song to the playing song
             self.song = self.queue.remove(0)

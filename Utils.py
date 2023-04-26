@@ -31,7 +31,7 @@ def pront(content, lvl="DEBUG", end="\n") -> None:
 # makes a ascii song progress bar
 def get_progress_bar(song: Song) -> str:
     # if the song is None or the song has been has not been started ( - 100000 is an arbitrary number)
-    if song is None or song.get_elapsed_time() > time.time() - 100000:
+    if song is None or song.get_elapsed_time() > time.time() - 100000 or song.duration is None:
         return ''
     percent_duration = (song.get_elapsed_time() / song.duration)*100
     ret = f'{song.parse_duration_short_hand(math.floor(song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'

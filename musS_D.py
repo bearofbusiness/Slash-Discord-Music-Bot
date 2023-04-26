@@ -12,6 +12,7 @@ from Player import Player
 from Servers import Servers
 from Song import Song
 from YTDLInterface import YTDLInterface
+from YTDLInterface import YTDLError
 
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
@@ -171,8 +172,17 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         return
 
     await interaction.response.defer(thinking=True)
+    
+    
     # create song
-    song = await Song.from_link(interaction, link)
+    scrape = await YTDLInterface.scrape_link(link)
+    song = Song(interaction, link, scrape)
+
+    # Check if song didn't initialize properly via scrape
+    if song.title is None:
+        # If it didn't, query the link instead (resolves searches in the link field)
+        query = await YTDLInterface.query_link(link)
+        song = Song(interaction, query.get('original_url'), query)
 
     # If not in a VC, join
     if interaction.guild.voice_client is None:
@@ -403,9 +413,9 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
     await interaction.response.defer(thinking=True)
 
-    playlist = await YTDLInterface.query_link(link)
+    playlist = await YTDLInterface.scrape_link(link)
 
-    if playlist.get('_type') != "playlist" or playlist.get('thumbnails') is None:
+    if playlist.get('_type') != "playlist":
         await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
 
@@ -421,7 +431,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
     for i, entry in enumerate(playlist.get("entries")):
         # If entry didn't populate properly, take note and skip it.
-        if entry.get("duration") is None:
+        if not entry:
             # Convert to human-readable count
             errored_song_positions.append(i+1)
             continue
@@ -453,8 +463,13 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     embed.add_field(
         name='Length:', value=f'{playlist.get("playlist_count")} songs')
     embed.add_field(name='Requested by:', value=interaction.user.mention)
+
     # Get the highest resolution thumbnail available
-    embed.set_thumbnail(url=playlist.get('thumbnails')[-1].get('url'))
+    if playlist.get('thumbnails'):
+        thumbnail = playlist.get('thumbnails')[-1].get('url')
+    else:
+        thumbnail = playlist.get('entries')[0].get('thumbnails')[-1].get('url')
+    embed.set_thumbnail(url=thumbnail)
 
     await interaction.followup.send(embed=embed)
 
@@ -473,7 +488,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
     await interaction.response.defer(thinking=True)
 
-    query_result = await YTDLInterface.query_search(query)
+    query_result = await YTDLInterface.scrape_search(query)
 
     if selection:
         selection -= 1
@@ -516,13 +531,13 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     for i, entry in enumerate(query_result.get('entries')):
         embed = Utils.get_embed(interaction,
                                 title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
-                                url=entry.get('webpage_url'),
+                                url=entry.get('url'),
                                 color=Utils.get_random_hex(
                                     entry.get("id"))
                                 )
         embed.add_field(name='Duration:', value=Song.parse_duration(
             entry.get('duration')), inline=True)
-        embed.set_thumbnail(url=entry.get('thumbnail'))
+        embed.set_thumbnail(url=entry.get('thumbnails')[-1].get('url'))
         embeds.append(embed)
 
     await interaction.followup.send(embeds=embeds)
