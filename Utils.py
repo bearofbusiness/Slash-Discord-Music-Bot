@@ -10,6 +10,7 @@ from Player import Player
 from Servers import Servers
 from Song import Song
 
+
 def pront(content, lvl="DEBUG", end="\n") -> None:
     colors = {
         "LOG": "",
@@ -73,23 +74,24 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
     embed = get_embed(interaction, title, content, url, color, progress)
     await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
-def get_now_playing_embed(player: Player, progress: bool=False) -> discord.Embed:
-        title_message = f'Now Playing:\t{":repeat_one: " if player.looping else ""}{":repeat: " if player.queue_looping else ""}'
-        embed = discord.Embed(
-            title=title_message,
-            url=player.song.original_url,
-            description=f'{player.song.title} -- {player.song.uploader}',
-            color=get_random_hex(player.song.id)
-        )
-        embed.add_field(name='Duration:', value=player.song.parse_duration(
-            player.song.duration), inline=True)
-        embed.add_field(name='Requested by:', value=player.song.requester.mention)
-        embed.set_image(url=player.song.thumbnail)
-        embed.set_author(name=player.song.requester.display_name,
-                         icon_url=player.song.requester.display_avatar.url)
-        if progress:
-            embed.set_footer(text=get_progress_bar(player.song))
-        return embed
+
+def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Embed:
+    title_message = f'Now Playing:\t{":repeat_one: " if player.looping else ""}{":repeat: " if player.queue_looping else ""}'
+    embed = discord.Embed(
+        title=title_message,
+        url=player.song.original_url,
+        description=f'{player.song.title} -- {player.song.uploader}',
+        color=get_random_hex(player.song.id)
+    )
+    embed.add_field(name='Duration:', value=player.song.parse_duration(
+        player.song.duration), inline=True)
+    embed.add_field(name='Requested by:', value=player.song.requester.mention)
+    embed.set_image(url=player.song.thumbnail)
+    embed.set_author(name=player.song.requester.display_name,
+                     icon_url=player.song.requester.display_avatar.url)
+    if progress:
+        embed.set_footer(text=get_progress_bar(player.song))
+    return embed
 
 
 # Cleans up and closes a player
@@ -102,7 +104,16 @@ async def clean(player: Player) -> None:
     await player.vc.disconnect()
     Servers.remove(player)
 
+
+def progress_bar(begin: int, end: int, current_val: int) -> str:
+    percent_duration = (current_val / end) * 100
+    ret = f'{current_val}/{end}'
+    ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
+    return ret
+
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
+
+
 class Pretests:
 
     # Checks if voice channel states are right
@@ -124,7 +135,7 @@ class Pretests:
             await interaction.response.send_message("This command can only be used while a queue exists", ephemeral=True)
             return False
         return True
-    
+
     # Expanded test for if audio is currently playing from a Player
     async def playing_audio(interaction: discord.Interaction) -> bool:
         if not await Pretests.player_exists(interaction):
