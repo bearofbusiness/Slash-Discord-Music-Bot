@@ -20,7 +20,6 @@ XX = '''
 TODO:
     6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
-        3- merge play and playlist
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear //done but needs to be updated
         1- settings #bear
