@@ -2,11 +2,6 @@ import asyncio
 import yt_dlp
 import functools
 
-# Class to make what caused the error more apparent
-class YTDLError(Exception):
-    pass
-
-
 class YTDLInterface:
 
     retrieve_options = {

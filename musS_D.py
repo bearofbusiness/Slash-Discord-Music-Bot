@@ -12,8 +12,9 @@ from Player import Player
 from Servers import Servers
 from Song import Song
 from YTDLInterface import YTDLInterface
-from YTDLInterface import YTDLError
 
+# imports for error type checking
+import yt_dlp
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
@@ -623,10 +624,19 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 # Custom error handler
-
-
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+
+    # If a yt_dlp DownloadError was raised
+    if type(error.original) == yt_dlp.utils.DownloadError:
+        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.", 
+        content=f'```ansi\n{error.original.exc_info[1]}```'))
+        # Return here because we don't want to print an obvious error like this.
+        return
+    
+    # Fallback default error
+    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+    # Allows entire error to be printed without raising an exception
+    # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()
 tree.on_error = on_tree_error
 
