@@ -49,13 +49,13 @@ class YTDLInterface:
     # Pulls information from a yt-dlp accepted URL and returns a Dict containing that information
     @staticmethod
     async def query_link(link: str = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') -> dict:
-        await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
+        return await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
 
 
     # Searches for a provided string
     @staticmethod
     async def scrape_search(query: str) -> dict:
-        await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, f'ytsearch5:{query}')
+        return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, f'ytsearch5:{query}')
 
     # Private method to condense all the others
     @staticmethod
@@ -69,8 +69,10 @@ class YTDLInterface:
                 ytdlp.extract_info, link, download=False)
             query_result = await loop.run_in_executor(None, partial)
 
-        # If it didn't pull properly
-        if not query_result:
-            raise YTDLError(f"Couldn't fetch `{link}`")
-            
+
+        # Might work, might break links
+        if query_result.get('entries') is not None:
+            if len(query_result.get('entries')) == 0:
+                raise YTDLError(f'Couldn\'t fetch `{link}`')
+
         return query_result
