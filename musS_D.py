@@ -427,14 +427,9 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if shuffle:
         random.shuffle(playlist.get("entries"))
 
-    errored_song_positions = []
 
-    for i, entry in enumerate(playlist.get("entries")):
-        # If entry didn't populate properly, take note and skip it.
-        if not entry:
-            # Convert to human-readable count
-            errored_song_positions.append(i+1)
-            continue
+    for entry in playlist.get("entries"):
+
         # Feed the Song the entire entry, saves time by not needing to create and fill a dict
         song = Song(interaction, link, entry)
 
@@ -449,13 +444,6 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     embed = Utils.get_embed(
         interaction,
         title='Added playlist to Queue:',
-        # Sorry for this being a bit of a mess
-        # If there were errored songs, generate a content that describes them
-        content=None if len(errored_song_positions) == 0 else f'''
-        The {'song at position' if len(errored_song_positions) == 1 else 'songs at positions'}
-        {str(errored_song_positions)[1:-1]}
-        failed to load properly, please try with a different URL.
-        ''',
         url=playlist.get('original_url'),
         color=Utils.get_random_hex(playlist.get('id'))
     )

@@ -53,10 +53,6 @@ class YTDLInterface:
                 ytdlp.extract_info, link, download=False)
             query_result = await loop.run_in_executor(None, partial)
         
-        # If yt-dlp threw an error
-        if query_result is None:
-            raise YTDLError(f'Couldn\'t fetch `{link}`')
-        
         return query_result
 
     # Only called to automatically resolve searches input into scrape_link
@@ -72,10 +68,6 @@ class YTDLInterface:
                 ytdlp.extract_info, link, download=False)
             query_result = await loop.run_in_executor(None, partial)
 
-        # If yt-dlp threw an error
-        if query_result is None:
-            raise YTDLError('Couldn\'t fetch `{}`'.format(link))
-
         return query_result
 
 
@@ -90,10 +82,6 @@ class YTDLInterface:
             partial = functools.partial(
                 ytdlp.extract_info, f'ytsearch5:{query}', download=False)
             query_result = await loop.run_in_executor(None, partial)
-
-        # If yt-dlp threw an error
-        if query_result is None:
-            raise YTDLError('Couldn\'t fetch `{}`'.format(query))
 
         return query_result
 

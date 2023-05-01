@@ -50,14 +50,18 @@ class Player:
         # This while will immediately terminate when player_abort is set.
         # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
         while not self.player_abort.is_set():
-            
+            # Check if the queue is empty
+            if not self.queue.get():
+                # Clean up and delete player
+                await Utils.clean(self)
+
             # Get the top song in queue ready to play
             try:
                 await self.queue.get(0).populate()
             # If anything goes wrong, just skip it.
-            except:
+            except Exception as e:
                 errored_song = self.queue.get(0)
-                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load and was skipped.")
+                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of `{e}` and was skipped.")
                 self.queue.remove(0)
                 continue
 
@@ -94,11 +98,6 @@ class Player:
                 continue
 
             self.song = None
-
-            # Check if the queue is empty
-            if not self.queue.get():
-                # Clean up and delete player
-                await Utils.clean(self)
 
     def terminate_player(self) -> None:
         self.player_abort.set()
