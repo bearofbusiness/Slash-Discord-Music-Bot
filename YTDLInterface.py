@@ -2,6 +2,10 @@ import asyncio
 import yt_dlp
 import functools
 
+# Generic post-process error class
+class YTDLError(Exception):
+    pass
+
 class YTDLInterface:
 
     retrieve_options = {
@@ -65,4 +69,8 @@ class YTDLInterface:
                 ytdlp.extract_info, link, download=False)
             query_result = await loop.run_in_executor(None, partial)
 
+        # If it didn't pull properly
+        if not query_result:
+            raise YTDLError(f"Couldn't fetch `{link}`")
+            
         return query_result
