@@ -427,9 +427,8 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     # Detect if this is a Mix
     if playlist.get("uploader") is None:
         # Truncate the playlist to just the top 50 Songs or fewer if there are less
-        new_entry_count = min(50, len(playlist.get("entries")) - 1)
-        playlist.update({"playlist_count":new_entry_count})
-        playlist.update({"entries":playlist.get("entries")[:new_entry_count]})
+        playlist.update({"playlist_count":50})
+        playlist.update({"entries":playlist.get("entries")[:50]})
 
     # If not in a VC, join
     if interaction.guild.voice_client is None:
