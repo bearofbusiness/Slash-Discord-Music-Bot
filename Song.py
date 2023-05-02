@@ -12,13 +12,31 @@ class Song:
         self.channel = interaction.channel
         self.vote = None
 
+        # If there's an unexpected list of entries
+        if dict.get('entries') is not None and len(dict.get('entries')) > 0:
+            # Get the first result and continue as normal
+            dict = dict.get('entries')[0]
+
+        # Try a few different approaches to get a thumbnail
+        if dict.get('thumbnail'):
+            self.thumbnail = dict.get('thumbnail')
+        elif dict.get('thumbnails'):
+            self.thumbnail = dict.get('thumbnails')[-1].get('url')
+        else:
+            self.thumbnail = None
+
+        # Try different method to get URL
+        if dict.get('webpage_url'):
+            self.original_url = dict.get('webpage_url')
+        else:
+            self.original_url = dict.get('url')
+
+
         self.title = dict.get('title')
         self.uploader = dict.get('channel')
         self.audio = dict.get('url')
         self.id = dict.get('id')
-        self.thumbnail = dict.get('thumbnail')
         self.duration = dict.get('duration')
-        self.original_url = dict.get('webpage_url')
 
         # Delta time handling variables
         self.start_time = 0
@@ -33,9 +51,9 @@ class Song:
 
     # Populate all None fields
     async def populate(self) -> None:
-        data = await YTDLInterface.query_link(self.original_url)
+        data = await YTDLInterface.scrape_link(self.original_url)
         # If there's an unexpected list of entries
-        if data.get('entries') is not None:
+        if data.get('entries') is not None and len(data.get('entries')) > 0:
             # Get the first result and continue as normal
             data = data.get('entries')[0]
         self.title = data.get('title')

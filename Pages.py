@@ -78,7 +78,7 @@ class Pages:
         },
         "playlist": {
             "title": "playlist", "description": "This command is used to get a playlist from youtube and add it to the queue",
-            "fields": []
+            "fields": [{"name": "Can play youtube Mixes", "value": "yes"}]
         },
         "search": {
             "title": "search", "description": "This command is used to search for a song on youtube and add it to the queue",

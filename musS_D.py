@@ -13,6 +13,8 @@ from Servers import Servers
 from Song import Song
 from YTDLInterface import YTDLInterface
 
+# imports for error type checking
+import yt_dlp
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
@@ -20,13 +22,13 @@ XX = '''
 TODO:
     6-fnt alert user when songs were unable to be added inside _playlist()
     -make more commands
-        3- merge play and playlist
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear //done but needs to be updated
         1- settings #bear
         1- option to decide if __send_np goes into vc.channel or song.channel
         1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- move command #bear 
+        1- remove_duplicates #bear
     -other
         8- perform link saniti*zation before being sent to yt-dlp
         5- rename get_embed's content argument to description
@@ -58,6 +60,8 @@ DONE:
         6-f clear #bear
         5-f shuffle #bear
         4-f loop (queue, song) #bear
+        1-f fix queue emojis being backwards
+
      - Be able to play music from youtube
         - play music
         - stop music
@@ -162,30 +166,38 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
+
     # Check if author is in the *right* vc if it applies
     if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
         return
 
     await interaction.response.defer(thinking=True)
-    # create song
-    song = await Song.from_link(interaction, link)
-
     
+    
+    # create song
+    scrape = await YTDLInterface.scrape_link(link)
+    song = Song(interaction, link, scrape)
+
+    # Check if song didn't initialize properly via scrape
+    if song.title is None:
+        # If it didn't, query the link instead (resolves searches in the link field)
+        query = await YTDLInterface.query_link(link)
+        song = Song(interaction, query.get('original_url'), query)
+
     # If not in a VC, join
     if interaction.guild.voice_client is None:
         await interaction.user.voice.channel.connect(self_deaf=True)
 
     # If player does not exist, create one.
     if Servers.get_player(interaction.guild_id) is None:
-        Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+        Servers.add(interaction.guild_id, Player(
+            interaction.guild.voice_client, song))
     # If it does, add the song to queue
     elif top:
-        Servers.get_player(interaction.guild_id).queue.add_at(song, 1)
+        Servers.get_player(interaction.guild_id).queue.add_at(song, 0)
     else:
         Servers.get_player(interaction.guild_id).queue.add(song)
-
 
     embed = Utils.get_embed(
         interaction,
@@ -342,7 +354,7 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
     if not await Utils.Pretests.player_exists(interaction):
         return
     # Convert to non-human-readable
-    number_in_queue-=1
+    number_in_queue -= 1
     if Servers.get_player(interaction.guild_id).queue.get(number_in_queue) is None:
         await Utils.send(interaction, "Queue index does not exist.")
         return
@@ -394,17 +406,17 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
+
     # Check if author is in the *right* vc if it applies
     if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
         return
-    
+
     await interaction.response.defer(thinking=True)
 
-    playlist = await YTDLInterface.query_link(link)
+    playlist = await YTDLInterface.scrape_link(link)
 
-    if playlist.get('_type') != "playlist" or playlist.get('thumbnails') is None:
+    if playlist.get('_type') != "playlist":
         await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
 
@@ -416,35 +428,23 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if shuffle:
         random.shuffle(playlist.get("entries"))
 
-    errored_song_positions = []
 
-    for i, entry in enumerate(playlist.get("entries")):
-        # If entry didn't populate properly, take note and skip it.
-        if entry.get("duration") is None:
-            # Convert to human-readable count
-            errored_song_positions.append(i+1)
-            continue
+    for entry in playlist.get("entries"):
+
         # Feed the Song the entire entry, saves time by not needing to create and fill a dict
         song = Song(interaction, link, entry)
 
         # If player does not exist, create one.
         if Servers.get_player(interaction.guild_id) is None:
-            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+            Servers.add(interaction.guild_id, Player(
+                interaction.guild.voice_client, song))
         # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
 
-
     embed = Utils.get_embed(
         interaction,
         title='Added playlist to Queue:',
-        # Sorry for this being a bit of a mess
-        # If there were errored songs, generate a content that describes them
-        content=None if len(errored_song_positions) == 0 else f'''
-        The {'song at position' if len(errored_song_positions) == 1 else 'songs at positions'}
-        {str(errored_song_positions)[1:-1]}
-        failed to load properly, please try with a different URL.
-        ''',
         url=playlist.get('original_url'),
         color=Utils.get_random_hex(playlist.get('id'))
     )
@@ -452,8 +452,13 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     embed.add_field(
         name='Length:', value=f'{playlist.get("playlist_count")} songs')
     embed.add_field(name='Requested by:', value=interaction.user.mention)
+
     # Get the highest resolution thumbnail available
-    embed.set_thumbnail(url=playlist.get('thumbnails')[-1].get('url'))
+    if playlist.get('thumbnails'):
+        thumbnail = playlist.get('thumbnails')[-1].get('url')
+    else:
+        thumbnail = playlist.get('entries')[0].get('thumbnails')[-1].get('url')
+    embed.set_thumbnail(url=thumbnail)
 
     await interaction.followup.send(embed=embed)
 
@@ -464,7 +469,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     if interaction.user.voice is None:
         await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
-    
+
     # Check if author is in the *right* vc if it applies
     if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
         await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
@@ -472,7 +477,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
     await interaction.response.defer(thinking=True)
 
-    query_result = await YTDLInterface.query_search(query)
+    query_result = await YTDLInterface.scrape_search(query)
 
     if selection:
         selection -= 1
@@ -486,7 +491,8 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
 
         # If player does not exist, create one.
         if Servers.get_player(interaction.guild_id) is None:
-            Servers.add(interaction.guild_id, Player(interaction.guild.voice_client, song))
+            Servers.add(interaction.guild_id, Player(
+                interaction.guild.voice_client, song))
         # If it does, add the song to queue
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
@@ -514,13 +520,13 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
     for i, entry in enumerate(query_result.get('entries')):
         embed = Utils.get_embed(interaction,
                                 title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
-                                url=entry.get('webpage_url'),
+                                url=entry.get('url'),
                                 color=Utils.get_random_hex(
                                     entry.get("id"))
                                 )
         embed.add_field(name='Duration:', value=Song.parse_duration(
             entry.get('duration')), inline=True)
-        embed.set_thumbnail(url=entry.get('thumbnail'))
+        embed.set_thumbnail(url=entry.get('thumbnails')[-1].get('url'))
         embeds.append(embed)
 
     await interaction.followup.send(embeds=embeds)
@@ -581,7 +587,6 @@ async def _queue_loop(interaction: discord.Interaction) -> None:
 @ tree.command(name="help", description="Shows the help menu")
 @ discord.app_commands.describe(commands="choose a command to see more info")
 @ discord.app_commands.choices(commands=[
-    # discord.app_commands.Choice(name="none", value=""),
     discord.app_commands.Choice(name="ping", value="ping"),
     discord.app_commands.Choice(name="help", value="help"),
     discord.app_commands.Choice(name="join", value="join"),
@@ -619,10 +624,19 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 # Custom error handler
-
-
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+
+    # If a yt_dlp DownloadError was raised
+    if type(error.original) == yt_dlp.utils.DownloadError:
+        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.", 
+        content=f'```ansi\n{error.original.exc_info[1]}```'))
+        # Return here because we don't want to print an obvious error like this.
+        return
+    
+    # Fallback default error
+    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+    # Allows entire error to be printed without raising an exception
+    # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()
 tree.on_error = on_tree_error
 
