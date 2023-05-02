@@ -420,6 +420,17 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
         await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
 
+    # Might not proc, there for extra protection
+    if len(playlist.get("entries")) == 0:
+        await interaction.followup.send("Playlist Entries [] empty.")
+
+    # Detect if this is a Mix
+    if playlist.get("uploader") is None:
+        # Truncate the playlist to just the top 50 Songs or fewer if there are less
+        new_entry_count = min(50, len(playlist.get("entries")) - 1)
+        playlist.update({"playlist_count":new_entry_count})
+        playlist.update({"entries":playlist.get("entries")[:new_entry_count]})
+
     # If not in a VC, join
     if interaction.guild.voice_client is None:
         await interaction.user.voice.channel.connect(self_deaf=True)
