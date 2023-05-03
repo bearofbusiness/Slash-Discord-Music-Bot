@@ -637,7 +637,7 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 
     # If a yt_dlp DownloadError was raised
-    if type(error.original) == yt_dlp.utils.DownloadError:
+    if isinstance(error.original, yt_dlp.utils.DownloadError):
         await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.", 
         content=f'```ansi\n{error.original.exc_info[1]}```'))
         # Return here because we don't want to print an obvious error like this.

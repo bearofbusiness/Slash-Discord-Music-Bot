@@ -18,7 +18,7 @@ class Servers():
 
     @staticmethod
     def remove(server: int | Player) -> None:
-        if type(server) == Player:
+        if isinstance(server, Player):
             for key, value in Servers.dict.items():
                 if value == server:
                     del Servers.dict[key]
