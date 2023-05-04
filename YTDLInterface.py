@@ -11,7 +11,6 @@ class YTDLInterface:
     retrieve_options = {
         'format': 'bestaudio/best',
         'audioformat': 'mp3',
-        'yesplaylist': True,
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
@@ -26,7 +25,6 @@ class YTDLInterface:
     scrape_options = {
         'format': 'bestaudio/best',
         'audioformat': 'mp3',
-        'yesplaylist': True,
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
