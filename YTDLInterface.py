@@ -19,6 +19,8 @@ class YTDLInterface:
         'no_warnings': False,
         'default_search': 'auto',
         'source_address': '0.0.0.0',
+        'lazy_playlist': True,
+
     }
 
     scrape_options = {
@@ -33,6 +35,8 @@ class YTDLInterface:
         'default_search': 'auto',
         'source_address': '0.0.0.0',
         'extract_flat':True,
+        'lazy_playlist': True,
+
     }
 
     
