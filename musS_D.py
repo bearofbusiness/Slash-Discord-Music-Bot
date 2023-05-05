@@ -338,6 +338,15 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
     await interaction.response.send_message(embed=embed)
 
+@ tree.command(name="replay", description="Restarts the current song")
+async def _replay(interaction: discord.Interaction) -> None:
+    if not await Utils.Pretests.playing_audio(interaction):
+        return
+    player = Servers.get_player(interaction.guild_id)
+    # Just add it to the top of the queue and skip to it
+    # Dirty but it works.
+    player.queue.add_at(player.song, 0)
+    player.vc.stop()
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
