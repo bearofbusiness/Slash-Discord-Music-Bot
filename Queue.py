@@ -23,10 +23,8 @@ class Queue:
         return self.list[index]
 
     def shuffle(self) -> None:
-        temp_list = self.list.copy()
-        temp_list.pop(0)
-        random.shuffle(temp_list)
-        self.list = [self.list[0]] + temp_list
+        random.shuffle(self.list)
+
 
     def remove(self, index: int) -> Song:
         song = self.list.pop(index)
