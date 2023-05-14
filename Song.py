@@ -17,10 +17,8 @@ class Song:
             # Get the first result and continue as normal
             dict = dict.get('entries')[0]
 
-        # Try a few different approaches to get a thumbnail
-        if dict.get('thumbnail'):
-            self.thumbnail = dict.get('thumbnail')
-        elif dict.get('thumbnails'):
+        # Try to get a thumbnail
+        if dict.get('thumbnails'):
             self.thumbnail = dict.get('thumbnails')[-1].get('url')
         else:
             self.thumbnail = None

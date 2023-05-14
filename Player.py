@@ -55,6 +55,22 @@ class Player:
                 # Clean up and delete player
                 await Utils.clean(self)
 
+            # Create NP message for new song while it gets ready
+            if self.last_np_message is not None:
+                await self.last_np_message.delete()
+            # BE CAREFUL, this song is not self.song!!!
+            song = self.queue.get(0)
+            embed = discord.Embed(
+                title="Preparing next song...",
+                description=f"{song.title} -- {song.uploader} is up next.",
+                url=song.original_url,
+                color=Utils.get_random_hex(song.id)
+            )
+
+            embed.set_thumbnail(url=song.thumbnail)
+            self.last_np_message = await self.vc.channel.send(embed=embed)
+            #del song(?)
+
             # Get the top song in queue ready to play
             try:
                 await self.queue.get(0).populate()
@@ -68,12 +84,9 @@ class Player:
             # Set the now-populated top song to the playing song
             self.song = self.queue.remove(0)
 
+            # Send the new NP
             embed = Utils.get_now_playing_embed(self)
-
-            # Delete last now_playing if there is one
-            if self.last_np_message is not None:
-                await self.last_np_message.delete()
-            self.last_np_message = await self.vc.channel.send(embed=embed)
+            self.last_np_message = await self.last_np_message.edit(embed=embed)
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()
@@ -88,6 +101,7 @@ class Player:
 
             # Sleep player until song ends
             await self.player_song_end.wait()
+
             # If song is looping, re-add song to the top of queue
             if self.looping:
                 self.queue.add_at(self.song, 0)

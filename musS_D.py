@@ -286,7 +286,7 @@ async def _force_skip(interaction: discord.Interaction) -> None:
     # If user doesn't have the permissions
     if not interaction.user.guild_permissions.manage_channels:
         # If there's enough users in vc for it to make sense to enforce the perms
-        if len(Servers.get_player(interaction.guild.id).vc.channel.members) > 3:
+        if len(Servers.get_player(interaction.guild_id).vc.channel.members) > 3:
             await Utils.send(interaction, "Insufficient Permissions!", 'This command requires the "Manage Channels" permission!', ephemeral=True)
             return
 
@@ -353,7 +353,7 @@ async def _now(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
     if (Servers.get_player(interaction.guild_id).song is None):
-        await Utils.send(interaction, title="Nothing is playing", content="You should add something")
+        await Utils.send(interaction, title="Nothing is playing", content="You should add something", progress=False)
         return
     await interaction.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(interaction.guild_id), progress=True))
 
