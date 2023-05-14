@@ -286,7 +286,7 @@ async def _force_skip(interaction: discord.Interaction) -> None:
     # If user doesn't have the permissions
     if not interaction.user.guild_permissions.manage_channels:
         # If there's enough users in vc for it to make sense to enforce the perms
-        if len(Servers.get_player(interaction.guild.id).vc.channel.members) > 3:
+        if len(Servers.get_player(interaction.guild_id).vc.channel.members) > 3:
             await Utils.send(interaction, "Insufficient Permissions!", 'This command requires the "Manage Channels" permission!', ephemeral=True)
             return
 
@@ -338,13 +338,22 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
     await interaction.response.send_message(embed=embed)
 
+@ tree.command(name="replay", description="Restarts the current song")
+async def _replay(interaction: discord.Interaction) -> None:
+    if not await Utils.Pretests.playing_audio(interaction):
+        return
+    player = Servers.get_player(interaction.guild_id)
+    # Just add it to the top of the queue and skip to it
+    # Dirty but it works.
+    player.queue.add_at(player.song, 0)
+    player.vc.stop()
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
     if (Servers.get_player(interaction.guild_id).song is None):
-        await Utils.send(interaction, title="Nothing is playing", content="You should add something")
+        await Utils.send(interaction, title="Nothing is playing", content="You should add something", progress=False)
         return
     await interaction.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(interaction.guild_id), progress=True))
 
@@ -419,6 +428,16 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     if playlist.get('_type') != "playlist":
         await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
         return
+
+    # Might not proc, there for extra protection
+    if len(playlist.get("entries")) == 0:
+        await interaction.followup.send("Playlist Entries [] empty.")
+
+    # Detect if this is a Mix
+    if playlist.get("uploader") is None:
+        # Truncate the playlist to just the top 50 Songs or fewer if there are less
+        playlist.update({"playlist_count":50})
+        playlist.update({"entries":playlist.get("entries")[:50]})
 
     # If not in a VC, join
     if interaction.guild.voice_client is None:
@@ -627,7 +646,7 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 
     # If a yt_dlp DownloadError was raised
-    if type(error.original) == yt_dlp.utils.DownloadError:
+    if isinstance(error.original, yt_dlp.utils.DownloadError):
         await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.", 
         content=f'```ansi\n{error.original.exc_info[1]}```'))
         # Return here because we don't want to print an obvious error like this.
