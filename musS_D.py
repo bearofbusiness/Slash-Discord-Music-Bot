@@ -30,7 +30,7 @@ TODO:
         1- move command #bear 
         1- remove_duplicates #bear
     -other
-        8- perform link saniti*zation before being sent to yt-dlp
+        
         5- rename get_embed's content argument to description
         ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
         ^^^ it's likely fine but still, race conditions.
@@ -72,6 +72,7 @@ DONE:
         - play sound
     - other
         9-f footer that states the progress of the song #bear
+        8-f author doesn't need to vote to skip#sming
         8-f fix auto now playing messages not deleting //found why, it's because the player.wait_until_termination() returns instantly once we tell the player to close
         8-f auto-leave VC if bot is alone #sming
         7-f only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
@@ -252,6 +253,10 @@ async def _skip(interaction: discord.Interaction) -> None:
         await Utils.send(interaction, "Skipped!", ":white_check_mark:")
         return
 
+    # If this is the person who queued the song
+    if interaction.user == player.song.requester:
+        player.vc.stop()
+        await Utils.send(interaction, "Skipped!", ":white_check_mark:")
     votes_required = len(player.vc.channel.members) // 2
 
     if player.song.vote is None:
