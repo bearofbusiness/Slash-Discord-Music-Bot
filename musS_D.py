@@ -30,7 +30,7 @@ TODO:
         1- move command #bear 
         1- remove_duplicates #bear
     -other
-        
+        7- DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
         5- rename get_embed's content argument to description
         ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
         ^^^ it's likely fine but still, race conditions.
