@@ -32,7 +32,6 @@ TODO:
     -other
         9- add info on permissions to help
         7-fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
-        6- Implement discord.Button with queue
         5- rename get_embed's content argument to description
         ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
         ^^^ it's likely fine but still, race conditions.
@@ -78,6 +77,7 @@ DONE:
         8-f fix auto now playing messages not deleting //found why, it's because the player.wait_until_termination() returns instantly once we tell the player to close
         8-f auto-leave VC if bot is alone #sming
         7-f only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
+        6-f Implement discord.Button with queue
         5-f access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
         4-f remove unneeded async defs
         3-f make it multi server #bear
@@ -197,6 +197,10 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
             interaction.guild.voice_client, song))
     # If it does, add the song to queue
     elif top:
+        if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            return
         Servers.get_player(interaction.guild_id).queue.add_at(song, 0)
     else:
         Servers.get_player(interaction.guild_id).queue.add(song)
