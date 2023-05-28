@@ -91,7 +91,7 @@ class Player:
             # Send the new NP
             embed = Utils.get_now_playing_embed(self)
             try:
-                self.last_np_message = await self.last_np_message.edit(embed=embed)
+                self.last_np_message = await self.last_np_message.edit(embed=embed, view=Utils.NowPlayingButtons(self))
             except discord.errors.NotFound:
                 self.last_np_message = await self.vc.channel.send(embed=embed)
 

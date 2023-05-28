@@ -219,67 +219,7 @@ async def _skip(interaction: discord.Interaction) -> None:
 
     player = Servers.get_player(interaction.guild_id)
 
-    # Get a complex embed for votes
-    async def skip_msg(title: str = '', content: str = '', present_tense: bool = True, ephemeral: bool = False) -> None:
-
-        embed = Utils.get_embed(interaction, title, content,
-                                color=Utils.get_random_hex(player.song.id),
-                                progress=present_tense)
-        embed.set_thumbnail(url=player.song.thumbnail)
-
-        users = ''
-        for user in player.song.vote.get():
-            users = f'{user.name}, {users}'
-        users = users[:-2]
-        if present_tense:
-            # != 1 because if for whatever reason len(skip_vote) == 0 it will still make sense
-            voter_message = f"User{'s who have' if len(player.song.vote) != 1 else ' who has'} voted to skip:"
-            song_message = "Song being voted on:"
-        else:
-            voter_message = f"Vote passed by:"
-            song_message = "Song that was voted on:"
-
-        embed.add_field(name="Initiated by:",
-                        value=player.song.vote.initiator.mention)
-        embed.add_field(name=song_message,
-                        value=player.song.title, inline=True)
-        embed.add_field(name=voter_message, value=users, inline=False)
-        await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
-
-    # If there's not enough people for it to make sense to call a vote in the first place
-    if len(player.vc.channel.members) <= 3:
-        player.vc.stop()
-        await Utils.send(interaction, "Skipped!", ":white_check_mark:")
-        return
-
-    # If this is the person who queued the song
-    if interaction.user == player.song.requester:
-        player.vc.stop()
-        await Utils.send(interaction, "Skipped!", ":white_check_mark:")
-    votes_required = len(player.vc.channel.members) // 2
-
-    if player.song.vote is None:
-        # Create new Vote
-        player.song.create_vote(interaction.user)
-        await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
-        return
-
-    # If user has already voted to skip
-    if interaction.user in player.song.vote.get():
-        await skip_msg("You have already voted to skip!", ":octagonal_sign:", ephemeral=True)
-        return
-
-    # Add vote
-    player.song.vote.add(interaction.user)
-
-    # If vote succeeds
-    if len(player.song.vote) >= votes_required:
-        await skip_msg("Skip vote succeeded! :tada:", present_tense=False)
-        player.song.vote = None
-        player.vc.stop()
-        return
-
-    await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
+    Utils.skip_logic(player, interaction)
 
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
@@ -527,32 +467,22 @@ class __SearchSelection(discord.ui.View):
 
     @discord.ui.button(label="1",style=discord.ButtonStyle.blurple)
     async def button_one(self,interaction:discord.Interaction,button:discord.ui.Button):
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         await self.__selector(0, interaction)
 
     @discord.ui.button(label="2",style=discord.ButtonStyle.blurple)
     async def button_two(self,interaction:discord.Interaction,button:discord.ui.Button):
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         await self.__selector(1, interaction)
 
     @discord.ui.button(label="3",style=discord.ButtonStyle.blurple)
     async def button_three(self,interaction:discord.Interaction,button:discord.ui.Button):
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         await self.__selector(2, interaction)
 
     @discord.ui.button(label="4",style=discord.ButtonStyle.blurple)
     async def button_four(self,interaction:discord.Interaction,button:discord.ui.Button):
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         await self.__selector(3, interaction)
 
     @discord.ui.button(label="5",style=discord.ButtonStyle.blurple)
     async def button_five(self,interaction:discord.Interaction,button:discord.ui.Button):
-        button.disabled = True
-        await interaction.response.edit_message(view=self)
         await self.__selector(4, interaction)
 
 
@@ -596,7 +526,7 @@ async def _clear(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
     Servers.get_player(interaction.guild_id).queue.clear()
-    await interaction.response.send_message('Queue cleared')
+    await interaction.response.send_message('💥 Queue cleared')
 
 
 @ tree.command(name="shuffle", description="Shuffles the queue")
@@ -604,7 +534,7 @@ async def _shuffle(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
     Servers.get_player(interaction.guild_id).queue.shuffle()
-    await interaction.response.send_message('Queue shuffled')
+    await interaction.response.send_message('🔀 Queue shuffled')
 
 
 @ tree.command(name="pause", description="Pauses the current song")
