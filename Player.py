@@ -47,17 +47,12 @@ class Player:
 
     async def __player(self) -> None:
         Utils.pront("Player initialized.", "OKGREEN")
-        # This while will immediately terminate when player_abort is set.
-        # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
         while not self.player_abort.is_set():
             # Check if the queue is empty
             if not self.queue.get():
                 # Clean up and delete player
                 await Utils.clean(self)
 
-            # Create NP message for new song while it gets ready
-            if self.last_np_message is not None:
-                await self.last_np_message.delete()
             # BE CAREFUL, this song is not self.song!!!
             song = self.queue.get(0)
             embed = discord.Embed(
@@ -68,13 +63,22 @@ class Player:
             )
 
             embed.set_thumbnail(url=song.thumbnail)
-            self.last_np_message = await self.vc.channel.send(embed=embed)
+            # If the np message exists, edit it
+            if self.last_np_message is not None:
+                try:
+                    self.last_np_message = await self.last_np_message.edit(embed=embed)
+                # If something happened to the now-playing message just send it again
+                except discord.errors.NotFound:
+                    self.last_np_message = await self.vc.channel.send(embed=embed)
+            # Otherwise, create it
+            else:
+                self.last_np_message = await self.vc.channel.send(embed=embed)
             #del song(?)
 
             # Get the top song in queue ready to play
             try:
                 await self.queue.get(0).populate()
-            # If anything goes wrong, just skip it.
+            # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
             except Exception as e:
                 errored_song = self.queue.get(0)
                 await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of `{e}` and was skipped.")
@@ -86,7 +90,10 @@ class Player:
 
             # Send the new NP
             embed = Utils.get_now_playing_embed(self)
-            self.last_np_message = await self.last_np_message.edit(embed=embed)
+            try:
+                self.last_np_message = await self.last_np_message.edit(embed=embed)
+            except discord.errors.NotFound:
+                self.last_np_message = await self.vc.channel.send(embed=embed)
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()

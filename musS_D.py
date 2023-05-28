@@ -349,7 +349,7 @@ async def _replay(interaction: discord.Interaction) -> None:
         return
     player = Servers.get_player(interaction.guild_id)
     # Just add it to the top of the queue and skip to it
-    # Dirty but it works.
+    # Dirty, but it works.
     player.queue.add_at(player.song, 0)
     player.vc.stop()
 
@@ -488,7 +488,7 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
 
 
 # Button handling for __search
-class Selection(discord.ui.View):
+class __SearchSelection(discord.ui.View):
     def __init__(self, query_result, *, timeout=180):
         self.query_result = query_result
         super().__init__(timeout=timeout)
@@ -588,7 +588,7 @@ async def _search(interaction: discord.Interaction, query: str) -> None:
         embed.set_thumbnail(url=entry.get('thumbnails')[-1].get('url'))
         embeds.append(embed)
 
-    await interaction.followup.send(embeds=embeds, view=Selection(query_result))
+    await interaction.followup.send(embeds=embeds, view=__SearchSelection(query_result))
 
 
 @ tree.command(name="clear", description="Clears the queue")
