@@ -230,7 +230,7 @@ class Pretests:
         for role in interaction.user.roles:
             if role.name.lower() == 'dj':
                 return True
-            if role.permissions.manage_channels:
+            if role.permissions.manage_channels or role.permissions.administrator:
                 return True
         # Force discretionary authority for developers
         # Commented for testing

@@ -240,6 +240,54 @@ async def _force_skip(interaction: discord.Interaction) -> None:
     Servers.get_player(interaction.guild_id).vc.stop()
     await Utils.send(interaction, "Skipped!", ":white_check_mark:")
 
+# Button handling for _queue
+class __QueueButtons(discord.ui.View):
+    def __init__(self, *, timeout=180, page=1):
+        self.page = page
+        super().__init__(timeout=timeout)
+
+    def get_queue_embed(self, interaction: discord.Interaction):
+        player = Servers.get_player(interaction.guild_id)
+        page_size = 5
+        queue_len = len(player.queue)
+        max_page = math.ceil(queue_len / page_size)
+
+        if self.page < 0:
+            self.page = 0
+        elif self.page > max_page:
+            self.page = max_page
+        
+
+        # The index to start reading from Queue
+        min_queue_index = page_size * (self.page)
+        # The index to stop reading from Queue
+        max_queue_index = min_queue_index + page_size
+
+        embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
+            player.song.id), progress=False)
+
+        # Loop through the region of songs in this page
+        for i in range(min_queue_index, max_queue_index):
+            if i >= queue_len:
+                break
+            song = player.queue.get()[i]
+
+            embed.add_field(name=f"`{i + 1}`: {song.title}",
+                            value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
+
+        embed.set_footer(
+            text=f"Page {self.page + 1}/{max_page} | {queue_len} song{'s' if queue_len != 1 else ''} in queue")
+        return embed
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⬅")
+    async def button_left(self,interaction:discord.Interaction,button:discord.ui.Button):
+        self.page -= 1
+        await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
+        
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡")
+    async def button_right(self,interaction:discord.Interaction,button:discord.ui.Button):
+        self.page += 1
+        await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
 
 @ tree.command(name="queue", description="Shows the current queue")
 async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
@@ -251,39 +299,10 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
     if not player.queue.get():
         await Utils.send(interaction, title='Queue is empty!', ephemeral=True)
         return
-    embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
-        player.song.id), progress=False)
-    page_size = 5
-    queue_len = len(player.queue)
-    min_queue_index = page_size * (page - 1)
-    max_queue_index = min_queue_index + page_size
-    max_page = math.ceil(queue_len / page_size)
-    # check for highest page
-    if max_page < page or page < 0:
-        await interaction.response.send_message(
-            "Page doesn't exist! :octagonal_sign:", ephemeral=True)
-        return
-    # The index to start reading from Queue
-    min_queue_index = page_size * (page)
-    # The index to stop reading from Queue
-    max_queue_index = min_queue_index + page_size
 
-    embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
-        player.song.id), progress=False)
+    qb = __QueueButtons(page=page)
 
-    # Loop through the region of songs in this page
-    for i in range(min_queue_index, max_queue_index):
-        if i >= queue_len:
-            break
-        song = player.queue.get()[i]
-
-        embed.add_field(name=f"`{i + 1}`: {song.title}",
-                        value=f"by {song.uploader}\nAdded By: {song.requester.mention}", inline=False)
-
-    embed.set_footer(
-        text=f"Page {page + 1}/{max_page} | {queue_len} song{'s' if queue_len != 1 else ''} in queue")
-
-    await interaction.response.send_message(embed=embed)
+    await interaction.response.send_message(embed=qb.get_queue_embed(interaction), view=qb)
 
 
 @ tree.command(name="replay", description="Restarts the current song")
