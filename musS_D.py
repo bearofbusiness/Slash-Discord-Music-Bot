@@ -30,7 +30,9 @@ TODO:
         1- move command #bear 
         1- remove_duplicates #bear
     -other
-        7- DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
+        9- add info on permissions to help
+        7-fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
+        6- Implement discord.Button with queue
         5- rename get_embed's content argument to description
         ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
         ^^^ it's likely fine but still, race conditions.
@@ -227,13 +229,14 @@ async def _force_skip(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.playing_audio(interaction):
         return
 
-    # If user doesn't have the permissions
-    if not interaction.user.guild_permissions.manage_channels:
-        # If there's enough users in vc for it to make sense to enforce the perms
-        if len(Servers.get_player(interaction.guild_id).vc.channel.members) > 3:
-            await Utils.send(interaction, "Insufficient Permissions!", 'This command requires the "Manage Channels" permission!', ephemeral=True)
+    # If there's enough users in vc for it to make sense check perms
+    if len(Servers.get_player(interaction.guild_id).vc.channel.members) > 3:
+        # Check song authority
+        if not Utils.Pretests.has_song_authority(interaction, Servers.get_player(interaction.guild_id).song):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
             return
-
+        
     Servers.get_player(interaction.guild_id).vc.stop()
     await Utils.send(interaction, "Skipped!", ":white_check_mark:")
 
@@ -287,11 +290,20 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 async def _replay(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.playing_audio(interaction):
         return
+    
+    player = Servers.get_player(interaction.guild_id)
+
+    if not Utils.Pretests.has_song_authority(interaction, player.song):
+        await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+        return
+    
     player = Servers.get_player(interaction.guild_id)
     # Just add it to the top of the queue and skip to it
     # Dirty, but it works.
     player.queue.add_at(player.song, 0)
     player.vc.stop()
+    await Utils.send(interaction, title='⏪ Rewound')
 
 
 @ tree.command(name="now", description="Shows the current song")
@@ -310,11 +322,20 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
         return
     # Convert to non-human-readable
     number_in_queue -= 1
-    if Servers.get_player(interaction.guild_id).queue.get(number_in_queue) is None:
+    song = Servers.get_player(interaction.guild_id).queue.get(number_in_queue)
+
+    if song is None:
         await Utils.send(interaction, "Queue index does not exist.")
         return
+    
+    if not Utils.Pretests.has_song_authority(interaction, song):
+        await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+        return
+
     removed_song = Servers.get_player(
         interaction.guild_id).queue.remove(number_in_queue)
+    # TODO, Why do we do this?
     if removed_song is not None:
         embed = discord.Embed(
             title='Removed from Queue:',
@@ -337,7 +358,12 @@ async def _remove(interaction: discord.Interaction, number_in_queue: int) -> Non
 async def _remove_user(interaction: discord.Interaction, member: discord.Member):
     if not await Utils.Pretests.player_exists(interaction):
         return
-
+    
+    if not Utils.Pretests.has_discretionary_authority(interaction):
+        await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+        return
+    
     queue = Servers.get_player(interaction.guild.id).queue
 
     # TODO either make this an int or fill out the send embed more
@@ -525,6 +551,12 @@ async def _search(interaction: discord.Interaction, query: str) -> None:
 async def _clear(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
+    
+    if not Utils.Pretests.has_discretionary_authority(interaction):
+        await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+        return
+
     Servers.get_player(interaction.guild_id).queue.clear()
     await interaction.response.send_message('💥 Queue cleared')
 

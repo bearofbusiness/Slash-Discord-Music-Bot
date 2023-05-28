@@ -140,15 +140,13 @@ async def skip_logic(player: Player, interaction: discord.Interaction):
         await interaction.response.send_message(embed=embed, ephemeral=ephemeral)
 
     # If there's not enough people for it to make sense to call a vote in the first place
-    if len(player.vc.channel.members) <= 3:
+    # or if this user has authority
+    if len(player.vc.channel.members) <= 3 or Pretests.has_song_authority(interaction, player.song):
         player.vc.stop()
         await send(interaction, "Skipped!", ":white_check_mark:")
         return
 
-    # If this is the person who queued the song
-    if interaction.user == player.song.requester:
-        player.vc.stop()
-        await send(interaction, "Skipped!", ":white_check_mark:")
+
     votes_required = len(player.vc.channel.members) // 2
 
     if player.song.vote is None:
@@ -218,7 +216,7 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=get_embed(interaction, title='Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple,emoji="🔁")
+    @discord.ui.button(style=discord.ButtonStyle.blurple,emoji="🔀")
     async def shuffle_button(self,interaction:discord.Interaction,button:discord.ui.Button) -> None:
         self.player.queue.shuffle()
         await interaction.response.send_message(embed=get_embed(interaction, title='🔀 Queue shuffled'))
@@ -226,6 +224,26 @@ class NowPlayingButtons(discord.ui.View):
 
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
 class Pretests:
+
+    # To be used with control over the Player as a whole
+    def has_discretionary_authority(interaction: discord.Interaction) -> bool:
+        for role in interaction.user.roles:
+            if role.name.lower() == 'dj':
+                return True
+            if role.permissions.manage_channels:
+                return True
+        # Force discretionary authority for developers
+        # Commented for testing
+        #if interaction.user.id == 369999044023549962 or interaction.user.id == 311659410109759488:
+        #    return True
+        return False
+    
+    # To be used for control over a specific song
+    def has_song_authority(interaction: discord.Interaction, song: Song) -> bool:
+        if song.requester == interaction.user:
+            return True
+        
+        return Pretests.has_discretionary_authority(interaction)
 
     # Checks if voice channel states are right
     async def voice_channel(interaction: discord.Interaction) -> bool:
