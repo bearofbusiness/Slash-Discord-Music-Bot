@@ -174,8 +174,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         return
 
     await interaction.response.defer(thinking=True)
-    
-    
+
     # create song
     scrape = await YTDLInterface.scrape_link(link)
     song = Song(interaction, link, scrape)
@@ -343,6 +342,7 @@ async def _queue(interaction: discord.Interaction, page: int = 1) -> None:
 
     await interaction.response.send_message(embed=embed)
 
+
 @ tree.command(name="replay", description="Restarts the current song")
 async def _replay(interaction: discord.Interaction) -> None:
     if not await Utils.Pretests.playing_audio(interaction):
@@ -352,6 +352,7 @@ async def _replay(interaction: discord.Interaction) -> None:
     # Dirty but it works.
     player.queue.add_at(player.song, 0)
     player.vc.stop()
+
 
 @ tree.command(name="now", description="Shows the current song")
 async def _now(interaction: discord.Interaction) -> None:
@@ -441,8 +442,8 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     # Detect if this is a Mix
     if playlist.get("uploader") is None:
         # Truncate the playlist to just the top 50 Songs or fewer if there are less
-        playlist.update({"playlist_count":50})
-        playlist.update({"entries":playlist.get("entries")[:50]})
+        playlist.update({"playlist_count": 50})
+        playlist.update({"entries": playlist.get("entries")[:50]})
 
     # If not in a VC, join
     if interaction.guild.voice_client is None:
@@ -451,7 +452,6 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     # Shuffle the entries[] within playlist before processing them
     if shuffle:
         random.shuffle(playlist.get("entries"))
-
 
     for entry in playlist.get("entries"):
 
@@ -487,26 +487,15 @@ async def _playlist(interaction: discord.Interaction, link: str, shuffle: bool =
     await interaction.followup.send(embed=embed)
 
 
-@ tree.command(name="search", description="Searches YouTube for a given query")
-async def _search(interaction: discord.Interaction, query: str, selection: int = None) -> None:
-    # Check if author is in VC
-    if interaction.user.voice is None:
-        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
-        return
-
-    # Check if author is in the *right* vc if it applies
-    if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
-        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
-        return
-
-    await interaction.response.defer(thinking=True)
-
-    query_result = await YTDLInterface.scrape_search(query)
-
-    if selection:
-        selection -= 1
-        entry = query_result.get('entries')[selection]
-
+# Button handling for __search
+class Selection(discord.ui.View):
+    def __init__(self, query_result, *, timeout=180):
+        self.query_result = query_result
+        super().__init__(timeout=timeout)
+    
+    # All the buttons will call this method to add the song to queue
+    async def __selector(self, index: int, interaction: discord.Interaction) -> None:
+        entry = self.query_result.get('entries')[index]
         song = Song(interaction, entry.get('original_url'), entry)
 
         # If not in a VC, join
@@ -533,10 +522,56 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
         embed.add_field(name='Duration:',
                         value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
-        await interaction.followup.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
+
+
+    @discord.ui.button(label="1",style=discord.ButtonStyle.blurple)
+    async def button_one(self,interaction:discord.Interaction,button:discord.ui.Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await self.__selector(0, interaction)
+
+    @discord.ui.button(label="2",style=discord.ButtonStyle.blurple)
+    async def button_two(self,interaction:discord.Interaction,button:discord.ui.Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await self.__selector(1, interaction)
+
+    @discord.ui.button(label="3",style=discord.ButtonStyle.blurple)
+    async def button_three(self,interaction:discord.Interaction,button:discord.ui.Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await self.__selector(2, interaction)
+
+    @discord.ui.button(label="4",style=discord.ButtonStyle.blurple)
+    async def button_four(self,interaction:discord.Interaction,button:discord.ui.Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await self.__selector(3, interaction)
+
+    @discord.ui.button(label="5",style=discord.ButtonStyle.blurple)
+    async def button_five(self,interaction:discord.Interaction,button:discord.ui.Button):
+        button.disabled = True
+        await interaction.response.edit_message(view=self)
+        await self.__selector(4, interaction)
+
+
+@ tree.command(name="search", description="Searches YouTube for a given query")
+async def _search(interaction: discord.Interaction, query: str) -> None:
+    # Check if author is in VC
+    if interaction.user.voice is None:
+        await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
         return
 
-    # player = Servers.get_player(interaction.guild_id)
+    # Check if author is in the *right* vc if it applies
+    if interaction.guild.voice_client is not None and interaction.user.voice.channel != interaction.guild.voice_client.channel:
+        await interaction.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+        return
+
+    await interaction.response.defer(thinking=True)
+
+    query_result = await YTDLInterface.scrape_search(query)
+
     embeds = []
     embeds.append(Utils.get_embed(interaction,
                                   title="Search results:",
@@ -553,7 +588,7 @@ async def _search(interaction: discord.Interaction, query: str, selection: int =
         embed.set_thumbnail(url=entry.get('thumbnails')[-1].get('url'))
         embeds.append(embed)
 
-    await interaction.followup.send(embeds=embeds)
+    await interaction.followup.send(embeds=embeds, view=Selection(query_result))
 
 
 @ tree.command(name="clear", description="Clears the queue")
@@ -648,15 +683,17 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 # Custom error handler
+
+
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 
     # If a yt_dlp DownloadError was raised
     if isinstance(error.original, yt_dlp.utils.DownloadError):
-        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.", 
-        content=f'```ansi\n{error.original.exc_info[1]}```'))
+        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.",
+                                                              content=f'```ansi\n{error.original.exc_info[1]}```'))
         # Return here because we don't want to print an obvious error like this.
         return
-    
+
     # Fallback default error
     await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
     # Allows entire error to be printed without raising an exception
