@@ -522,7 +522,7 @@ class __SearchSelection(discord.ui.View):
         embed.add_field(name='Duration:',
                         value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
 
     @discord.ui.button(label="1",style=discord.ButtonStyle.blurple)
@@ -613,7 +613,7 @@ async def _pause(interaction: discord.Interaction) -> None:
         return
     Servers.get_player(interaction.guild_id).vc.pause()
     Servers.get_player(interaction.guild_id).song.pause()
-    await Utils.send(interaction, title='Paused')
+    await Utils.send(interaction, title='⏸ Paused')
 
 
 @ tree.command(name="resume", description="Resumes the current song")
@@ -622,7 +622,7 @@ async def _resume(interaction: discord.Interaction) -> None:
         return
     Servers.get_player(interaction.guild_id).vc.resume()
     Servers.get_player(interaction.guild_id).song.resume()
-    await Utils.send(interaction, title='Resumed')
+    await Utils.send(interaction, title='▶ Resumed')
 
 
 @ tree.command(name="loop", description="Loops the current song")
