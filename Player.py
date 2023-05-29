@@ -63,16 +63,10 @@ class Player:
             )
 
             embed.set_thumbnail(url=song.thumbnail)
-            # If the np message exists, edit it
+            # Delete the NP and refresh
             if self.last_np_message is not None:
-                try:
-                    self.last_np_message = await self.last_np_message.edit(embed=embed)
-                # If something happened to the now-playing message just send it again
-                except discord.errors.NotFound:
-                    self.last_np_message = await self.vc.channel.send(embed=embed)
-            # Otherwise, create it
-            else:
-                self.last_np_message = await self.vc.channel.send(embed=embed)
+                await self.last_np_message.delete()
+            self.last_np_message = await self.vc.channel.send(embed=embed)
             #del song(?)
 
             # Get the top song in queue ready to play
