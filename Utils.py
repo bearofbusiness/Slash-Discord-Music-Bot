@@ -62,7 +62,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     if progress:
         player = Servers.get_player(interaction.guild_id)
         if player is not None and player.queue.get():
-            footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}\n{get_progress_bar(player.song)}'
+            footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,
                              icon_url=player.song.thumbnail)
@@ -208,13 +208,19 @@ class NowPlayingButtons(discord.ui.View):
     async def loop_button(self,interaction:discord.Interaction,button:discord.ui.Button) -> None:
         self.player.set_loop(not self.player.looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
-        await interaction.response.send_message(ephemeral=True, embed=get_embed(interaction, title='Looped.' if self.player.looping else 'Loop disabled.'))
+        await interaction.response.send_message(ephemeral=True, embed=get_embed(interaction, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
     @discord.ui.button(style=discord.ButtonStyle.blurple,emoji="🔁")
     async def queue_loop_button(self,interaction:discord.Interaction,button:discord.ui.Button) -> None:
         self.player.set_queue_loop(not self.player.queue_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
-        await interaction.response.send_message(ephemeral=True, embed=get_embed(interaction, title='Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
+        await interaction.response.send_message(ephemeral=True, embed=get_embed(interaction, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾')
+    async def true_loop_button(self,interaction:discord.Interaction,button:discord.ui.Button) -> None:
+        self.player.set_true_loop(not self.player.true_looping)
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
+        await interaction.response.send_message(ephemeral=True, embed=get_embed(interaction, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
     @discord.ui.button(style=discord.ButtonStyle.blurple,emoji="🔀")
     async def shuffle_button(self,interaction:discord.Interaction,button:discord.ui.Button) -> None:

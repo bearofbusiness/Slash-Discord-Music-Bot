@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import random
 
 # Our imports
 import Utils
@@ -32,6 +33,7 @@ class Player:
 
         self.looping = False
         self.queue_looping = False
+        self.true_looping = False
 
         self.vc = vc
 
@@ -107,10 +109,17 @@ class Player:
             if self.looping:
                 self.queue.add_at(self.song, 0)
 
+            # If we're true looping, re-add the song to a random position in queue
+            elif self.true_looping:
+                if len(self.queue.get()) < 4:
+                    self.queue.add(self.song)
+                    continue
+                index = random.randrange(3, len(self.queue.get()))
+                self.queue.add_at(self.song, index)
+
             # If we're queue looping, re-add the removed song to bottom of queue
-            if self.queue_looping:
+            elif self.queue_looping:
                 self.queue.add(self.song)
-                continue
 
             self.song = None
 
@@ -122,6 +131,9 @@ class Player:
 
     def set_loop(self, state: bool) -> None:
         self.looping = state
+
+    def set_true_loop(self, state: bool) -> None:
+        self.true_looping = state
 
     def set_queue_loop(self, state: bool) -> None:
         self.queue_looping = state

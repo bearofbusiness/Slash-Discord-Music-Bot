@@ -624,8 +624,7 @@ async def _loop(interaction: discord.Interaction) -> None:
         return
     player = Servers.get_player(interaction.guild.id)
     player.set_loop(not player.looping)
-    await Utils.send(interaction, title='Looped.' if player.looping else 'Loop disabled.')
-
+    await Utils.send(interaction, title='🔂 Looped.' if player.looping else 'Loop disabled.')
 
 @ tree.command(name="queueloop", description="Loops the queue")
 async def _queue_loop(interaction: discord.Interaction) -> None:
@@ -633,8 +632,13 @@ async def _queue_loop(interaction: discord.Interaction) -> None:
         return
     player = Servers.get_player(interaction.guild.id)
     player.set_queue_loop(not player.queue_looping)
-    await Utils.send(interaction, title='Queue looped.' if player.queue_looping else 'Queue loop disabled.')
+    await Utils.send(interaction, title='🔁 Queue looped.' if player.queue_looping else 'Queue loop disabled.')
 
+@ tree.command(name="trueloop", description="Loops and adds songs to a random position in queue")
+async def _true_loop(interaction: discord.Interaction) -> None:
+    player = Servers.get_player(interaction.guild.id)
+    player.set_true_loop(not player.queue_looping)
+    await Utils.send(interaction, title='♾ True looped.' if player.true_looping else 'True loop disabled.')
 
 @ tree.command(name="help", description="Shows the help menu")
 @ discord.app_commands.describe(commands="choose a command to see more info")
