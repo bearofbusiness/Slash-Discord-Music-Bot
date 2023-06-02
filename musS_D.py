@@ -511,7 +511,7 @@ class __SearchSelection(discord.ui.View):
         embed.add_field(name='Duration:',
                         value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
-        await interaction.followup.send(embed=embed)
+        await interaction.response.send_message(embed=embed)
 
 
     @discord.ui.button(label="1",style=discord.ButtonStyle.blurple)
