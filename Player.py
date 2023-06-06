@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import random
 
 # Our imports
 import Utils
@@ -32,12 +33,23 @@ class Player:
 
         self.looping = False
         self.queue_looping = False
+        self.true_looping = False
 
         self.vc = vc
 
         # Create task to run __player
         self.player_task = asyncio.create_task(
-            self.__player())  # self.player_event
+            self.__exception_handler_wrapper(self.__player()))
+
+    # Custom exception handler
+    async def __exception_handler_wrapper(self, awaitable) -> None:
+        try:
+            return await awaitable
+        except Exception as e:
+            embed = discord.Embed(title="An unrecoverable Exception occurred", description=f"```ansi\n{e}\n```")
+            await self.vc.channel.send(embed=embed)
+            await Utils.clean(self)
+
 
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
@@ -63,16 +75,10 @@ class Player:
             )
 
             embed.set_thumbnail(url=song.thumbnail)
-            # If the np message exists, edit it
+            # Delete the NP and refresh
             if self.last_np_message is not None:
-                try:
-                    self.last_np_message = await self.last_np_message.edit(embed=embed)
-                # If something happened to the now-playing message just send it again
-                except discord.errors.NotFound:
-                    self.last_np_message = await self.vc.channel.send(embed=embed)
-            # Otherwise, create it
-            else:
-                self.last_np_message = await self.vc.channel.send(embed=embed)
+                await self.last_np_message.delete()
+            self.last_np_message = await self.vc.channel.send(embed=embed)
             #del song(?)
 
             # Get the top song in queue ready to play
@@ -81,7 +87,7 @@ class Player:
             # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
             except Exception as e:
                 errored_song = self.queue.get(0)
-                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of `{e}` and was skipped.")
+                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
                 self.queue.remove(0)
                 continue
 
@@ -113,10 +119,17 @@ class Player:
             if self.looping:
                 self.queue.add_at(self.song, 0)
 
+            # If we're true looping, re-add the song to a random position in queue
+            elif self.true_looping:
+                if len(self.queue.get()) < 4:
+                    self.queue.add(self.song)
+                    continue
+                index = random.randrange(3, len(self.queue.get()))
+                self.queue.add_at(self.song, index)
+
             # If we're queue looping, re-add the removed song to bottom of queue
-            if self.queue_looping:
+            elif self.queue_looping:
                 self.queue.add(self.song)
-                continue
 
             self.song = None
 
@@ -128,6 +141,9 @@ class Player:
 
     def set_loop(self, state: bool) -> None:
         self.looping = state
+
+    def set_true_loop(self, state: bool) -> None:
+        self.true_looping = state
 
     def set_queue_loop(self, state: bool) -> None:
         self.queue_looping = state
