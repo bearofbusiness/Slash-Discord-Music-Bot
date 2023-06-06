@@ -39,7 +39,17 @@ class Player:
 
         # Create task to run __player
         self.player_task = asyncio.create_task(
-            self.__player())  # self.player_event
+            self.__exception_handler_wrapper(self.__player()))
+
+    # Custom exception handler
+    async def __exception_handler_wrapper(self, awaitable) -> None:
+        try:
+            return await awaitable
+        except Exception as e:
+            embed = discord.Embed(title="An unrecoverable Exception occurred", description=f"```ansi\n{e}\n```")
+            await self.vc.channel.send(embed=embed)
+            await Utils.clean(self)
+
 
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
