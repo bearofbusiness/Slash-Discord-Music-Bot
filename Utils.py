@@ -237,13 +237,14 @@ class Pretests:
 
     # To be used with control over the Player as a whole
     def has_discretionary_authority(interaction: discord.Interaction) -> bool:
+        if len(interaction.user.voice.channel.members) <= 3:
+            return True
         for role in interaction.user.roles:
             if role.name.lower() == 'dj':
                 return True
             if role.permissions.manage_channels or role.permissions.administrator:
                 return True
         # Force discretionary authority for developers
-        # Commented for testing
         if interaction.user.id == 369999044023549962 or interaction.user.id == 311659410109759488:
             return True
         return False
