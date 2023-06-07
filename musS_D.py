@@ -229,7 +229,7 @@ async def _skip(interaction: discord.Interaction) -> None:
 
     player = Servers.get_player(interaction.guild_id)
 
-    Utils.skip_logic(player, interaction)
+    await Utils.skip_logic(player, interaction)
 
 
 @ tree.command(name="forceskip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
