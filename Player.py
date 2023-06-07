@@ -1,6 +1,8 @@
 import asyncio
 import discord
 import random
+import traceback
+
 
 # Our imports
 import Utils
@@ -18,7 +20,6 @@ class VoiceError(Exception):
 class Player:
     def __init__(self, vc: discord.VoiceClient, song: Song) -> None:
         self.player_event = asyncio.Event()
-        self.player_abort = asyncio.Event()
         self.player_song_end = asyncio.Event()
         # Immediately set the Event because audio is not currently playing
         self.player_song_end.set()
@@ -48,6 +49,7 @@ class Player:
         except Exception as e:
             embed = discord.Embed(title="An unrecoverable Exception occurred", description=f"```ansi\n{e}\n```")
             await self.vc.channel.send(embed=embed)
+            traceback.print_exc()
             await Utils.clean(self)
 
 
@@ -59,7 +61,7 @@ class Player:
 
     async def __player(self) -> None:
         Utils.pront("Player initialized.", "OKGREEN")
-        while not self.player_abort.is_set():
+        while True:
             # Check if the queue is empty
             if not self.queue.get():
                 # Clean up and delete player
@@ -132,9 +134,6 @@ class Player:
                 self.queue.add(self.song)
 
             self.song = None
-
-    def terminate_player(self) -> None:
-        self.player_abort.set()
 
     def is_playing(self) -> bool:
         return not self.player_song_end.is_set()
