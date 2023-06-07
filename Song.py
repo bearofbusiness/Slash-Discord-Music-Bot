@@ -29,7 +29,6 @@ class Song:
         else:
             self.original_url = dict.get('url')
 
-
         self.title = dict.get('title')
         self.uploader = dict.get('channel')
         self.audio = dict.get('url')
@@ -43,7 +42,7 @@ class Song:
 
     @classmethod
     async def from_link(cls, interaction: Interaction, link: str):
-        song = cls(interaction, link, {'webpage_url' : link})
+        song = cls(interaction, link, {'webpage_url': link})
         await song.populate()
         return song
 
@@ -116,7 +115,7 @@ class Song:
         self.pause_start = 0
 
     def get_elapsed_time(self) -> int:
-        return (time.time()) - (self.start_time + self.pause_time + ((time.time() - self.pause_start)if self.pause_start else 0))
+        return time.time() - (self.start_time + self.pause_time + ((time.time() - self.pause_start)if self.pause_start else 0))
 
     def __str__(self) -> str:
         return f'{self.title} by {self.uploader}'

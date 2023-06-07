@@ -1,5 +1,8 @@
 import asyncio
 import discord
+import random
+import traceback
+
 
 # Our imports
 import Utils
@@ -17,7 +20,6 @@ class VoiceError(Exception):
 class Player:
     def __init__(self, vc: discord.VoiceClient, song: Song) -> None:
         self.player_event = asyncio.Event()
-        self.player_abort = asyncio.Event()
         self.player_song_end = asyncio.Event()
         # Immediately set the Event because audio is not currently playing
         self.player_song_end.set()
@@ -32,12 +34,24 @@ class Player:
 
         self.looping = False
         self.queue_looping = False
+        self.true_looping = False
 
         self.vc = vc
 
         # Create task to run __player
         self.player_task = asyncio.create_task(
-            self.__player())  # self.player_event
+            self.__exception_handler_wrapper(self.__player()))
+
+    # Custom exception handler
+    async def __exception_handler_wrapper(self, awaitable) -> None:
+        try:
+            return await awaitable
+        except Exception as e:
+            embed = discord.Embed(title="An unrecoverable Exception occurred", description=f"```ansi\n{e}\n```")
+            await self.vc.channel.send(embed=embed)
+            traceback.print_exc()
+            await Utils.clean(self)
+
 
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
@@ -47,17 +61,12 @@ class Player:
 
     async def __player(self) -> None:
         Utils.pront("Player initialized.", "OKGREEN")
-        # This while will immediately terminate when player_abort is set.
-        # I still haven't properly tested if this abort method works so if it's misbehaving this is first on the chopping block
-        while not self.player_abort.is_set():
+        while True:
             # Check if the queue is empty
             if not self.queue.get():
                 # Clean up and delete player
                 await Utils.clean(self)
 
-            # Create NP message for new song while it gets ready
-            if self.last_np_message is not None:
-                await self.last_np_message.delete()
             # BE CAREFUL, this song is not self.song!!!
             song = self.queue.get(0)
             embed = discord.Embed(
@@ -68,16 +77,19 @@ class Player:
             )
 
             embed.set_thumbnail(url=song.thumbnail)
+            # Delete the NP and refresh
+            if self.last_np_message is not None:
+                await self.last_np_message.delete()
             self.last_np_message = await self.vc.channel.send(embed=embed)
             #del song(?)
 
             # Get the top song in queue ready to play
             try:
                 await self.queue.get(0).populate()
-            # If anything goes wrong, just skip it.
+            # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
             except Exception as e:
                 errored_song = self.queue.get(0)
-                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of `{e}` and was skipped.")
+                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
                 self.queue.remove(0)
                 continue
 
@@ -86,7 +98,10 @@ class Player:
 
             # Send the new NP
             embed = Utils.get_now_playing_embed(self)
-            self.last_np_message = await self.last_np_message.edit(embed=embed)
+            try:
+                self.last_np_message = await self.last_np_message.edit(embed=embed, view=Utils.NowPlayingButtons(self))
+            except discord.errors.NotFound:
+                self.last_np_message = await self.vc.channel.send(embed=embed)
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()
@@ -106,21 +121,28 @@ class Player:
             if self.looping:
                 self.queue.add_at(self.song, 0)
 
+            # If we're true looping, re-add the song to a random position in queue
+            elif self.true_looping:
+                if len(self.queue.get()) < 4:
+                    self.queue.add(self.song)
+                    continue
+                index = random.randrange(3, len(self.queue.get()))
+                self.queue.add_at(self.song, index)
+
             # If we're queue looping, re-add the removed song to bottom of queue
-            if self.queue_looping:
+            elif self.queue_looping:
                 self.queue.add(self.song)
-                continue
 
             self.song = None
-
-    def terminate_player(self) -> None:
-        self.player_abort.set()
 
     def is_playing(self) -> bool:
         return not self.player_song_end.is_set()
 
     def set_loop(self, state: bool) -> None:
         self.looping = state
+
+    def set_true_loop(self, state: bool) -> None:
+        self.true_looping = state
 
     def set_queue_loop(self, state: bool) -> None:
         self.queue_looping = state

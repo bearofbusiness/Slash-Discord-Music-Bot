@@ -13,5 +13,5 @@ class Vote:
         self.voters.append(member)
         return
 
-    def get(self) -> list:
+    def get(self) -> list[Member]:
         return self.voters

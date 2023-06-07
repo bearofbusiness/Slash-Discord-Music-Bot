@@ -17,7 +17,7 @@ class Queue:
         self.list.insert(index, song)
         self.has_songs.set()
 
-    def get(self, index: int | None = None) -> Song | list:
+    def get(self, index: int | None = None) -> Song | list[Song]:
         if index is None:
             return self.list
         return self.list[index]
