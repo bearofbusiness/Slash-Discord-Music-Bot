@@ -195,6 +195,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     if Servers.get_player(interaction.guild_id) is None:
         Servers.add(interaction.guild_id, Player(
             interaction.guild.voice_client, song))
+        position = 1
     # If it does, add the song to queue
     elif top:
         if not Utils.Pretests.has_discretionary_authority(interaction):
@@ -202,12 +203,15 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
                         content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
             return
         Servers.get_player(interaction.guild_id).queue.add_at(song, 0)
+        position = 1
     else:
         Servers.get_player(interaction.guild_id).queue.add(song)
+        position = len(Servers.get_player(interaction.guild_id).queue.get())
+        
 
     embed = Utils.get_embed(
         interaction,
-        title='Added to Queue:',
+        title=f'[{position}] Added to Queue:',
         url=song.original_url,
         color=Utils.get_random_hex(song.id)
     )
@@ -502,7 +506,7 @@ class __SearchSelection(discord.ui.View):
         # Create embed to go along with it
         embed = Utils.get_embed(
             interaction,
-            title='Added to Queue:',
+            title=f'[{len(Servers.get_player(interaction.guild_id).queue.get())} Added to Queue:',
             url=song.original_url,
             color=Utils.get_random_hex(song.id)
         )
