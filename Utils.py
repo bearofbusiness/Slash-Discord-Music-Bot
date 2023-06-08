@@ -96,12 +96,14 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
 
 # Cleans up and closes a player
 async def clean(player: Player) -> None:
-    player.player_task.cancel()
+    await player.vc.disconnect()
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
         await player.last_np_message.delete()
     player.queue.clear()
-    await player.vc.disconnect()
+    # Needs to be after at least player.vc.disconnect() because for some
+    # godawful reason it refuses to disconnect otherwise
+    player.player_task.cancel()
     Servers.remove(player)
 
 
@@ -230,6 +232,13 @@ class NowPlayingButtons(discord.ui.View):
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.queue.shuffle()
         await interaction.response.send_message(embed=get_embed(interaction, title='🔀 Queue shuffled'))
+
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺")
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
+
+
 
 
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
