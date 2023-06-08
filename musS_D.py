@@ -196,6 +196,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
         Servers.add(interaction.guild_id, Player(
             interaction.guild.voice_client, song))
         position = 0
+
     # If it does, add the song to queue
     elif top:
         if not Utils.Pretests.has_discretionary_authority(interaction):
@@ -684,6 +685,8 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 # Custom error handler
+
+
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 
     # If a yt_dlp DownloadError was raised

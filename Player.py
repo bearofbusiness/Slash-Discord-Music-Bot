@@ -50,6 +50,7 @@ class Player:
             await self.vc.channel.send(embed=embed)
             traceback.print_exc()
             await Utils.clean(self)
+            
 
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
@@ -119,8 +120,8 @@ class Player:
 
             # If song is looping, re-add song to the top of queue
             if self.looping:
-                self.queue.add_at(self.song, 0)
-        
+                self.queue.add_at(self.song, 0)        
+
             # If we're true looping, re-add the song to a random position in queue
             elif self.true_looping:
                 if len(self.queue.get()) < 4:
@@ -128,7 +129,7 @@ class Player:
                     continue
                 index = random.randrange(3, len(self.queue.get()))
                 self.queue.add_at(self.song, index)
-                
+
             # If we're queue looping, re-add the removed song to bottom of queue
             elif self.queue_looping:
                 self.queue.add(self.song)
