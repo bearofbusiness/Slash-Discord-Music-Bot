@@ -195,7 +195,7 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     if Servers.get_player(interaction.guild_id) is None:
         Servers.add(interaction.guild_id, Player(
             interaction.guild.voice_client, song))
-        position = 1
+        position = 0
     # If it does, add the song to queue
     elif top:
         if not Utils.Pretests.has_discretionary_authority(interaction):

@@ -19,7 +19,6 @@ class VoiceError(Exception):
 
 class Player:
     def __init__(self, vc: discord.VoiceClient, song: Song) -> None:
-        self.player_event = asyncio.Event()
         self.player_song_end = asyncio.Event()
         # Immediately set the Event because audio is not currently playing
         self.player_song_end.set()
@@ -52,7 +51,6 @@ class Player:
             traceback.print_exc()
             await Utils.clean(self)
 
-
     # Used only for the after flag of vc.play(), needs this specific signature
     def song_complete(self, error=None):
         if error:
@@ -82,7 +80,8 @@ class Player:
             if self.last_np_message is not None:
                 await self.last_np_message.delete()
             self.last_np_message = await self.vc.channel.send(embed=embed)
-            #del song(?)
+            del embed
+            del song
 
             # Get the top song in queue ready to play
             try:
@@ -121,7 +120,7 @@ class Player:
             # If song is looping, re-add song to the top of queue
             if self.looping:
                 self.queue.add_at(self.song, 0)
-
+        
             # If we're true looping, re-add the song to a random position in queue
             elif self.true_looping:
                 if len(self.queue.get()) < 4:
@@ -129,7 +128,7 @@ class Player:
                     continue
                 index = random.randrange(3, len(self.queue.get()))
                 self.queue.add_at(self.song, index)
-
+                
             # If we're queue looping, re-add the removed song to bottom of queue
             elif self.queue_looping:
                 self.queue.add(self.song)
