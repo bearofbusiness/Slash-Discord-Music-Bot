@@ -66,6 +66,7 @@ class Player:
             if not self.queue.get():
                 # Clean up and delete player
                 await Utils.clean(self)
+                return
 
             # BE CAREFUL, this song is not self.song!!!
             song = self.queue.get(0)

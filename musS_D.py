@@ -684,8 +684,6 @@ async def _help(interaction: discord.Interaction, commands: discord.app_commands
     await interaction.response.send_message(embed=embed)
 
 # Custom error handler
-
-
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 
     # If a yt_dlp DownloadError was raised

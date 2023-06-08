@@ -96,12 +96,14 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
 
 # Cleans up and closes a player
 async def clean(player: Player) -> None:
-    player.player_task.cancel()
+    await player.vc.disconnect()
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
         await player.last_np_message.delete()
     player.queue.clear()
-    await player.vc.disconnect()
+    # Needs to be after at least player.vc.disconnect() because for some
+    # godawful reason it refuses to disconnect otherwise
+    player.player_task.cancel()
     Servers.remove(player)
 
 
