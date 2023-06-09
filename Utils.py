@@ -236,6 +236,7 @@ class NowPlayingButtons(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺")
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
+        await interaction.response.send_message(delete_after=1, ephemeral=True, embed=get_embed(interaction, '⏺ Refreshed'))
 
 
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
