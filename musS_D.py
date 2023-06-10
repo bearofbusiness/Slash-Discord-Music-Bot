@@ -262,9 +262,9 @@ class __QueueButtons(discord.ui.View):
         max_page = math.ceil(queue_len / page_size)
 
         if self.page < 0:
+            self.page = max_page - 1
+        elif self.page >= max_page:
             self.page = 0
-        elif self.page > max_page:
-            self.page = max_page
         
 
         # The index to start reading from Queue
