@@ -262,9 +262,9 @@ class __QueueButtons(discord.ui.View):
         max_page = math.ceil(queue_len / page_size)
 
         if self.page < 0:
+            self.page = max_page - 1
+        elif self.page >= max_page:
             self.page = 0
-        elif self.page > max_page:
-            self.page = max_page
         
 
         # The index to start reading from Queue
@@ -697,7 +697,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
         return
 
     # Fallback default error
-    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
     # Allows entire error to be printed without raising an exception
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()

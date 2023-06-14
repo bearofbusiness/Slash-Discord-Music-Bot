@@ -1,5 +1,6 @@
 import asyncio
 import discord
+import math
 import random
 import traceback
 
@@ -127,7 +128,8 @@ class Player:
                 if len(self.queue.get()) < 4:
                     self.queue.add(self.song)
                     continue
-                index = random.randrange(3, len(self.queue.get()))
+                queue_length = len(self.queue)
+                index = random.randrange(math.ceil(queue_length/4), queue_length)
                 self.queue.add_at(self.song, index)
 
             # If we're queue looping, re-add the removed song to bottom of queue

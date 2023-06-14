@@ -61,7 +61,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = Servers.get_player(interaction.guild_id)
-        if player is not None and player.queue.get():
+        if player and player.song:
             footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,
@@ -237,6 +237,8 @@ class NowPlayingButtons(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺")
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
+        await interaction.response.send_message(delete_after=1, ephemeral=True, embed=get_embed(interaction, '⏺ Refreshed'))
+
 
 
 
