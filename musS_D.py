@@ -200,8 +200,8 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     # If it does, add the song to queue
     elif top:
         if not Utils.Pretests.has_discretionary_authority(interaction):
-            await interaction.followup.send(interaction, title='Insufficient permissions!', 
-                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            await interaction.followup.send(embed=Utils.get_embed(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information."))
             return
         Servers.get_player(interaction.guild_id).queue.add_at(song, 0)
         position = 1
