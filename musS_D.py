@@ -113,7 +113,22 @@ tree = discord.app_commands.CommandTree(bot)
 
 @bot.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
+    # If it's the bot
+    if member == bot.user:
+        # If we've been forcibly removed from a VC
+        # (this leaves a hanging voice_client)
+        if after.channel == None and member.guild.voice_client is not None:
+            player = Servers.get_player(member.guild.id)
+            # No player? No problem.
+            if player is None:
+                return
+            # If there is one, properly close it up
+            else:
+                await Utils.clean(player)
+                return
+            
     # If we don't care that a voice state was updated
+    # because we're not connected to that server anyways >:(
     if member.guild.voice_client is None:
         return
 
@@ -126,6 +141,8 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 member.guild.voice_client.disconnect()
             else:
                 await Utils.clean(player)
+
+
 
 
 ## COMMANDS ##

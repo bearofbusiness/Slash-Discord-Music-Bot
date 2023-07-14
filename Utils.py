@@ -96,7 +96,10 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
 
 # Cleans up and closes a player
 async def clean(player: Player) -> None:
-    await player.vc.disconnect()
+    # Only disconnect if bot is connected to vc
+    # (it won't be if it was disconnected by an admin)
+    if player.vc.is_connected():
+        await player.vc.disconnect()
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
         await player.last_np_message.delete()
@@ -237,7 +240,7 @@ class NowPlayingButtons(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺")
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
-        await interaction.response.send_message(delete_after=1, ephemeral=True, embed=get_embed(interaction, '⏺ Refreshed'))
+        await interaction.response.send_message(delete_after=1, ephemeral=True, embed=get_embed(interaction, '⏺ Refreshed', progress=False))
 
 
 
