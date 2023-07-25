@@ -21,6 +21,9 @@ XX = '''
 #-f is just finished
 TODO:
     6-fnt alert user when songs were unable to be added inside _playlist()
+    5- rearrange functions, their order here decides what order they show up in when people type / in discord
+    3- clean up todos in various parts of code
+    2- write pydocs
     -make more commands
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear //done but needs to be updated
@@ -365,8 +368,11 @@ async def _now(interaction: discord.Interaction) -> None:
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
-    # Convert to non-human-readable
-    number_in_queue -= 1
+    
+    # Convert to non-human-readable only if it's positive
+    if number_in_queue > 0:
+        # In this scenario 0 or 1 will mean the top song in queue
+        number_in_queue -= 1
     song = Servers.get_player(interaction.guild_id).queue.get(number_in_queue)
 
     if song is None:
@@ -424,6 +430,34 @@ async def _remove_user(interaction: discord.Interaction, member: discord.Member)
 
     await Utils.send(interaction,
                      title=f'Removed {len(removed)} songs.')
+
+@ tree.command(name="inspect", description="Inspects a song by number in queue")
+async def _inspect(interaction: discord.Interaction, number_in_queue: int):
+    if not await Utils.Pretests.player_exists(interaction):
+        return
+    
+    # Convert to non-human-readable only if it's positive
+    if number_in_queue > 0:
+        # In this scenario 0 or 1 will mean the top song in queue
+        number_in_queue -= 1
+    song = Servers.get_player(interaction.guild_id).queue.get(number_in_queue)
+
+    if song is None:
+        await Utils.send(interaction, "Queue index does not exist.")
+        return
+    
+    embed = Utils.get_embed(interaction, 
+                            title=f'Inspecting song #{number_in_queue}:',
+                            url=song.original_url,
+                            content=f'{song.title} -- {song.uploader}',
+                            color=Utils.get_random_hex(song.id)
+                            )
+    embed.add_field(name='Duration:', value=song.parse_duration(song.duration), inline=True)
+    embed.add_field(name='Requested by:', value=song.requester.mention)
+    embed.set_image(url=song.thumbnail)
+    embed.set_author(name=song.requester.display_name,
+                     icon_url=song.requester.display_avatar.url)
+    await interaction.response.send_message(embed=embed)
 
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
