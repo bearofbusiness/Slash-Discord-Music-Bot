@@ -9,6 +9,8 @@ class Song:
     """
     A class representing a piece of media
 
+    ...
+
     Attributes
     ----------
     link : str

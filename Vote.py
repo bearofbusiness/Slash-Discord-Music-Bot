@@ -5,6 +5,8 @@ class Vote:
     """
     A class for keeping track of users who have voted to do x
 
+    ...
+    
     Attributes
     ----------
     initiator : discord.Member

@@ -13,6 +13,8 @@ class YTDLInterface:
     """
     Static class that contains methods for easier usage of yt-dlp.
 
+    ...
+    
     Methods
     -------
     scrape_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
