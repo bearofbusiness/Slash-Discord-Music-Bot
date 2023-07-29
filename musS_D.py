@@ -32,6 +32,8 @@ TODO:
         1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- move command #bear 
         1- remove_duplicates #bear
+
+        write pause and play methods in player to consolidate controlls into one place
     -other
         9- add info on permissions to help
         7-fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
