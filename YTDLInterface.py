@@ -23,9 +23,6 @@ class YTDLInterface:
 
     scrape_search(query: str):
         Performs a quick scrape-based search for a provided query.
-
-    __call_dlp(options: dict, link: str)
-        Private method that performs the under-the-hood yt-dlp interfacing.
     """
     retrieve_options = {
         'format': 'bestaudio/best',
@@ -70,11 +67,12 @@ class YTDLInterface:
         Parameters
         ----------
             link : str
-                The URL to be scraped, note that searches do not work when scraping, an empty dict will be returned.
+                The URL to be scraped, note that searches do not work when scraping.
 
         Returns
         -------
-        A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        dict:
+            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, link)
 
@@ -92,7 +90,8 @@ class YTDLInterface:
 
         Returns
         -------
-        A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        dict:
+            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
 
@@ -110,13 +109,30 @@ class YTDLInterface:
 
         Returns
         -------
-        A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        dict:
+            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, f'ytsearch5:{query}')
 
     # Private method to condense all the others
     @staticmethod
     async def __call_dlp(options: dict, link: str):
+        """
+        Summons yt-dlp with a provided set of options and a query.
+
+        Parameters
+        ----------
+            options : dict
+                A dictionary of yt-dlp arguments. Listed at https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py
+            link : str
+                A string containing a URL or query that yt-dlp will interpret.
+
+        Returns
+        -------
+        dict:
+            A dictionary containing the result of the yt-dlp call.
+        
+        """
         # Define asyncio loop
         loop = asyncio.get_event_loop()
 
