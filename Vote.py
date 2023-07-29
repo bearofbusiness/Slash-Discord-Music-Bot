@@ -20,6 +20,12 @@ class Vote:
         Returns the list of voters
     """
     def __init__(self, initiator: Member):
+        """
+        Parameters
+        ----------
+        initiator : discord.Member
+            The Member who initiated the Vote.
+        """
         self.initiator = initiator
         self.voters = [initiator]
 
