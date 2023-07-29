@@ -15,11 +15,57 @@ from YTDLInterface import YTDLInterface
 
 
 class VoiceError(Exception):
+    """Generic voice error class."""
     pass
 
 
 class Player:
+    """
+    A class that handles Song population and playback as well as Queue management for a guild.
+    
+    If a Player ever has no Song to play it will die, remove itself from the Servers class and disconnect from its vc.
+
+    ...
+
+    Attributes
+    ----------
+    queue : Queue
+        The Queue that the Player is responsible for.
+    song : Song | None
+        The song that is currently playing, if there is not one this is a NoneType.
+        This is slightly innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
+    last_np_message: discord.Message | None
+        The last automatic now-playing Message the Player has sent.  NoneType if it has not sent one.
+    looping : bool
+        Whether the Player is looping the currently playing Song.
+    queue_looping : bool
+        Whether the Player is looping the Queue.
+    true_looping : bool
+        Whether the Player is shuffling completed Songs back into the Queue.
+    vc : discord.VoiceClient
+        The VoiceClient this Player is managing.
+
+    Methods
+    -------
+    is_playing():
+        Whether the player is playing audio or in-between songs. Pausing the Song does not effect this.
+    set_loop(state: bool):
+        Sets whether the Player should be looping the Song at song.
+    set_true_loop(state: bool):
+        Sets whether the Player should be shuffling completed Songs back into the Queue.
+    set_queue_loop(state: bool):
+        Sets whether the Player should be adding completed Songs to the end of the Queue.
+        
+    """
     def __init__(self, vc: discord.VoiceClient, song: Song) -> None:
+        """
+        Parameters
+        ----------
+        vc : discord.VoiceClient
+            The VoiceClient to bind the Player to
+        song : Song
+            The Song to initalize the Player with.
+        """
         self.player_song_end = asyncio.Event()
         # Immediately set the Event because audio is not currently playing
         self.player_song_end.set()
@@ -43,23 +89,45 @@ class Player:
             self.__exception_handler_wrapper(self.__player()))
 
     # Custom exception handler
-    async def __exception_handler_wrapper(self, awaitable) -> None:
+    async def __exception_handler_wrapper(self, awaitable) -> any:
+        """
+        Custom exception handling wrapper to avoid the Player from GBJ-ing itself due to unretrieved Exceptions.
+
+        Parameters
+        ----------
+        awaitable : any
+            The awaitable object to run within the wrapper.
+
+        Return
+        ------
+        any:
+            The result of the awaitable.
+        """
         try:
             return await awaitable
         except Exception as e:
             embed = discord.Embed(title="An unrecoverable Exception occurred", description=f"```ansi\n{e}\n```")
             await self.vc.channel.send(embed=embed)
+            # Traceback print here so we get the full error without causing an infinite loop of exception raises
             traceback.print_exc()
             await Utils.clean(self)
             
 
-    # Used only for the after flag of vc.play(), needs this specific signature
-    def song_complete(self, error=None):
+    def __song_complete(self, error=None):
+        """
+        This method is only used for the after parameter of vc.play(), it needs this specific signature.
+        
+        Not sure what scenario would cause it to raise a VoiceError but if it does, good luck.
+        Other than that this is just to raise the player_song_end flag for __player.
+        """
         if error:
             raise VoiceError(str(error))
         self.player_song_end.set()
 
     async def __player(self) -> None:
+        """
+        This is where the magic happens.  Contains all of the logic for the playback loop.
+        """
         Utils.pront("Player initialized.", "OKGREEN")
         while True:
             # Check if the queue is empty
@@ -113,7 +181,7 @@ class Player:
             # Begin playing audio into Discord
             self.vc.play(discord.FFmpegPCMAudio(
                 self.song.audio, **YTDLInterface.ffmpeg_options
-            ), after=self.song_complete)
+            ), after=self.__song_complete)
             # () implicit parenthesis
 
             # Sleep player until song ends
@@ -139,13 +207,53 @@ class Player:
             self.song = None
 
     def is_playing(self) -> bool:
+        """
+        Whether the player is playing audio or in-between songs. Pausing the Song does not effect this.
+
+        Returns
+        -------
+        bool:
+            True if the Player is playing audio or paused.
+
+            False if the Player is between songs.
+        """
         return not self.player_song_end.is_set()
 
     def set_loop(self, state: bool) -> None:
+        """
+        Sets whether the Player should be looping the Song at song.
+
+        Takes priority over true_looping or queue_looping.
+
+        Parameters
+        ----------
+        state : bool
+            Whether the player should be looping or not.
+        """
         self.looping = state
 
     def set_true_loop(self, state: bool) -> None:
+        """
+        Sets whether the Player should be shuffling completed Songs back into the Queue.
+
+        Takes priority over queue_looping but will be ignored if looping is True.
+
+        Parameters
+        ----------
+        state : bool
+            Whether the player should be true looping or not.
+        """
         self.true_looping = state
 
     def set_queue_loop(self, state: bool) -> None:
+        """
+        Sets whether the Player should be adding completed Songs to the end of the Queue.
+
+        Will be ignored if true_looping or looping are True.
+
+        Parameters
+        ----------
+        state : bool
+            Whether the player should be queue looping or not.
+        """
         self.queue_looping = state
