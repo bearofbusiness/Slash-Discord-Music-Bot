@@ -61,7 +61,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = Servers.get_player(interaction.guild_id)
-        if player is not None and player.queue.get():
+        if player and player.song:
             footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,
@@ -76,7 +76,7 @@ async def send(interaction: discord.Interaction, title='', content='', url='', c
 
 
 def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Embed:
-    title_message = f'Now Playing:\t{":repeat_one: " if player.looping else ""}{":repeat: " if player.queue_looping else ""}'
+    title_message = f'Now Playing:\t{":repeat_one: " if player.looping else ""}{":repeat: " if player.queue_looping else ""}{":infinity: " if player.true_looping else ""}'
     embed = discord.Embed(
         title=title_message,
         url=player.song.original_url,
@@ -96,12 +96,17 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
 
 # Cleans up and closes a player
 async def clean(player: Player) -> None:
-    player.player_task.cancel()
+    # Only disconnect if bot is connected to vc
+    # (it won't be if it was disconnected by an admin)
+    if player.vc.is_connected():
+        await player.vc.disconnect()
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
         await player.last_np_message.delete()
     player.queue.clear()
-    await player.vc.disconnect()
+    # Needs to be after at least player.vc.disconnect() because for some
+    # godawful reason it refuses to disconnect otherwise
+    player.player_task.cancel()
     Servers.remove(player)
 
 
@@ -230,6 +235,15 @@ class NowPlayingButtons(discord.ui.View):
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.queue.shuffle()
         await interaction.response.send_message(embed=get_embed(interaction, title='🔀 Queue shuffled'))
+
+
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺")
+    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=get_now_playing_embed(self.player, progress=True), view=self)
+        await interaction.response.send_message(delete_after=1, ephemeral=True, embed=get_embed(interaction, '⏺ Refreshed', progress=False))
+
+
+
 
 
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]

@@ -21,6 +21,9 @@ XX = '''
 #-f is just finished
 TODO:
     6-fnt alert user when songs were unable to be added inside _playlist()
+    5- rearrange functions, their order here decides what order they show up in when people type / in discord
+    3- clean up todos in various parts of code
+    2- write pydocs
     -make more commands
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear //done but needs to be updated
@@ -113,7 +116,22 @@ tree = discord.app_commands.CommandTree(bot)
 
 @bot.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
+    # If it's the bot
+    if member == bot.user:
+        # If we've been forcibly removed from a VC
+        # (this leaves a hanging voice_client)
+        if after.channel == None and member.guild.voice_client is not None:
+            player = Servers.get_player(member.guild.id)
+            # No player? No problem.
+            if player is None:
+                return
+            # If there is one, properly close it up
+            else:
+                await Utils.clean(player)
+                return
+            
     # If we don't care that a voice state was updated
+    # because we're not connected to that server anyways >:(
     if member.guild.voice_client is None:
         return
 
@@ -126,6 +144,8 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 member.guild.voice_client.disconnect()
             else:
                 await Utils.clean(player)
+
+
 
 
 ## COMMANDS ##
@@ -195,12 +215,13 @@ async def _play(interaction: discord.Interaction, link: str, top: bool = False) 
     if Servers.get_player(interaction.guild_id) is None:
         Servers.add(interaction.guild_id, Player(
             interaction.guild.voice_client, song))
-        position = 1
+        position = 0
+
     # If it does, add the song to queue
     elif top:
         if not Utils.Pretests.has_discretionary_authority(interaction):
-            await Utils.send(interaction, title='Insufficient permissions!', 
-                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            await interaction.followup.send(embed=Utils.get_embed(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information."))
             return
         Servers.get_player(interaction.guild_id).queue.add_at(song, 0)
         position = 1
@@ -261,9 +282,9 @@ class __QueueButtons(discord.ui.View):
         max_page = math.ceil(queue_len / page_size)
 
         if self.page < 0:
+            self.page = max_page - 1
+        elif self.page >= max_page:
             self.page = 0
-        elif self.page > max_page:
-            self.page = max_page
         
 
         # The index to start reading from Queue
@@ -347,8 +368,11 @@ async def _now(interaction: discord.Interaction) -> None:
 async def _remove(interaction: discord.Interaction, number_in_queue: int) -> None:
     if not await Utils.Pretests.player_exists(interaction):
         return
-    # Convert to non-human-readable
-    number_in_queue -= 1
+    
+    # Convert to non-human-readable only if it's positive
+    if number_in_queue > 0:
+        # In this scenario 0 or 1 will mean the top song in queue
+        number_in_queue -= 1
     song = Servers.get_player(interaction.guild_id).queue.get(number_in_queue)
 
     if song is None:
@@ -406,6 +430,34 @@ async def _remove_user(interaction: discord.Interaction, member: discord.Member)
 
     await Utils.send(interaction,
                      title=f'Removed {len(removed)} songs.')
+
+@ tree.command(name="inspect", description="Inspects a song by number in queue")
+async def _inspect(interaction: discord.Interaction, number_in_queue: int):
+    if not await Utils.Pretests.player_exists(interaction):
+        return
+    
+    # Convert to non-human-readable only if it's positive
+    if number_in_queue > 0:
+        # In this scenario 0 or 1 will mean the top song in queue
+        number_in_queue -= 1
+    song = Servers.get_player(interaction.guild_id).queue.get(number_in_queue)
+
+    if song is None:
+        await Utils.send(interaction, "Queue index does not exist.")
+        return
+    
+    embed = Utils.get_embed(interaction, 
+                            title=f'Inspecting song #{number_in_queue}:',
+                            url=song.original_url,
+                            content=f'{song.title} -- {song.uploader}',
+                            color=Utils.get_random_hex(song.id)
+                            )
+    embed.add_field(name='Duration:', value=song.parse_duration(song.duration), inline=True)
+    embed.add_field(name='Requested by:', value=song.requester.mention)
+    embed.set_image(url=song.thumbnail)
+    embed.set_author(name=song.requester.display_name,
+                     icon_url=song.requester.display_avatar.url)
+    await interaction.response.send_message(embed=embed)
 
 
 @ tree.command(name="playlist", description="Adds a playlist to the queue")
@@ -696,7 +748,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
         return
 
     # Fallback default error
-    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```'))
+    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
     # Allows entire error to be printed without raising an exception
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()

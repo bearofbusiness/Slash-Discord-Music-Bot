@@ -4,10 +4,29 @@ import functools
 
 # Generic post-process error class
 class YTDLError(Exception):
+    """
+    Generic YTDL error class.
+    """
     pass
 
 class YTDLInterface:
+    """
+    Static class that contains methods for easier usage of yt-dlp.
 
+    Methods
+    -------
+    scrape_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
+        Does a fast scrape of the URL providing limited information.
+
+    query_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
+        Does a slower but more thorough query of the URL than scrape_link.
+
+    scrape_search(query: str):
+        Performs a quick scrape-based search for a provided query.
+
+    __call_dlp(options: dict, link: str)
+        Private method that performs the under-the-hood yt-dlp interfacing.
+    """
     retrieve_options = {
         'format': 'bestaudio/best',
         'audioformat': 'mp3',
@@ -45,18 +64,54 @@ class YTDLInterface:
     # Rapidy retrieves shell information surrounding a URL
     @staticmethod
     async def scrape_link(link: str = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') -> dict:
+        """
+        Does a fast scrape of the URL providing limited information.
+        
+        Parameters
+        ----------
+            link : str
+                The URL to be scraped, note that searches do not work when scraping, an empty dict will be returned.
+
+        Returns
+        -------
+        A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, link)
 
     # Only called to automatically resolve searches input into scrape_link
     # Pulls information from a yt-dlp accepted URL and returns a Dict containing that information
     @staticmethod
     async def query_link(link: str = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') -> dict:
+        """
+        Does a slower but more thorough query of the URL than scrape_link.
+        
+        Parameters
+        ----------
+            link : str
+                The URL to be queried, non-links will be searched and the first result returned.
+
+        Returns
+        -------
+        A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        """
         return await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
 
 
     # Searches for a provided string
     @staticmethod
     async def scrape_search(query: str) -> dict:
+        """
+        Performs a quick scrape-based search for a provided query.
+        
+        Parameters
+        ----------
+            query : str
+                The text to be searched.  The method will return the top 5 search results.
+
+        Returns
+        -------
+        A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, f'ytsearch5:{query}')
 
     # Private method to condense all the others
