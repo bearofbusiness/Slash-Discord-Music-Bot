@@ -17,13 +17,13 @@ class YTDLInterface:
     
     Methods
     -------
-    scrape_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
+    async scrape_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
         Does a fast scrape of the URL providing limited information.
 
-    query_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
+    async query_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
         Does a slower but more thorough query of the URL than scrape_link.
 
-    scrape_search(query: str):
+    async scrape_search(query: str):
         Performs a quick scrape-based search for a provided query.
     """
     retrieve_options = {

@@ -39,12 +39,12 @@ class Song:
     
     Class Methods
     -------------
-    from_link(interaction: discord.Interaction, link: str):
+    async from_link(interaction: discord.Interaction, link: str):
         Will attempt to automatically initalize a Song with the provided link.
     
     Methods
     -------
-    populate():
+    async populate():
         Fills the Song with up-to-date information from original_url.
     create_vote(member: discord.Member)
         Creates a vote to track how many users wish to skip the Song.
@@ -121,6 +121,11 @@ class Song:
             The Interaction that created the Song.
         link : str
             The URL the method should try to pull information from.
+
+        Returns
+        -------
+        Song:
+            A Song object.
         """
         song = cls(interaction, link, {'webpage_url': link})
         await song.populate()
