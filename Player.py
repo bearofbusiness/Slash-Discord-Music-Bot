@@ -6,6 +6,7 @@ import traceback
 
 
 # Our imports
+import Buttons
 import Utils
 from Queue import Queue
 from Song import Song
@@ -59,6 +60,8 @@ class Player:
     """
     def __init__(self, vc: discord.VoiceClient, song: Song) -> None:
         """
+        Creates a Player object.
+
         Parameters
         ----------
         vc : discord.VoiceClient
@@ -169,7 +172,7 @@ class Player:
             # Send the new NP
             embed = Utils.get_now_playing_embed(self)
             try:
-                self.last_np_message = await self.last_np_message.edit(embed=embed, view=Utils.NowPlayingButtons(self))
+                self.last_np_message = await self.last_np_message.edit(embed=embed, view=Buttons.NowPlayingButtons(self))
             except discord.errors.NotFound:
                 self.last_np_message = await self.vc.channel.send(embed=embed)
 

@@ -1,5 +1,7 @@
-# imports for classes from other files
-from Player import Player
+from __future__ import annotations
+# Use annotations here to keep the type suggestions without causing a circular import
+
+import Player
 
 class Servers():
     """
@@ -23,7 +25,7 @@ class Servers():
     dict = {}
 
     @staticmethod
-    def add(server: int, player: Player) -> None:
+    def add(server: int, player: Player.Player) -> None:
         """
         Registers a Player to the provided guild id.
         
@@ -37,7 +39,7 @@ class Servers():
         Servers.dict[server] = player
 
     @staticmethod
-    def get_player(server: int) -> Player | None:
+    def get_player(server: int) -> Player.Player:
         """
         Get the Player associated with the provided guild id, if any.
 
@@ -56,7 +58,7 @@ class Servers():
         return Servers.dict.get(server)
 
     @staticmethod
-    def set_player(server: int, player: Player):
+    def set_player(server: int, player: Player.Player) -> None:
         """
         Replaces/registers a Player to the provided guild id.        
 
@@ -70,7 +72,7 @@ class Servers():
         Servers.dict.update({server : player})
 
     @staticmethod
-    def remove(server: int | Player) -> None:
+    def remove(server: Player.Player | int) -> None:
         """
         Unregisters a Player by guild id or Object.
 
@@ -87,7 +89,7 @@ class Servers():
         """
         #TODO find a faster method than this for removing by Player
         #O(n) in the worst case. (I think?)
-        if isinstance(server, Player):
+        if isinstance(server, Player.Player):
             for key, value in Servers.dict.items():
                 if value == server:
                     del Servers.dict[key]

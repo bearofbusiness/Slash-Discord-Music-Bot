@@ -28,6 +28,9 @@ class Queue:
         Will wait asynchronously until the Queue has Songs inside it again.
     """
     def __init__(self) -> None:
+        """
+        Creates a Queue object.
+        """
         self.list = []
         self.has_songs = Event()
 
