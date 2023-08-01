@@ -1,7 +1,5 @@
 import discord
-import math
 import os
-import random
 import traceback
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -9,10 +7,7 @@ from dotenv import load_dotenv
 # importing other classes from other files
 import Utils
 from Pages import Pages
-from Player import Player
 from Servers import Servers
-from Song import Song
-from YTDLInterface import YTDLInterface
 
 # imports for error type checking
 import yt_dlp
