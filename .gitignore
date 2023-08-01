@@ -7,3 +7,6 @@
 /.TestingScripts
 /.env
 /cogs/__pycache__
+/settings.db
+/settings.json
+/settings.session.sql

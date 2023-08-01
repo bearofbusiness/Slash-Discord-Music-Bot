@@ -2,6 +2,7 @@ import discord
 import math
 import random
 import time
+import sqlite3
 
 from datetime import datetime
 
@@ -231,3 +232,7 @@ class Pretests:
             await interaction.response.send_message("This command can only be used while a song is playing.")
             return False
         return True
+
+sqlite3.connect('settings.db')
+class DB:
+    pass

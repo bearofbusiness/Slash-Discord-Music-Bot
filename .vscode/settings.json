@@ -1,0 +1,10 @@
+{
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "driver": "SQLite",
+      "name": "settings",
+      "database": "${workspaceFolder:Slash-Discord-Music-Bot}/settings.db"
+    }
+  ]
+}
