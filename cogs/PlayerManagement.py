@@ -40,8 +40,6 @@ class PlayerManagement(commands.Cog):
         player.set_true_loop(not player.queue_looping)
         await Utils.send(interaction, title='♾ True looped.' if player.true_looping else 'True loop disabled.')
 
-Utils.DB.GuildSettings.get()
-
 async def setup(bot):
     Utils.pront("Cog PlayerManagement loading...")
     await bot.add_cog(PlayerManagement(bot))
