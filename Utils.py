@@ -235,8 +235,8 @@ class Pretests:
 
 
 class DB:
-    __settings_db = sqlite3.connect('settings.db')
-    __cursor = __settings_db.cursor()
+    _settings_db = sqlite3.connect('settings.db')
+    _cursor = _settings_db.cursor()
     # def on_start() -> None:
     #     """
     #     runs to connect the database and ready important variables
@@ -266,8 +266,8 @@ class DB:
 
                     > remove_orphaned_songs
             """
-            DB.__cursor.execute("SELECT ? FROM GuildSettings WHERE guild_id = ?", (setting, guild_id))
-            return DB.cursor.fetchone()
+            DB._cursor.execute("SELECT ? FROM GuildSettings WHERE guild_id = ?", (setting, guild_id))
+            return DB._cursor.fetchone()
         
         def set(guild_id: int, setting: str, value: str) -> None:
             """
@@ -289,8 +289,8 @@ class DB:
 
                     > remove_orphaned_songs
             """
-            DB.__cursor.execute("UPDATE GuildSettings SET ? = ? WHERE guild_id = ?", (setting, value, guild_id))
-            DB.__settings_db.commit()
+            DB._cursor.execute("UPDATE GuildSettings SET ? = ? WHERE guild_id = ?", (setting, value, guild_id))
+            DB._settings_db.commit()
             return
 
 

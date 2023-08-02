@@ -191,8 +191,9 @@ class GuildSettingsView(discord.ui.View):
             discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.')
         ], placeholder='Select a setting to edit.', )
     async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
+        value = select.values[0]
         match select.values[0]:
-            case 'np_sent_to_vc' as value:
+            case 'np_sent_to_vc':
                 # Remove any existing Buttons before spawning a new one
                 item = self.children[0]
                 self.clear_items().add_item(item)
@@ -200,7 +201,7 @@ class GuildSettingsView(discord.ui.View):
                 current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
                 self.add_item(ToggleButton(current_state, value))
                 await interaction.response.edit_message(view=self)
-            case 'remove_orphaned_songs' as value:
+            case 'remove_orphaned_songs':
                 # Remove any existing Buttons before spawning a new one
                 item = self.children[0]
                 self.clear_items().add_item(item)
