@@ -59,7 +59,15 @@ class NowPlayingButtons(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀")
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        self.player.queue.shuffle()
+        player = Servers.get_player(interaction.guild_id)
+        # If there's enough people, require authority to shuffle
+        if len(player.vc.channel.members) > 4:
+            if not Utils.Pretests.has_discretionary_authority(interaction):
+                await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+                return
+                
+        player.queue.shuffle()
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title='🔀 Queue shuffled'))
 
 
