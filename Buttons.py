@@ -181,3 +181,49 @@ class QueueButtons(discord.ui.View):
         self.page += 1
         await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
 
+
+class GuildSettingsView(discord.ui.View):
+    def __init__(self) -> None:
+        super().__init__(timeout=180)
+
+    @discord.ui.select(options=[
+            discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent between VC and where the song was queued from.'),
+            discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.')
+        ], placeholder='Select a setting to edit.', )
+    async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
+        match select.values[0]:
+            case 'np_sent_to_vc' as value:
+                # Remove any existing Buttons before spawning a new one
+                item = self.children[0]
+                self.clear_items().add_item(item)
+
+                current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
+                self.add_item(ToggleButton(current_state, value))
+                await interaction.response.edit_message(view=self)
+            case 'remove_orphaned_songs' as value:
+                # Remove any existing Buttons before spawning a new one
+                item = self.children[0]
+                self.clear_items().add_item(item)
+
+                current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
+                self.add_item(ToggleButton(current_state, value))
+                await interaction.response.edit_message(view=self)
+            case other:
+                # If this procs, we're boned.
+                raise NotImplementedError(f'Unexpected match:case values. ({other})')
+
+class ToggleButton(discord.ui.Button):
+    def __init__(self, state: bool, value: str):
+        self.value = value
+        self.state = state
+        style = discord.ButtonStyle.green if state else discord.ButtonStyle.red
+        super().__init__(style=style, label=str(state))
+
+    async def callback(self, interaction: discord.Interaction):
+        self.state = not self.state
+        self.style = discord.ButtonStyle.green if self.state else discord.ButtonStyle.red
+        self.label = str(self.state)
+
+        Utils.DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
+        # Remove and re-add the Button to the View and edit message
+        await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self))
