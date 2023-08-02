@@ -262,7 +262,7 @@ class DB:
 
                     > np_sent_to_vc
 
-                    > remove_songs_on_member_dc
+                    > remove_orphaned_songs
             """
             DB.__cursor.execute("SELECT ? FROM GuildSettings WHERE guild_id = ?", (setting, guild_id))
             return DB.cursor.fetchone()
@@ -278,14 +278,14 @@ class DB:
             setting : str
                 The setting to set.
 
-                
+
                 The Valid values are:
 
                     > guild_id
 
                     > np_sent_to_vc
 
-                    > remove_songs_on_member_dc
+                    > remove_orphaned_songs
             """
             DB.__cursor.execute("UPDATE GuildSettings SET ? = ? WHERE guild_id = ?", (setting, value, guild_id))
             DB.__settings_db.commit()
