@@ -183,10 +183,7 @@ async def _leave(interaction: discord.Interaction) -> None:
         await interaction.guild.voice_client.disconnect()
     await Utils.send(interaction, title='Left!', content=':white_check_mark:', progress=False)
 
-@bot.tree.command(name="Settings", description="Get or set the bot's settings for your server")
-@ discord.app_commands.choices(commands=[
-    discord.app_commands.Choice(name="Now_Playing_Send", value="ping")
-    ])
+@bot.tree.command(name="settings", description="Get or set the bot's settings for your server")
 async def _settings(interaction: discord.Interaction) -> None:
     pass
 

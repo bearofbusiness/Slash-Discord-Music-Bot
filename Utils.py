@@ -235,13 +235,15 @@ class Pretests:
 
 
 class DB:
-    def on_start() -> None:
-        """
-        runs to connect the database and ready important variables
-        """
-        __settings_db = sqlite3.connect('settings.db')
-        __cursor = __settings_db.cursor()
-        print("Connected to database")
+    __settings_db = sqlite3.connect('settings.db')
+    __cursor = __settings_db.cursor()
+    # def on_start() -> None:
+    #     """
+    #     runs to connect the database and ready important variables
+    #     """
+    #     __settings_db = sqlite3.connect('settings.db')
+    #     __cursor = __settings_db.cursor()
+    #     print("Connected to database")
     
     class GuildSettings:
         def get(guild_id: int, setting: str) -> str | bool | int:
@@ -292,4 +294,4 @@ class DB:
             return
 
 
-DB.on_start()
+#DB.on_start()
