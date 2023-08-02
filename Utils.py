@@ -277,10 +277,15 @@ class DB:
                 The guild to Set the setting to.
             setting : str
                 The setting to set.
+
+                
                 The Valid values are:
-                    - guild_id
-                    - np_sent_to_vc
-                    - remove_songs_on_member_dc
+
+                    > guild_id
+
+                    > np_sent_to_vc
+
+                    > remove_songs_on_member_dc
             """
             DB.__cursor.execute("UPDATE GuildSettings SET ? = ? WHERE guild_id = ?", (setting, value, guild_id))
             DB.__settings_db.commit()
