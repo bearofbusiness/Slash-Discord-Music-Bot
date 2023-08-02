@@ -233,6 +233,58 @@ class Pretests:
             return False
         return True
 
-sqlite3.connect('settings.db')
+
 class DB:
-    pass
+    def on_start() -> None:
+        """
+        runs to connect the database and ready important variables
+        """
+        __settings_db = sqlite3.connect('settings.db')
+        __cursor = __settings_db.cursor()
+        print("Connected to database")
+    
+    class GuildSettings:
+        def get(guild_id: int, setting: str) -> str | bool | int:
+            """
+            Gets an item from the GuildSettings table.
+
+            Parameters
+            ----------
+            guild_id : int
+                The guild to get the setting from.
+            setting : str
+                The setting to get.
+
+                
+                The Valid values are:
+
+                    > guild_id
+
+                    > np_sent_to_vc
+
+                    > remove_songs_on_member_dc
+            """
+            DB.__cursor.execute("SELECT ? FROM GuildSettings WHERE guild_id = ?", (setting, guild_id))
+            return DB.cursor.fetchone()
+        
+        def set(guild_id: int, setting: str, value: str) -> None:
+            """
+            Sets an item from the GuildSettings table.
+
+            Parameters
+            ----------
+            guild_id : int
+                The guild to Set the setting to.
+            setting : str
+                The setting to set.
+                The Valid values are:
+                    - guild_id
+                    - np_sent_to_vc
+                    - remove_songs_on_member_dc
+            """
+            DB.__cursor.execute("UPDATE GuildSettings SET ? = ? WHERE guild_id = ?", (setting, value, guild_id))
+            DB.__settings_db.commit()
+            return
+
+
+DB.on_start()
