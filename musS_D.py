@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 # importing other classes from other files
 import Utils
+import Buttons
 from Pages import Pages
 from Servers import Servers
 
@@ -151,7 +152,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
 
 @bot.tree.command(name="ping", description="The ping command (^-^)")
 async def _ping(interaction: discord.Interaction) -> None:
-    await interaction.response.send_message('Pong!', ephemeral=True)
+    await interaction.response.send_message('Pong!', ephemeral=True, view=Buttons.GuildSettingsView())
 
 @bot.tree.command(name="join", description="Adds the MaBalls to the voice channel you are in")
 async def _join(interaction: discord.Interaction) -> None:
