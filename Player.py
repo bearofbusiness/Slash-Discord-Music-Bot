@@ -11,6 +11,7 @@ import Utils
 from Queue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
+from DB import DB
 
 # Class to make what caused the error more apparent
 
@@ -45,6 +46,8 @@ class Player:
         Whether the Player is shuffling completed Songs back into the Queue.
     vc : discord.VoiceClient
         The VoiceClient this Player is managing.
+    send_location : discord.abc.GuildChannel
+        The location the bot will send auto Now Playing messages.  Updated every song.
 
     Methods
     -------
@@ -86,6 +89,8 @@ class Player:
         self.true_looping = False
 
         self.vc = vc
+
+        self.send_location = vc.channel if DB.GuildSettings.get(vc.guild.id, setting='np_sent_to_vc') else song.channel
 
         # Create task to run __player
         self.player_task = asyncio.create_task(
@@ -149,10 +154,15 @@ class Player:
             )
 
             embed.set_thumbnail(url=song.thumbnail)
-            # Delete the NP and refresh
+            # Delete the old NP if it exists
             if self.last_np_message is not None:
                 await self.last_np_message.delete()
-            self.last_np_message = await self.vc.channel.send(embed=embed)
+
+            # Update send location preference
+            # Purposefully uses song rather than self.song here to get the channel of the upcoming song, not the old one.
+            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else song.channel
+
+            self.last_np_message = await self.send_location.send(embed=embed)
             del embed
             del song
 
@@ -174,7 +184,7 @@ class Player:
             try:
                 self.last_np_message = await self.last_np_message.edit(embed=embed, view=Buttons.NowPlayingButtons(self))
             except discord.errors.NotFound:
-                self.last_np_message = await self.vc.channel.send(embed=embed)
+                self.last_np_message = await self.send_location.send(embed=embed)
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()
