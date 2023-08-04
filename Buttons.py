@@ -5,6 +5,7 @@ import math
 # Import Player rather than from Player to resolve a circular import
 import Player
 import Utils
+from DB import DB
 from Servers import Servers
 from Song import Song
 
@@ -197,7 +198,7 @@ class GuildSettingsView(discord.ui.View):
 
         # Get current state from DB
         value = select.values[0]
-        current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
+        current_state = DB.GuildSettings.get(interaction.guild_id, value)
 
         # Define the messages for the ToggleButton
         if value == 'np_sent_to_vc':
@@ -223,6 +224,6 @@ class ToggleButton(discord.ui.Button):
         self.style = discord.ButtonStyle.green if self.state else discord.ButtonStyle.red
         self.label = self.messages[self.state]
 
-        Utils.DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
+        DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
         # Remove and re-add the Button to the View and edit message
         await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self))
