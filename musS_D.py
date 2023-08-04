@@ -186,7 +186,13 @@ async def _leave(interaction: discord.Interaction) -> None:
 
 @bot.tree.command(name="settings", description="Get or set the bot's settings for your server")
 async def _settings(interaction: discord.Interaction) -> None:
-    pass
+    if not Utils.Pretests.has_discretionary_authority(interaction):
+        return
+    embed = Utils.get_embed(interaction, title='Settings')
+    embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: {bool(Utils.DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc'))}")
+    embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: {bool(Utils.DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}")
+    await interaction.response.send_message(ephemeral=True, embed=embed, view=Buttons.GuildSettingsView())
+
 
 @bot.tree.command(name="help", description="Shows the help menu")
 @ discord.app_commands.describe(commands="choose a command to see more info")

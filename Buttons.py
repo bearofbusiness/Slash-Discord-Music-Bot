@@ -187,43 +187,41 @@ class GuildSettingsView(discord.ui.View):
         super().__init__(timeout=180)
 
     @discord.ui.select(options=[
-            discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent between VC and where the song was queued from.'),
+            discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
             discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.')
         ], placeholder='Select a setting to edit.', )
     async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
+        # Remove any existing Buttons before spawning a new one
+        item = self.children[0]
+        self.clear_items().add_item(item)
+
+        # Get current state from DB
         value = select.values[0]
-        match select.values[0]:
-            case 'np_sent_to_vc':
-                # Remove any existing Buttons before spawning a new one
-                item = self.children[0]
-                self.clear_items().add_item(item)
+        current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
 
-                current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
-                self.add_item(ToggleButton(current_state, value))
-                await interaction.response.edit_message(view=self)
-            case 'remove_orphaned_songs':
-                # Remove any existing Buttons before spawning a new one
-                item = self.children[0]
-                self.clear_items().add_item(item)
+        # Define the messages for the ToggleButton
+        if value == 'np_sent_to_vc':
+            self.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
+        else:
+            self.add_item(ToggleButton(current_state, value))
 
-                current_state = Utils.DB.GuildSettings.get(interaction.guild_id, value)
-                self.add_item(ToggleButton(current_state, value))
-                await interaction.response.edit_message(view=self)
-            case other:
-                # If this procs, we're boned.
-                raise NotImplementedError(f'Unexpected match:case values. ({other})')
+
+        # Update select to have new placeholder
+        select.placeholder = 'Now Playing Location' if value == 'np_sent_to_vc' else 'Remove Orphaned Songs'
+        await interaction.response.edit_message(view=self)
 
 class ToggleButton(discord.ui.Button):
-    def __init__(self, state: bool, value: str):
+    def __init__(self, state: bool, value: str, messages: list[str] = ['False', 'True']):
         self.value = value
         self.state = state
+        self.messages = messages
         style = discord.ButtonStyle.green if state else discord.ButtonStyle.red
-        super().__init__(style=style, label=str(state))
+        super().__init__(style=style, label=messages[state])
 
     async def callback(self, interaction: discord.Interaction):
         self.state = not self.state
         self.style = discord.ButtonStyle.green if self.state else discord.ButtonStyle.red
-        self.label = str(self.state)
+        self.label = self.messages[self.state]
 
         Utils.DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
         # Remove and re-add the Button to the View and edit message
