@@ -154,7 +154,8 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             if player is None:
                 return
             # Loop through songs in queue and remove duplicates
-            removed, i = 0
+            removed = 0
+            i = 0
             while i < len(player.queue.get()):
                 if player.queue.get(i).requester == member:
                     player.queue.remove(i)
@@ -164,7 +165,12 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 i += 1
             # If songs were removed, let the users know.
             if removed != 0:
-                await player.send_location.send(f'Removed {removed} song{"" if len(removed) == 1 else "s"} queued by user {member.mention}.')
+                embed = discord.Embed(
+                    title=f'Removed {removed} song{"" if removed == 1 else "s"} queued by user {member.mention}.'
+                )
+                embed.set_footer(icon_url=player.song.thumbnail,
+                    text=f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{Utils.get_progress_bar(player.song)}')
+                await player.send_location.send(embed=embed)
 
 
 @bot.tree.command(name="help", description="Shows the help menu")
