@@ -167,7 +167,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 i += 1
             # If songs were removed, let the users know.
             if removed != 0:
-                await player.send_location.send(f'Removed {removed} songs queued by user {member.mention}.')
+                await player.send_location.send(f'Removed {removed} song{"" if len(removed) == 1 else "s"} queued by user {member.mention}.')
 
 
 @bot.tree.command(name="help", description="Shows the help menu")

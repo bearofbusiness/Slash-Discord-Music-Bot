@@ -273,8 +273,33 @@ class QueueManagement(commands.Cog):
             i += 1
 
         await Utils.send(interaction,
-                        title=f'Removed {len(removed)} songs.')
+                        title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"}.')
 
+    @app_commands.command(name="removeduplicates", description="Removes duplicate songs from the queue")
+    async def remove_dupes(self, interaction: discord.Interaction):
+        if not await Utils.Pretests.player_exists(interaction):
+            return
+        if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            return
+        player = Servers.get_player(interaction.guild_id)
+        queue = player.queue
+
+        #O(n) algorithm using a hash table
+        table = {player.song.id : player.song} if player.song else {}
+        # TODO either make this an int or fill out the send embed more
+        removed = []
+        i = 0
+        while i < len(queue.get()):
+            song = queue.get(i)
+            if table.get(song.id) == None:
+                table.update({song.id : song})
+                i += 1
+                continue
+            removed.append(queue.remove(i))
+        await Utils.send(interaction,
+                        title=f'Removed {len(removed)} duplicate song{"" if len(removed) == 1 else "s"}.')
     @app_commands.command(name="clear", description="Clears the queue")
     async def clear(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.player_exists(interaction):
