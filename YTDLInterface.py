@@ -118,7 +118,7 @@ class YTDLInterface:
 
     # Private method to condense all the others
     @staticmethod
-    async def __call_dlp(options: dict, link: str):
+    async def __call_dlp(options: dict, link: str) -> dict:
         """
         Summons yt-dlp with a provided set of options and a query.
 
@@ -134,6 +134,10 @@ class YTDLInterface:
         dict:
             A dictionary containing the result of the yt-dlp call.
         
+        Raises
+        ------
+        YTDLError:
+            If yt-dlp returned an empty or incomplete dictionary
         """
         # Define asyncio loop
         loop = asyncio.get_event_loop()

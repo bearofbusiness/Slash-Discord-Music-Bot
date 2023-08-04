@@ -10,6 +10,7 @@ import Utils
 import Buttons
 from Pages import Pages
 from Servers import Servers
+from DB import DB
 
 # imports for error type checking
 import yt_dlp
@@ -120,6 +121,11 @@ bot = Bot()
 
 @bot.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
+    # If we don't care that a voice state was updated
+    # because we're not connected to that server anyways >:(
+    if member.guild.voice_client is None:
+        return
+    
     # If it's the bot
     if member == bot.user:
         # If we've been forcibly removed from a VC
@@ -133,14 +139,9 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             else:
                 await Utils.clean(player)
                 return
-            
-    # If we don't care that a voice state was updated
-    # because we're not connected to that server anyways >:(
-    if member.guild.voice_client is None:
-        return
 
-    # If the user was in the same VC as the bot
-    if before.channel == member.guild.voice_client.channel:
+    # If the user was in the same VC as the bot and disconnected
+    if before.channel == member.guild.voice_client.channel and after.channel == None:
         # If the bot is now alone
         if len(before.channel.members) == 1:
             player = Servers.get_player(member.guild.id)
@@ -148,6 +149,25 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 member.guild.voice_client.disconnect()
             else:
                 await Utils.clean(player)
+        
+        # If the bot should purge their queued songs
+        if DB.GuildSettings.get(member.guild.id, 'remove_orphaned_songs'):
+            player = Servers.get_player(member.guild.id)
+            # If there isn't a player, abort
+            if player is None:
+                return
+            # Loop through songs in queue and remove duplicates
+            removed, i = 0
+            while i < len(player.queue.get()):
+                if player.queue.get(i).requester == member:
+                    player.queue.remove(i)
+                    removed += 1
+                    continue
+                # Only increment i when song.requester != member
+                i += 1
+            # If songs were removed, let the users know.
+            if removed != 0:
+                await player.send_location.send(f'Removed {removed} songs queued by user {member.mention}.')
 
 
 @bot.tree.command(name="help", description="Shows the help menu")
