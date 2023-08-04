@@ -6,3 +6,8 @@
 /__pycache__
 /.TestingScripts
 /.env
+/.vscode
+/cogs/__pycache__
+/settings.db
+/settings.json
+/settings.session.sql
