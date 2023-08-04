@@ -27,18 +27,12 @@ TODO:
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)
         1- help #bear //done but needs to be updated
         1- settings #bear
-        1- option to decide if __send_np goes into vc.channel or song.channel
-        1- remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
         1- move command #bear 
-        1- remove_duplicates #bear
-
-        write pause and play methods in player to consolidate controlls into one place
+        1- write pause and play methods in player to consolidate controlls into one place
     -other
         9- add info on permissions to help
         7-fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
         5- rename get_embed's content argument to description
-        ^^^ player.queue.top() is not always == player.song, player.queue.top() exists before player.song is uninitialized, make this swap with care
-        ^^^ it's likely fine but still, race conditions.
         
 
 
@@ -66,6 +60,9 @@ DONE:
         5-f shuffle #bear
         4-f loop (queue, song) #bear
         1-f fix queue emojis being backwards
+        1-f option to decide if __send_np goes into vc.channel or song.channel #sming
+        1-f remove_duplicates #bear (sming finished it)
+        1-f remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
 
      - Be able to play music from youtube
         - play music
