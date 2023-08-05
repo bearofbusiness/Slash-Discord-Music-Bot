@@ -186,15 +186,6 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 if player.queue.get(i).requester == member:
                     player.queue.remove(i)
                     removed += 1
-            '''
-            while i < len(player.queue.get()):
-                if player.queue.get(i).requester == member:
-                    player.queue.remove(i)
-                    removed += 1
-                    continue
-                # Only increment i when song.requester != member
-                i += 1
-            '''
             # If songs were removed, let the users know.
             if removed != 0:
                 embed = discord.Embed(
