@@ -19,7 +19,7 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    6-fnt alert user when songs were unable to be added inside _playlist()
+    6- fnt alert user when songs were unable to be added inside _playlist()
     5- rearrange functions, their order here decides what order they show up in when people type / in discord
     3- clean up todos in various parts of code
     2- write pydocs
@@ -31,8 +31,9 @@ TODO:
         1- write pause and play methods in player to consolidate controlls into one place
     -other
         9- add info on permissions to help
-        7-fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
+        7- fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
         5- rename get_embed's content argument to description
+
         
 
 
@@ -100,16 +101,41 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         self.synced=False
 
     async def on_ready(self):
+        #Checking if database exists
+        if os.path.exists("settings.db"):
+            Utils.pront("database found")
+        else:
+            Utils.pront("database not found, creating one")
+            import InitializeDB
+            del InitializeDB
+            Utils.pront("database created")
+        
+        #fixing column values
+        DB.fix_column_values()
+
+        #adding existing servers to database
+        Utils.pront("Adding servers to database if any are missing")
+        DB.initalize_servers_in_DB(bot.guilds)
+
+        #adding cogs
         await bot.load_extension("cogs.GuildManagement")
         await bot.load_extension("cogs.QueueManagement")
         await bot.load_extension("cogs.PlaybackManagement")
         await bot.load_extension("cogs.PlayerManagement")
         Utils.pront("Cogs loaded!")
+
+        #syncing tree
+        Utils.pront("Syncing tree")
         if not self.synced:
             await bot.tree.sync()  # please dont remove just in case i need to sync
-        Utils.pront("Bot is ready", lvl="OKGREEN")
+        Utils.pront("Tree synced!")
+
+        #setting status
+        Utils.pront("Setting bot status")
         await self.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} Servers."))
+        
+        Utils.pront("Bot is ready", lvl="OKGREEN")
 
 # Global Variables
 bot = Bot()
@@ -138,7 +164,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 return
 
     # If the user was in the same VC as the bot and disconnected
-    if before.channel == member.guild.voice_client.channel and after.channel == None:
+    if before.channel == member.guild.voice_client.channel and after.channel != before.channel:
         # If the bot is now alone
         if len(before.channel.members) == 1:
             player = Servers.get_player(member.guild.id)
@@ -154,7 +180,13 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             if player is None:
                 return
             # Loop through songs in queue and remove duplicates
-            removed, i = 0
+            removed = 0
+            for i in range(len(player.queue.get()) - 1, 0, -1):
+                pass
+                if player.queue.get(i).requester == member:
+                    player.queue.remove(i)
+                    removed += 1
+            '''
             while i < len(player.queue.get()):
                 if player.queue.get(i).requester == member:
                     player.queue.remove(i)
@@ -162,10 +194,22 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                     continue
                 # Only increment i when song.requester != member
                 i += 1
+            '''
             # If songs were removed, let the users know.
             if removed != 0:
                 await player.send_location.send(f'Removed {removed} song{"" if len(removed) == 1 else "s"} queued by user {member.mention}.')
 
+
+
+@bot.event
+async def on_guild_join(guild: discord.Guild)-> None:
+    DB.GuildSettings.create_new_guild(guild.id)
+    Utils.pront(f"Added {guild.name} to database")
+
+@bot.event
+async def on_guild_remove(guild: discord.Guild)-> None:
+    DB.GuildSettings.remove_guild(guild.id)
+    Utils.pront(f"Removed {guild.name} from database")
 
 @bot.tree.command(name="help", description="Shows the help menu")
 @ discord.app_commands.describe(commands="choose a command to see more info")
@@ -222,5 +266,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()
 bot.tree.on_error = on_tree_error
+
+
 
 bot.run(key)

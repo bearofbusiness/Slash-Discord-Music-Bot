@@ -10,6 +10,7 @@ from Player import Player
 from Servers import Servers
 from Song import Song
 from YTDLInterface import YTDLInterface
+from DB import DB
 
 class QueueManagement(commands.Cog):
     def __init__(self, bot: discord.Client):
@@ -76,6 +77,9 @@ class QueueManagement(commands.Cog):
 
     @app_commands.command(name="playlist", description="Adds a playlist to the queue")
     async def playlist(self, interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
+        if DB.GuildSettings.get(interaction.guild_id, 'allow_playlist') == 0:
+            await interaction.response.send_message("Playlists are disabled on this server", ephemeral=True)
+            return
         # Check if author is in VC
         if interaction.user.voice is None:
             await interaction.response.send_message('You are not in a voice channel', ephemeral=True)

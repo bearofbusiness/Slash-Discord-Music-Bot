@@ -189,7 +189,8 @@ class GuildSettingsView(discord.ui.View):
 
     @discord.ui.select(options=[
             discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
-            discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.')
+            discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.'),
+            discord.SelectOption(label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.')
         ], placeholder='Select a setting to edit.', )
     async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
         # Remove any existing Buttons before spawning a new one

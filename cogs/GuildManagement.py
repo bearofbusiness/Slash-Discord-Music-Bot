@@ -44,10 +44,12 @@ class GuildManagement(commands.Cog):
     @app_commands.command(name="settings", description="Get or set the bot's settings for your server")
     async def _settings(self, interaction: discord.Interaction) -> None:
         if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', ephemeral=True)
             return
         embed = Utils.get_embed(interaction, title='Settings')
         embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: {bool(DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc'))}")
         embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: {bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}")
+        embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: {bool(DB.GuildSettings.get(interaction.guild_id, 'allow_playlist'))}")
         await interaction.response.send_message(ephemeral=True, embed=embed, view=Buttons.GuildSettingsView())
 
 async def setup(bot):
