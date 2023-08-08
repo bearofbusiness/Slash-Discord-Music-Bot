@@ -237,4 +237,4 @@ class Pages:
 
     @staticmethod
     def get_command_page(page: str) -> dict:
-        return Pages.ind_commands[str]
+        return Pages.ind_commands[page]
