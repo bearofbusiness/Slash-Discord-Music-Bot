@@ -103,7 +103,7 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 
     async def on_ready(self):
         #Checking if database exists
-        if os.path.exists("settings.db"):
+        if os.file.exists("settings.db"):
             Utils.pront("database found")
         else:
             Utils.pront("database not found, creating one")
