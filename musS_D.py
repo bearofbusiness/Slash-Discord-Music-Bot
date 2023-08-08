@@ -209,43 +209,9 @@ async def on_guild_remove(guild: discord.Guild)-> None:
     Utils.pront(f"Removed {guild.name} from database")
 
 @bot.tree.command(name="help", description="Shows the help menu")
-@ discord.app_commands.describe(commands="choose a command to see more info")
-@ discord.app_commands.choices(commands=[
-    discord.app_commands.Choice(name="help", value="help"),
-    discord.app_commands.Choice(name="ping", value="ping"),
-    discord.app_commands.Choice(name="join", value="join"),
-    discord.app_commands.Choice(name="leave", value="leave"),
-    discord.app_commands.Choice(name="play", value="play"),
-    discord.app_commands.Choice(name="skip", value="skip"),
-    discord.app_commands.Choice(name="forceskip", value="forceskip"),
-    discord.app_commands.Choice(name="queue", value="queue"),
-    discord.app_commands.Choice(name="now", value="now"),
-    discord.app_commands.Choice(name="remove", value="remove"),
-    discord.app_commands.Choice(name="removeuser", value="removeuser"),
-    discord.app_commands.Choice(name="playlist", value="playlist"),
-    discord.app_commands.Choice(name="search", value="search"),
-    discord.app_commands.Choice(name="clear", value="clear"),
-    discord.app_commands.Choice(name="shuffle", value="shuffle"),
-    discord.app_commands.Choice(name="pause", value="pause"),
-    discord.app_commands.Choice(name="resume", value="resume"),
-    discord.app_commands.Choice(name="loop", value="loop"),
-    discord.app_commands.Choice(name="queueloop", value="queueloop")
-])
-async def _help(interaction: discord.Interaction, commands: discord.app_commands.Choice[str] = "") -> None:
-    if not commands:
-        main_embed = Pages.main_page
-        embed = Utils.get_embed(
-            interaction, title=main_embed["title"], content=main_embed["description"])
-        for field in main_embed["fields"]:
-            embed.add_field(name=field["name"], value=field["value"])
-        await interaction.response.send_message(embed=embed)
-        return
-    command_embed_dict = Pages.get_page(commands.value)
-    embed = Utils.get_embed(
-        interaction, title=command_embed_dict["title"], content=command_embed_dict["description"])
-    for field in command_embed_dict["fields"]:
-        embed.add_field(name=field["name"], value=field["value"])
-    await interaction.response.send_message(embed=embed)
+async def _help(interaction: discord.Interaction) -> None:
+    embed = discord.Embed.from_dict(Pages.get_main_page())
+    await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
 # Custom error handler
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):

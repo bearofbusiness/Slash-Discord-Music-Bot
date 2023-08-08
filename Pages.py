@@ -63,7 +63,7 @@ class Pages:
             "buttons" : ["queue", "clear", "shuffle", "loop", "loopqueue", "trueloop", "skip", "forceskip"],
             "cat_style": ButtonStyle.secondary
         },
-        "OtherCommands": {
+        "Other Commands": {
             "page" : {
                 "title": "Other Commands", "description": "",
                 "fields": [

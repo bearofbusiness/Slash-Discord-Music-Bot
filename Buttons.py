@@ -8,6 +8,7 @@ import Utils
 from DB import DB
 from Servers import Servers
 from Song import Song
+from Pages import Pages
 
 class NowPlayingButtons(discord.ui.View):
     def __init__(self, player: Player):
@@ -249,3 +250,40 @@ class TripleButton(ToggleButton):
         self.label = self.messages[self.state]
 
         await super().update(interaction)
+
+
+class HelpView(discord.ui.View):
+    def __init__(self) -> None:
+        super().__init__(timeout=300)
+
+    @discord.ui.select(options=[
+            discord.SelectOption(label='General Help', description='General tips and tricks for using MaBalls'),
+            discord.SelectOption(label='Adding Songs', description='Commands for adding one or many songs to the queue'),
+            discord.SelectOption(label='Removing Songs', description='Commands for removing one or many songs from the queue'),
+            discord.SelectOption(label='Queue Management', description='Commands for modifying the queue'),
+            discord.SelectOption(label='Other Commands', description='Miscellaneous commands that don\'t fit into to any category')
+        ], placeholder='Select a command category.', )
+    async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
+        value = select.values[0]
+        self.placeholder = value
+
+        # Remove any existing Buttons before spawning a new one
+        item = self.children[0]
+        self.clear_items().add_item(item)
+
+        category = Pages.get_category(value)
+        style = category.get('cat_style')
+        for item in category.get('buttons'):
+            self.add_item(HelpButton(item, style))
+        
+        embed = discord.Embed.from_dict(category.get('page'))
+        await interaction.response.edit_message(embed=embed, view=self)
+
+
+class HelpButton(discord.ui.Button):
+    def __init__(self, label: str, style: discord.ButtonStyle):
+        super().__init__(label=label, style=style)
+
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed.from_dict(Pages.get_command_page(self.label))
+        await interaction.response.edit_message(embed=embed, view=self.view)
