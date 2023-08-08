@@ -33,6 +33,7 @@ TODO:
         9- add info on permissions to help
         7- fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
         5- rename get_embed's content argument to description
+        5- right more help including dj role
 
         
 
@@ -210,8 +211,8 @@ async def on_guild_remove(guild: discord.Guild)-> None:
 @bot.tree.command(name="help", description="Shows the help menu")
 @ discord.app_commands.describe(commands="choose a command to see more info")
 @ discord.app_commands.choices(commands=[
-    discord.app_commands.Choice(name="ping", value="ping"),
     discord.app_commands.Choice(name="help", value="help"),
+    discord.app_commands.Choice(name="ping", value="ping"),
     discord.app_commands.Choice(name="join", value="join"),
     discord.app_commands.Choice(name="leave", value="leave"),
     discord.app_commands.Choice(name="play", value="play"),
