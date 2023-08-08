@@ -12,7 +12,7 @@ class Pages:
             {"name": "Other Commands", "value" : "miscellaneous commands that don't fit into to any category"},
         ]
     }
-    catagories = {
+    categories = {
         "General Help": { 
             "page" : {
                 "title": "General Help", "description": "",
@@ -231,8 +231,8 @@ class Pages:
 
 
     @staticmethod
-    def get_catagory(cat: str) -> dict:
-        return Pages.catagories[cat]
+    def get_category(cat: str) -> dict:
+        return Pages.categories[cat]
 
 
     @staticmethod
