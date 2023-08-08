@@ -19,7 +19,7 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
-    6-fnt alert user when songs were unable to be added inside _playlist()
+    6- fnt alert user when songs were unable to be added inside _playlist()
     5- rearrange functions, their order here decides what order they show up in when people type / in discord
     3- clean up todos in various parts of code
     2- write pydocs
@@ -31,8 +31,10 @@ TODO:
         1- write pause and play methods in player to consolidate controlls into one place
     -other
         9- add info on permissions to help
-        7-fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
+        7- fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
         5- rename get_embed's content argument to description
+        5- right more help including dj role
+
         
 
 
@@ -100,16 +102,41 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         self.synced=False
 
     async def on_ready(self):
+        #Checking if database exists
+        if os.path.exists("settings.db"):
+            Utils.pront("database found")
+        else:
+            Utils.pront("database not found, creating one")
+            import InitializeDB
+            del InitializeDB
+            Utils.pront("database created")
+        
+        #fixing column values
+        DB.fix_column_values()
+
+        #adding existing servers to database
+        Utils.pront("Adding servers to database if any are missing")
+        DB.initalize_servers_in_DB(bot.guilds)
+
+        #adding cogs
         await bot.load_extension("cogs.GuildManagement")
         await bot.load_extension("cogs.QueueManagement")
         await bot.load_extension("cogs.PlaybackManagement")
         await bot.load_extension("cogs.PlayerManagement")
         Utils.pront("Cogs loaded!")
+
+        #syncing tree
+        Utils.pront("Syncing tree")
         if not self.synced:
             await bot.tree.sync()  # please dont remove just in case i need to sync
-        Utils.pront("Bot is ready", lvl="OKGREEN")
+        Utils.pront("Tree synced!")
+
+        #setting status
+        Utils.pront("Setting bot status")
         await self.change_presence(activity=discord.Activity(
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} Servers."))
+        
+        Utils.pront("Bot is ready", lvl="OKGREEN")
 
 # Global Variables
 bot = Bot()
@@ -138,7 +165,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 return
 
     # If the user was in the same VC as the bot and disconnected
-    if before.channel == member.guild.voice_client.channel and after.channel == None:
+    if before.channel == member.guild.voice_client.channel and after.channel != before.channel:
         # If the bot is now alone
         if len(before.channel.members) == 1:
             player = Servers.get_player(member.guild.id)
@@ -155,14 +182,11 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 return
             # Loop through songs in queue and remove duplicates
             removed = 0
-            i = 0
-            while i < len(player.queue.get()):
+            for i in range(len(player.queue.get()) - 1, 0, -1):
+                pass
                 if player.queue.get(i).requester == member:
                     player.queue.remove(i)
                     removed += 1
-                    continue
-                # Only increment i when song.requester != member
-                i += 1
             # If songs were removed, let the users know.
             if removed != 0:
                 embed = discord.Embed(
@@ -173,44 +197,21 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 await player.send_location.send(embed=embed)
 
 
+
+@bot.event
+async def on_guild_join(guild: discord.Guild)-> None:
+    DB.GuildSettings.create_new_guild(guild.id)
+    Utils.pront(f"Added {guild.name} to database")
+
+@bot.event
+async def on_guild_remove(guild: discord.Guild)-> None:
+    DB.GuildSettings.remove_guild(guild.id)
+    Utils.pront(f"Removed {guild.name} from database")
+
 @bot.tree.command(name="help", description="Shows the help menu")
-@ discord.app_commands.describe(commands="choose a command to see more info")
-@ discord.app_commands.choices(commands=[
-    discord.app_commands.Choice(name="ping", value="ping"),
-    discord.app_commands.Choice(name="help", value="help"),
-    discord.app_commands.Choice(name="join", value="join"),
-    discord.app_commands.Choice(name="leave", value="leave"),
-    discord.app_commands.Choice(name="play", value="play"),
-    discord.app_commands.Choice(name="skip", value="skip"),
-    discord.app_commands.Choice(name="forceskip", value="forceskip"),
-    discord.app_commands.Choice(name="queue", value="queue"),
-    discord.app_commands.Choice(name="now", value="now"),
-    discord.app_commands.Choice(name="remove", value="remove"),
-    discord.app_commands.Choice(name="removeuser", value="removeuser"),
-    discord.app_commands.Choice(name="playlist", value="playlist"),
-    discord.app_commands.Choice(name="search", value="search"),
-    discord.app_commands.Choice(name="clear", value="clear"),
-    discord.app_commands.Choice(name="shuffle", value="shuffle"),
-    discord.app_commands.Choice(name="pause", value="pause"),
-    discord.app_commands.Choice(name="resume", value="resume"),
-    discord.app_commands.Choice(name="loop", value="loop"),
-    discord.app_commands.Choice(name="queueloop", value="queueloop")
-])
-async def _help(interaction: discord.Interaction, commands: discord.app_commands.Choice[str] = "") -> None:
-    if not commands:
-        main_embed = Pages.main_page
-        embed = Utils.get_embed(
-            interaction, title=main_embed["title"], content=main_embed["description"])
-        for field in main_embed["fields"]:
-            embed.add_field(name=field["name"], value=field["value"])
-        await interaction.response.send_message(embed=embed)
-        return
-    command_embed_dict = Pages.get_page(commands.value)
-    embed = Utils.get_embed(
-        interaction, title=command_embed_dict["title"], content=command_embed_dict["description"])
-    for field in command_embed_dict["fields"]:
-        embed.add_field(name=field["name"], value=field["value"])
-    await interaction.response.send_message(embed=embed)
+async def _help(interaction: discord.Interaction) -> None:
+    embed = discord.Embed.from_dict(Pages.get_main_page())
+    await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
 # Custom error handler
 async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
@@ -228,5 +229,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()
 bot.tree.on_error = on_tree_error
+
+
 
 bot.run(key)

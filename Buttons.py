@@ -8,6 +8,7 @@ import Utils
 from DB import DB
 from Servers import Servers
 from Song import Song
+from Pages import Pages
 
 class NowPlayingButtons(discord.ui.View):
     def __init__(self, player: Player):
@@ -189,7 +190,8 @@ class GuildSettingsView(discord.ui.View):
 
     @discord.ui.select(options=[
             discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
-            discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.')
+            discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.'),
+            discord.SelectOption(label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.')
         ], placeholder='Select a setting to edit.', )
     async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
         # Remove any existing Buttons before spawning a new one
@@ -201,14 +203,19 @@ class GuildSettingsView(discord.ui.View):
         current_state = DB.GuildSettings.get(interaction.guild_id, value)
 
         # Define the messages for the ToggleButton
-        if value == 'np_sent_to_vc':
-            self.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
-        else:
-            self.add_item(ToggleButton(current_state, value))
-
-
-        # Update select to have new placeholder
-        select.placeholder = 'Now Playing Location' if value == 'np_sent_to_vc' else 'Remove Orphaned Songs'
+        match value:
+            case 'np_sent_to_vc':
+                select.placeholder = "Now Playing Location"
+                self.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
+            case 'remove_orphaned_songs':
+                select.placeholder = "Remove Orphaned Songs"
+                self.add_item(ToggleButton(current_state, value))
+            case 'allow_playlist':
+                select.placeholder = "Allow Playlist"
+                self.add_item(TripleButton(current_state, value))
+            case default:
+                raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
+            
         await interaction.response.edit_message(view=self)
 
 class ToggleButton(discord.ui.Button):
@@ -223,7 +230,60 @@ class ToggleButton(discord.ui.Button):
         self.state = not self.state
         self.style = discord.ButtonStyle.green if self.state else discord.ButtonStyle.red
         self.label = self.messages[self.state]
+        await self.update(interaction)
 
+    async def update(self, interaction: discord.Interaction):
         DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
-        # Remove and re-add the Button to the View and edit message
         await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self))
+
+class TripleButton(ToggleButton):
+    def __init__(self, state: int, value: str, messages: list[str] = ['False', 'True', 'DJ Only']):
+        self.styles = [discord.ButtonStyle.red, discord.ButtonStyle.green, discord.ButtonStyle.blurple]
+        super().__init__(False, value, messages)
+        self.state = state
+        self.style = self.styles[state]
+        self.label = self.messages[state]
+
+    async def callback(self, interaction: discord.Interaction):
+        self.state = (self.state + 1) % 3
+        self.style = self.styles[self.state]
+        self.label = self.messages[self.state]
+
+        await super().update(interaction)
+
+
+class HelpView(discord.ui.View):
+    def __init__(self) -> None:
+        super().__init__(timeout=300)
+
+    @discord.ui.select(options=[
+            discord.SelectOption(label='General Help', description='General tips and tricks for using MaBalls'),
+            discord.SelectOption(label='Adding Songs', description='Commands for adding one or many songs to the queue'),
+            discord.SelectOption(label='Removing Songs', description='Commands for removing one or many songs from the queue'),
+            discord.SelectOption(label='Queue Management', description='Commands for modifying the queue'),
+            discord.SelectOption(label='Other Commands', description='Miscellaneous commands that don\'t fit into to any category')
+        ], placeholder='Select a command category.', )
+    async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
+        value = select.values[0]
+        self.placeholder = value
+
+        # Remove any existing Buttons before spawning a new one
+        item = self.children[0]
+        self.clear_items().add_item(item)
+
+        category = Pages.get_category(value)
+        style = category.get('cat_style')
+        for item in category.get('buttons'):
+            self.add_item(HelpButton(item, style))
+        
+        embed = discord.Embed.from_dict(category.get('page'))
+        await interaction.response.edit_message(embed=embed, view=self)
+
+
+class HelpButton(discord.ui.Button):
+    def __init__(self, label: str, style: discord.ButtonStyle):
+        super().__init__(label=label, style=style)
+
+    async def callback(self, interaction: discord.Interaction):
+        embed = discord.Embed.from_dict(Pages.get_command_page(self.label))
+        await interaction.response.edit_message(embed=embed, view=self.view)

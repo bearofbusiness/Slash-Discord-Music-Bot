@@ -1,5 +1,5 @@
 import sqlite3
-
+from discord.utils import SequenceProxy
 class DB:
     """
     A static class containing subclasses for accessing and mutating columns in various SQL tables.
@@ -20,7 +20,23 @@ class DB:
     #     __settings_db = sqlite3.connect('settings.db')
     #     __cursor = __settings_db.cursor()
     #     print("Connected to database")
+    def fix_column_values() -> None:
+        columns = [['np_sent_to_vc',"1"], ['remove_orphaned_songs',"0"], ['allow_playlist',"1"]]
+        for i in columns:
+            try:
+                DB._cursor.execute(f"ALTER TABLE GuildSettings ADD COLUMN {i[0]} BOOLEAN DEFAULT '{i[1]}'")
+                DB._settings_db.commit()
+            except:
+                pass
+        pass
+
+    def initalize_servers_in_DB(guilds: SequenceProxy) -> None:
+        for guild in list(guilds):
+            DB.GuildSettings.create_new_guild(guild.id)
     
+    def initalize_server_in_DB(guild: dict) -> None:
+            DB.GuildSettings.create_new_guild(guild.id)
+
     class GuildSettings:
         """
         A static subclass of DB providing higher level querying of the GuildSettings SQL table containing guild-specific options.
@@ -35,6 +51,14 @@ class DB:
         set(guild_id: int, setting: str value: str | bool | int):
             Sets a requested column from a guild by ID
         """
+        def create_new_guild(guild_id: int) -> None:
+            DB._cursor.execute(f"INSERT OR IGNORE INTO GuildSettings (guild_id) VALUES ({guild_id})")
+            DB._settings_db.commit()
+
+        def remove_guild(guild_id: int) -> None:
+            DB._cursor.execute(f"DELETE FROM GuildSettings WHERE guild_id = {guild_id}")
+            DB._settings_db.commit()
+
         def __setting_check(setting: str) -> str:
             """
             Provides column sanitization for the GuildSettings table.
@@ -60,6 +84,8 @@ class DB:
                 case 'np_sent_to_vc':
                     return setting
                 case 'remove_orphaned_songs':
+                    return setting
+                case 'allow_playlist':
                     return setting
                 case default:
                     raise ValueError(f'Invalid setting value supplied ({default})')
