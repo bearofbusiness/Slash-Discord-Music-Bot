@@ -103,15 +103,13 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 
     async def on_ready(self):
         #Checking if database exists
-        if os.file.exists("settings.db"):
-            Utils.pront("database found")
-        else:
-            Utils.pront("database not found, creating one")
-            import InitializeDB
-            del InitializeDB
-            Utils.pront("database created")
+
+        Utils.pront("trying to create database")
+        import InitializeDB
+        del InitializeDB
         
         #fixing column values
+        Utils.pront("Fixing column values if needed")
         DB.fix_column_values()
 
         #adding existing servers to database
