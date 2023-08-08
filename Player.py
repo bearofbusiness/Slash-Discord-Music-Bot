@@ -162,7 +162,7 @@ class Player:
             # Purposefully uses song rather than self.song here to get the channel of the upcoming song, not the old one.
             self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else song.channel
 
-            self.last_np_message = await self.send_location.send(embed=embed)
+            self.last_np_message = await self.send_location.send(silent=True, embed=embed)
             del embed
             del song
 
@@ -184,7 +184,7 @@ class Player:
             try:
                 self.last_np_message = await self.last_np_message.edit(embed=embed, view=Buttons.NowPlayingButtons(self))
             except discord.errors.NotFound:
-                self.last_np_message = await self.send_location.send(embed=embed)
+                self.last_np_message = await self.send_location.send(silent=True, embed=embed)
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()
