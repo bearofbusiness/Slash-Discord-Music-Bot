@@ -202,14 +202,19 @@ class GuildSettingsView(discord.ui.View):
         current_state = DB.GuildSettings.get(interaction.guild_id, value)
 
         # Define the messages for the ToggleButton
-        if value == 'np_sent_to_vc':
-            self.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
-        else:
-            self.add_item(ToggleButton(current_state, value))
-
-
-        # Update select to have new placeholder
-        select.placeholder = 'Now Playing Location' if value == 'np_sent_to_vc' else 'Remove Orphaned Songs'
+        match value:
+            case 'np_sent_to_vc':
+                select.placeholder = "Now Playing Location"
+                self.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
+            case 'remove_orphaned_songs':
+                select.placeholder = "Remove Orphaned Songs"
+                self.add_item(ToggleButton(current_state, value))
+            case 'allow_playlist':
+                select.placeholder = "Allow Playlist"
+                self.add_item(TripleButton(current_state, value))
+            case default:
+                raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
+            
         await interaction.response.edit_message(view=self)
 
 class ToggleButton(discord.ui.Button):
@@ -224,7 +229,23 @@ class ToggleButton(discord.ui.Button):
         self.state = not self.state
         self.style = discord.ButtonStyle.green if self.state else discord.ButtonStyle.red
         self.label = self.messages[self.state]
+        await self.update(interaction)
 
+    async def update(self, interaction: discord.Interaction):
         DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
-        # Remove and re-add the Button to the View and edit message
         await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self))
+
+class TripleButton(ToggleButton):
+    def __init__(self, state: int, value: str, messages: list[str] = ['False', 'True', 'DJ Only']):
+        self.styles = [discord.ButtonStyle.red, discord.ButtonStyle.green, discord.ButtonStyle.blurple]
+        super().__init__(False, value, messages)
+        self.state = state
+        self.style = self.styles[state]
+        self.label = self.messages[state]
+
+    async def callback(self, interaction: discord.Interaction):
+        self.state = (self.state + 1) % 3
+        self.style = self.styles[self.state]
+        self.label = self.messages[self.state]
+
+        await super().update(interaction)

@@ -77,9 +77,23 @@ class QueueManagement(commands.Cog):
 
     @app_commands.command(name="playlist", description="Adds a playlist to the queue")
     async def playlist(self, interaction: discord.Interaction, link: str, shuffle: bool = False) -> None:
-        if DB.GuildSettings.get(interaction.guild_id, 'allow_playlist') == 0:
-            await interaction.response.send_message("Playlists are disabled on this server", ephemeral=True)
-            return
+        match DB.GuildSettings.get(interaction.guild_id, 'allow_playlist'):
+            # False
+            case 0:
+                await interaction.response.send_message("Playlists are disabled on this server", ephemeral=True)
+                return
+            # True
+            case 1:
+                pass
+            # DJ Only
+            case 2:
+                if not Utils.Pretests.has_discretionary_authority(interaction):
+                    await interaction.response.send_message(embed=Utils.get_embed(interaction, title='Insufficient permissions!', 
+                            content="Playlists are DJ-only in this server!  Please refer to /help for more information."))
+                    return
+            case default:
+                raise NotImplementedError(f'Invalid value gathered from DB for allow_playlist ({default})')
+            
         # Check if author is in VC
         if interaction.user.voice is None:
             await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
