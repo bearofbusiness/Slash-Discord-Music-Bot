@@ -168,7 +168,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         if len(before.channel.members) == 1:
             player = Servers.get_player(member.guild.id)
             if player is None:
-                member.guild.voice_client.disconnect()
+                await member.guild.voice_client.disconnect()
             else:
                 await Utils.clean(player)
         
