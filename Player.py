@@ -3,6 +3,7 @@ import discord
 import math
 import random
 import traceback
+import time
 
 
 # Our imports
@@ -143,48 +144,32 @@ class Player:
                 # Clean up and delete player
                 await Utils.clean(self)
                 return
-
-            # BE CAREFUL, this song is not self.song!!!
-            song = self.queue.get(0)
-            embed = discord.Embed(
-                title="Preparing next song...",
-                description=f"{song.title} -- {song.uploader} is up next.",
-                url=song.original_url,
-                color=Utils.get_random_hex(song.id)
-            )
-
-            embed.set_thumbnail(url=song.thumbnail)
-            # Delete the old NP if it exists
-            if self.last_np_message is not None:
+            
+            # Delete the last now playing if it exists
+            if self.last_np_message:
                 await self.last_np_message.delete()
 
-            # Update send location preference
-            # Purposefully uses song rather than self.song here to get the channel of the upcoming song, not the old one.
-            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else song.channel
 
-            self.last_np_message = await self.send_location.send(silent=True, embed=embed)
-            del embed
-            del song
+            # If the song has not yet been populated or will expire while playing
+            if (self.queue.get(0).expiry_epoch is None or
+                    self.queue.get(0).expiry_epoch - time.time() - self.queue.get(0).duration < 30):
+                
+                # Populate the song again to refresh the timer
+                try:
+                    await self.queue.get(0).populate()
+                # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
+                except Exception as e:
+                    errored_song = self.queue.get(0)
+                    await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
+                    self.queue.remove(0)
+                    continue
 
-            # Get the top song in queue ready to play
-            try:
-                await self.queue.get(0).populate()
-            # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
-            except Exception as e:
-                errored_song = self.queue.get(0)
-                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
-                self.queue.remove(0)
-                continue
-
-            # Set the now-populated top song to the playing song
+            # Set the top song to the playing song
             self.song = self.queue.remove(0)
 
             # Send the new NP
             embed = Utils.get_now_playing_embed(self)
-            try:
-                self.last_np_message = await self.last_np_message.edit(embed=embed, view=Buttons.NowPlayingButtons(self))
-            except discord.errors.NotFound:
-                self.last_np_message = await self.send_location.send(silent=True, embed=embed)
+            self.last_np_message = await self.send_location.send(silent=True, embed=embed, view=Buttons.NowPlayingButtons(self))
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()

@@ -97,14 +97,16 @@ class Song:
             self.thumbnail = None
 
         # Try different method to get URL
+        # Also define audio here because of a naming collision
         if dict.get('webpage_url'):
             self.original_url = dict.get('webpage_url')
+            self.audio = dict.get('url')
         else:
             self.original_url = dict.get('url')
+            self.audio = None
 
         self.title = dict.get('title')
         self.uploader = dict.get('channel')
-        self.audio = dict.get('url')
         self.id = dict.get('id')
         self.duration = dict.get('duration')
 
@@ -112,7 +114,8 @@ class Song:
         self.start_time = 0
         self.pause_start = 0
         self.pause_time = 0
-        self.expiry_epoch = None
+        if self.audio is not None:
+            self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
         
 
     @classmethod
@@ -217,7 +220,7 @@ class Song:
             If the epoch was unable to be parsed from the URL
         """
         print(url)
-        url = url[url.index('expire=') + 7: url.index('&')]
+        url = url[url.find('expire=') + 7: url.find('&')]
         if not url.isnumeric():
             return None
         
@@ -249,13 +252,13 @@ class Song:
 
         duration = []
         if days > 0:
-            duration.append(f'{days} days')
+            duration.append(f'{int(days)} days')
         if hours > 0:
-            duration.append(f'{hours} hours')
+            duration.append(f'{int(hours)} hours')
         if minutes > 0:
-            duration.append(f'{minutes} minutes')
+            duration.append(f'{int(minutes)} minutes')
         if seconds > 0:
-            duration.append(f'{seconds} seconds')
+            duration.append(f'{int(seconds)} seconds')
 
         return ', '.join(duration)
 
