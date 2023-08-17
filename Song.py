@@ -35,7 +35,10 @@ class Song:
     duration : int | None
         The duration of the media in seconds, if it is available.
     original_url : str | None
-        The upstream URL of the media, if it exists.  This may or may not differ from link.    
+        The upstream URL of the media, if it exists.  This may or may not differ from link.   
+    expiry_epoch : int | None
+        The unix timestamp at which the Song will need to repopulate itself.
+        Will be a NoneType unless the song has been populated
     
     Class Methods
     -------------
@@ -109,6 +112,8 @@ class Song:
         self.start_time = 0
         self.pause_start = 0
         self.pause_time = 0
+        self.expiry_epoch = None
+        
 
     @classmethod
     async def from_link(cls, interaction: Interaction, link: str):
@@ -149,6 +154,8 @@ class Song:
         self.thumbnail = data.get('thumbnail')
         self.duration = data.get('duration')
         self.original_url = data.get('webpage_url')
+        if self.audio:
+            self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
 
     def create_vote(self, member: Member) -> None:
         """
@@ -192,6 +199,31 @@ class Song:
             The number of seconds that the song has played for.
         """
         return time.time() - (self.start_time + self.pause_time + ((time.time() - self.pause_start)if self.pause_start else 0))
+
+    @staticmethod
+    def __parse_expiry_epoch(url: str) -> int | None:
+        """Parses when the provided audio url will expire.
+        
+        Parameters
+        ----------
+        url : str
+            The URL to parse the epoch from
+
+        Returns
+        -------
+        int:
+            The epoch at which the url will expire
+        NoneType:
+            If the epoch was unable to be parsed from the URL
+        """
+        print(url)
+        url = url[url.index('expire=') + 7: url.index('&')]
+        if not url.isnumeric():
+            return None
+        
+        print(f"expires in {Song.parse_duration(int(url) - time.time())}")
+        return int(url)
+
 
     @staticmethod
     def parse_duration(duration: int | None) -> str:
