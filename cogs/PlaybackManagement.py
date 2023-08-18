@@ -59,8 +59,7 @@ class PlaybackManagement(commands.Cog):
     async def pause(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
-        Servers.get_player(interaction.guild_id).vc.pause()
-        Servers.get_player(interaction.guild_id).song.pause()
+        Servers.get_player(interaction.guild_id).pause()
         await Utils.send(interaction, title='⏸ Paused')
 
 
@@ -68,8 +67,7 @@ class PlaybackManagement(commands.Cog):
     async def resume(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
-        Servers.get_player(interaction.guild_id).vc.resume()
-        Servers.get_player(interaction.guild_id).song.resume()
+        Servers.get_player(interaction.guild_id).resume()
         await Utils.send(interaction, title='▶ Resumed')
 
 async def setup(bot):

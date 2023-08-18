@@ -25,14 +25,12 @@ class NowPlayingButtons(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", row=1)
     async def pause_play_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if self.player.vc.is_paused():
-            self.player.vc.resume()
-            self.player.song.resume()
+            self.player.resume()
             button.emoji = "⏸"
             self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
             await interaction.response.send_message(embed=Utils.get_embed(interaction, title="▶ Resumed"))
             return
-        self.player.vc.pause()
-        self.player.song.pause()
+        self.player.pause()
         button.emoji = "▶"
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏸ Paused"))

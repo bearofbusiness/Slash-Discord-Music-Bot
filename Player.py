@@ -54,6 +54,10 @@ class Player:
     -------
     is_playing():
         Whether the player is playing audio or in-between songs. Pausing the Song does not effect this.
+    pause():
+        Pauses the player.
+    resume():
+        Resumes the player
     set_loop(state: bool):
         Sets whether the Player should be looping the Song at song.
     set_true_loop(state: bool):
@@ -224,6 +228,20 @@ class Player:
             False if the Player is between songs.
         """
         return not self.player_song_end.is_set()
+
+    def pause(self) -> None:
+        """
+        Pauses the player.
+        """
+        self.vc.pause()
+        self.song.pause()
+    
+    def resume(self) -> None:
+        """
+        Resumes the player.
+        """
+        self.vc.resume()
+        self.song.resume()
 
     def set_loop(self, state: bool) -> None:
         """
