@@ -159,9 +159,10 @@ class Player:
             # If the song has not yet been populated or will expire while playing
             # Pretty sure this will cause worse performance on sources other than youtube because they will try to repopulate every time
             #TODO find a better way for that
-            if (song.expiry_epoch is None or
-                    song.expiry_epoch - time.time() - song.duration < 30):
-                
+            if song.expiry_epoch is not None and song.expiry_epoch - time.time() - song.duration < 30:
+                song.expiry_epoch = None
+
+            if song.expiry_epoch is None:
                 # Populate the song again to refresh the timer
                 try:
                     await song.populate()
@@ -171,9 +172,11 @@ class Player:
                     await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
                     self.queue.remove(0)
                     continue
-                # If even after repopulating, the song was going to pass the expiry time
-                if song.expiry_epoch - time.time() - song.duration < 30:
-                    await song.channel.send(f"Song {song.title} -- {song.uploader} ({song.original_url}) was unable to load because it would expire before playback completed (too long)")
+                # If the song does actually have an epoch
+                if song.expiry_epoch is not None:
+                    # If even after repopulating, the song was going to pass the expiry time
+                    if song.expiry_epoch - time.time() - song.duration < 30:
+                        await song.channel.send(f"Song {song.title} -- {song.uploader} ({song.original_url}) was unable to load because it would expire before playback completed (too long)")
 
             del song
 
