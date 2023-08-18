@@ -85,6 +85,7 @@ class Player:
         self.queue.add(song)
 
         # Shouldn't be set but it fixes a race condition
+        #TODO is this still true?
         self.song = song
 
         self.last_np_message = None
@@ -172,7 +173,7 @@ class Player:
                     continue
                 # If even after repopulating, the song was going to pass the expiry time
                 if song.expiry_epoch - time.time() - song.duration < 30:
-                    await song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) was unable to load because it would expire before playback completed")
+                    await song.channel.send(f"Song {song.title} -- {song.uploader} ({song.original_url}) was unable to load because it would expire before playback completed (too long)")
 
             del song
 
