@@ -286,11 +286,11 @@ class Song:
 
         duration = []
         if days > 0:
-            duration.append(f'{days:02d}')
+            duration.append(f'{int(days):02d}')
         if hours > 0:
-            duration.append(f'{hours:02d}')
-        duration.append(f'{minutes:02d}')
-        duration.append(f'{seconds:02d}')
+            duration.append(f'{int(hours):02d}')
+        duration.append(f'{int(minutes):02d}')
+        duration.append(f'{int(seconds):02d}')
 
         return ':'.join(duration)
 
