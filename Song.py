@@ -109,6 +109,9 @@ class Song:
         self.uploader = dict.get('channel')
         self.id = dict.get('id')
         self.duration = dict.get('duration')
+        # Cast the duration to an integer
+        if self.duration:
+            self.duration = int(self.duration)
 
         # Delta time handling variables
         self.start_time = 0
@@ -252,13 +255,13 @@ class Song:
 
         duration = []
         if days > 0:
-            duration.append(f'{int(days)} days')
+            duration.append(f'{days} days')
         if hours > 0:
-            duration.append(f'{int(hours)} hours')
+            duration.append(f'{hours} hours')
         if minutes > 0:
-            duration.append(f'{int(minutes)} minutes')
+            duration.append(f'{minutes} minutes')
         if seconds > 0:
-            duration.append(f'{int(seconds)} seconds')
+            duration.append(f'{seconds} seconds')
 
         return ', '.join(duration)
 
@@ -286,11 +289,11 @@ class Song:
 
         duration = []
         if days > 0:
-            duration.append(f'{int(days):02d}')
+            duration.append(f'{days:02d}')
         if hours > 0:
-            duration.append(f'{int(hours):02d}')
-        duration.append(f'{int(minutes):02d}')
-        duration.append(f'{int(seconds):02d}')
+            duration.append(f'{hours:02d}')
+        duration.append(f'{minutes:02d}')
+        duration.append(f'{seconds:02d}')
 
         return ':'.join(duration)
 
