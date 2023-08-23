@@ -97,11 +97,10 @@ class Song:
             self.thumbnail = None
 
         # Try different method to get URL
-        # Also define audio here because of a naming collision
-        if dict.get('webpage_url'):
-            self.original_url = dict.get('webpage_url')
-            self.audio = dict.get('url')
-        else:
+        # Also define audio here because of a naming collision in yt-dlp
+        self.original_url = dict.get('webpage_url')
+        self.audio = dict.get('url')
+        if self.original_url is None:
             self.original_url = dict.get('url')
             self.audio = None
 
