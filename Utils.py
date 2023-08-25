@@ -71,9 +71,13 @@ def get_progress_bar(song: Song) -> str:
     if song is None or song.get_elapsed_time() > time.time() - 100000 or song.duration is None:
         return ''
     percent_duration = (song.get_elapsed_time() / song.duration)*100
+
+    if percent_duration > 100:#percent duration cant be greater than 100
+        percent_duration = 100
+    
     ret = f'{song.parse_duration_short_hand(math.floor(song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
     ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
-    return ret[:100]  # hot fix for embeds being too long
+    return ret
 
 @DeprecationWarning
 def progress_bar(begin: int, end: int, current_val: int) -> str:
@@ -81,9 +85,13 @@ def progress_bar(begin: int, end: int, current_val: int) -> str:
     A deprecated method for producing progress bars that do not 
     """
     percent_duration = (current_val / end) * 100
+
+    if percent_duration > 100:#percent duration cant be greater than 100
+        percent_duration = 100
+
     ret = f'{current_val}/{end}'
     ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
-    return ret[:32]  # hot fix for embeds being too long
+    return ret
 
 # Returns a random hex code
 def get_random_hex(seed = None) -> int:
