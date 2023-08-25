@@ -16,7 +16,15 @@ class NowPlayingButtons(discord.ui.View):
         self.player = player
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪", row=1)
-    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None: 
+        if not Utils.Pretests.playing_audio(interaction):
+            return
+        
+        if not Utils.Pretests.has_song_authority(interaction, self.player.song):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.", ephemeral=True)
+            return
+        
         self.player.queue.add_at(self.player.song, 0)
         self.player.vc.stop()
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
@@ -24,6 +32,8 @@ class NowPlayingButtons(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", row=1)
     async def pause_play_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not Utils.Pretests.playing_audio(interaction):
+            return
         if self.player.vc.is_paused():
             self.player.resume()
             button.emoji = "⏸"
@@ -37,36 +47,43 @@ class NowPlayingButtons(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏩", row=1)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.playing_audio(interaction):
+            return
         await Utils.skip_logic(self.player, interaction)
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔂", row=2)
     async def loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         self.player.set_loop(not self.player.looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", row=2)
     async def queue_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         self.player.set_queue_loop(not self.player.queue_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', row=2)
     async def true_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         self.player.set_true_loop(not self.player.true_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", row=3)
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         player = Servers.get_player(interaction.guild_id)
-        # If there's enough people, require authority to shuffle
-        if len(player.vc.channel.members) > 4:
-            if not Utils.Pretests.has_discretionary_authority(interaction):
-                await Utils.send(interaction, title='Insufficient permissions!', 
-                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
-                return
-                
+        if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            return
         player.queue.shuffle()
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title='🔀 Queue shuffled'))
 
