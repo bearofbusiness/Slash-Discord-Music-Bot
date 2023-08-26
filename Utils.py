@@ -250,6 +250,19 @@ async def clean(player: Player) -> None:
 
 
 async def skip_logic(player: Player, interaction: discord.Interaction):
+    """
+    Performs all of the complex logic for permitting or denying skips.
+    
+    Placed here for use in both PlaybackManagement and NowPlayingButtons
+    
+    Parameters
+    ----------
+    player : Player
+        The player the song belongs to.
+    interaction : discord.Interaction
+        The message Interaction.
+
+    """
     # Get a complex embed for votes
     async def skip_msg(title: str = '', content: str = '', present_tense: bool = True, ephemeral: bool = False) -> None:
 
@@ -311,9 +324,39 @@ async def skip_logic(player: Player, interaction: discord.Interaction):
 
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
 class Pretests:
+    """
+    A static class containing methods for pre-run state tests.
 
+    ...
+
+    Methods
+    -------
+    has_discretionary_authority(interaction: `discord.Interaction`):
+        Checks if the interaction.user has discretionary authority in the current scenario.
+    has_song_authority(interaction: `discord.Interaction`, `song: Song`):
+        Checks if the interaction.user has authority over the given song.
+    voice_channel(interaction: `discord.Interaction`)
+        Checks if all voice channel states are correct.
+    player_exists(interaction: `discord.Interaction`):
+        Checks if there is a Player registered for the current guild and if voice channel states are correct.
+    playing_audio(interaction: `discord.Interaction`)
+        Checks if audio is playing in a player for that guild and voice channel states are correct.
+    """
     # To be used with control over the Player as a whole
     def has_discretionary_authority(interaction: discord.Interaction) -> bool:
+        """
+        Checks if the interaction.user has discretionary authority in the current scenario.
+        
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to pull interaction.user from.
+
+        Returns
+        -------
+        `bool`:
+            Whether the interaction.user should have discretionary authority.
+        """
         if len(interaction.user.voice.channel.members) <= 3:
             return True
         for role in interaction.user.roles:
@@ -328,6 +371,21 @@ class Pretests:
 
     # To be used for control over a specific song
     def has_song_authority(interaction: discord.Interaction, song: Song) -> bool:
+        """
+        Checks if the interaction.user has authority over the given song.
+        
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to pull interaction.user from.
+        song : `Song`
+            The song to compare interaction.user to.
+
+        Returns
+        -------
+        `bool`:
+            Whether the interaction.user should have authority over the song.
+        """
         if song.requester == interaction.user:
             return True
 
@@ -335,6 +393,23 @@ class Pretests:
 
     # Checks if voice channel states are right
     async def voice_channel(interaction: discord.Interaction) -> bool:
+        """
+        Checks if all voice channel states are correct.
+
+        Specifically, this checks if MaBalls is in a voice channel and if the person executing the command is in the same channel.
+        
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to check and respond in.
+
+        Returns
+        -------
+        `True`:
+            Will return true in the event that all checks pass.
+        `False`:
+            Will return false in the event one or more checks fail, this will also use interaction.response to send a response to the message.
+        """
         if interaction.guild.voice_client is None:
             await interaction.response.send_message("MaBalls is not in a voice channel", ephemeral=True)
             return False
@@ -346,6 +421,23 @@ class Pretests:
 
     # Expanded test for if a Player exists
     async def player_exists(interaction: discord.Interaction) -> bool:
+        """
+        Checks if there is a Player registered for the current guild and if voice channel states are correct.
+
+        Specifically, this checks if voice_channel returns True then checks if the Player exists for that guild.
+        
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to check and respond in.
+
+        Returns
+        -------
+        `True`:
+            Will return true in the event that all checks pass.
+        `False`:
+            Will return false in the event one or more checks fail, this will also use interaction.response to send a response to the message.
+        """
         if not await Pretests.voice_channel(interaction):
             return False
         if Servers.get_player(interaction.guild_id) is None:
@@ -355,6 +447,23 @@ class Pretests:
 
     # Expanded test for if audio is currently playing from a Player
     async def playing_audio(interaction: discord.Interaction) -> bool:
+        """
+        Checks if audio is playing in a player for that guild and voice channel states are correct.
+
+        Specifically, this checks if player_exists and subsequently voice_channel returns True then checks if player.is_playing is True.
+        
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to check and respond in.
+
+        Returns
+        -------
+        `True`:
+            Will return true in the event that all checks pass.
+        `False`:
+            Will return false in the event one or more checks fail, this will also use interaction.response to send a response to the message.
+        """
         if not await Pretests.player_exists(interaction):
             return False
         if not Servers.get_player(interaction.guild_id).is_playing():
