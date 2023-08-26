@@ -158,6 +158,10 @@ class Song:
         self.id = data.get('id')
         self.thumbnail = data.get('thumbnail')
         self.duration = data.get('duration')
+        # Cast the duration to an integer
+        if self.duration:
+            self.duration = int(self.duration)
+            
         self.original_url = data.get('webpage_url')
         if self.audio:
             self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
