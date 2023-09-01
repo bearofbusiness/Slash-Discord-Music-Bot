@@ -222,7 +222,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
         return
 
     # Fallback default error
-    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
+    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
     # Allows entire error to be printed without raising an exception
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()

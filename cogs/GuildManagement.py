@@ -30,11 +30,10 @@ class GuildManagement(commands.Cog):
         player = Servers.get_player(interaction.guild_id)
         # Clean up if needed
         if player is not None:
-            if len(player.vc.channel.members) > 4:
-                if not Utils.Pretests.has_discretionary_authority(interaction):
-                        await Utils.send(interaction, title='Insufficient permissions!', 
-                                    content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
-                        return
+            if not Utils.Pretests.has_discretionary_authority(interaction):
+                    await Utils.send(interaction, title='Insufficient permissions!', 
+                                content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+                    return
             await Utils.clean(Servers.get_player(interaction.guild_id))
         # Otherwise, just leave VC
         else:

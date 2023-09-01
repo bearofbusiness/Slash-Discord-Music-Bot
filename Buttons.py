@@ -17,7 +17,7 @@ class NowPlayingButtons(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪", row=1)
     async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None: 
-        if not Utils.Pretests.playing_audio(interaction):
+        if not await Utils.Pretests.playing_audio(interaction):
             return
         
         if not Utils.Pretests.has_song_authority(interaction, self.player.song):
@@ -32,7 +32,7 @@ class NowPlayingButtons(discord.ui.View):
 
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", row=1)
     async def pause_play_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        if not Utils.Pretests.playing_audio(interaction):
+        if not await Utils.Pretests.playing_audio(interaction):
             return
         if self.player.vc.is_paused():
             self.player.resume()
