@@ -125,6 +125,7 @@ class Song:
         self.start_time = 0
         self.pause_start = 0
         self.pause_time = 0
+        self.expiry_epoch = None
         if self.audio is not None:
             self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
         

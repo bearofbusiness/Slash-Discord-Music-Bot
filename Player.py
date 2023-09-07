@@ -156,14 +156,26 @@ class Player:
 
             song = self.queue.get(0)
 
-            # If the song has not yet been populated or will expire while playing
-            # Pretty sure this will cause worse performance on sources other than youtube because they will try to repopulate every time
-            #TODO find a better way for that
+            # Update send location preference
+            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else song.channel
+
+            # If the song will expire while playing
             if song.expiry_epoch is not None and song.expiry_epoch - time.time() - song.duration < 30:
                 song.expiry_epoch = None
 
             # Only repopulate YouTube links
             if song.expiry_epoch is None and song.source == "Youtube":
+                # If we're going to try repopulating, say something about it
+                embed = discord.Embed(
+                    title="Preparing next song...",
+                    description=f"{song.title} -- {song.uploader} is up next.",
+                    url=song.original_url,
+                    color=Utils.get_random_hex(song.id)
+                )
+                embed.set_thumbnail(url=song.thumbnail)
+                self.last_np_message = await self.send_location.send(silent=True, embed=embed)
+                del embed
+
                 # Populate the song again to refresh the timer
                 try:
                     await song.populate()
@@ -184,8 +196,18 @@ class Player:
             self.song = self.queue.remove(0)
 
             # Send the new NP
-            embed = Utils.get_now_playing_embed(self)
-            self.last_np_message = await self.send_location.send(silent=True, embed=embed, view=Buttons.NowPlayingButtons(self))
+            # TODO I don't like accounting for the "Preparing next song" embed like this
+            if self.last_np_message:
+                self.last_np_message = await self.last_np_message.edit( 
+                                            embed=Utils.get_now_playing_embed(self), 
+                                            view=Buttons.NowPlayingButtons(self)
+                                        )
+            else:
+                self.last_np_message = await self.send_location.send(silent=True, 
+                                            embed=Utils.get_now_playing_embed(self), 
+                                            view=Buttons.NowPlayingButtons(self)
+                                        )
+            
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()
