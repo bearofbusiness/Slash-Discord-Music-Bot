@@ -19,6 +19,8 @@ class Song:
         The Member who requested the Song to be played.
     channel : discord.abc.GuildChannel
         The channel that the song was requested from.
+    source : str
+        The extractor that YT-DLP used on the link.
     vote : Vote | None
         The Vote to skip this song, if there is one.
     title : str | None
@@ -90,6 +92,13 @@ class Song:
             # Get the first result and continue as normal
             dict = dict.get('entries')[0]
 
+        # Get the extractor used
+        # Try the way it is displayed in playlists first
+        # because extractor_key exists both ways
+        self.source = dict.get('ie_key')
+        if self.source is None:
+            self.source =  dict.get('extractor_key')
+
         # Try to get a thumbnail
         if dict.get('thumbnails'):
             self.thumbnail = dict.get('thumbnails')[-1].get('url')
@@ -152,6 +161,7 @@ class Song:
         if data.get('entries') is not None and len(data.get('entries')) > 0:
             # Get the first result and continue as normal
             data = data.get('entries')[0]
+        self.source = data.get('extractor_key')
         self.title = data.get('title')
         self.uploader = data.get('channel')
         self.audio = data.get('url')
