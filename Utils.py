@@ -233,6 +233,9 @@ async def clean(player: Player) -> None:
     player : Player
         The Player to close.
     """
+    # Immediately remove the Player from Servers to avoid a race condition
+    # which leads to the defunct player being re-used
+    Servers.remove(player)
     # Only disconnect if bot is connected to vc
     # (it won't be if it was disconnected by an admin)
     if player.vc.is_connected():
@@ -240,11 +243,9 @@ async def clean(player: Player) -> None:
     # Delete a to-be defunct now_playing message
     if player.last_np_message:
         await player.last_np_message.delete()
-    player.queue.clear()
     # Needs to be after at least player.vc.disconnect() because for some
     # godawful reason it refuses to disconnect otherwise
     player.player_task.cancel()
-    Servers.remove(player)
 
 # Moved the logic for skip into here to be used by NowPlayingButtons
 
