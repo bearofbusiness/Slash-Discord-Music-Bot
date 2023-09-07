@@ -241,7 +241,7 @@ class Song:
         if not url.isnumeric():
             return None
         
-        print(f"expires in {Song.parse_duration(int(url) - time.time())}")
+        print(f"expires in {Song.parse_duration(int(url) - int(time.time()))}")
         return int(url)
 
 

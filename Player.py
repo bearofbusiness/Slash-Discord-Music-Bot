@@ -164,18 +164,7 @@ class Player:
                 song.expiry_epoch = None
 
             # Only repopulate YouTube links
-            if song.expiry_epoch is None and song.source == "Youtube":
-                # If we're going to try repopulating, say something about it
-                embed = discord.Embed(
-                    title="Preparing next song...",
-                    description=f"{song.title} -- {song.uploader} is up next.",
-                    url=song.original_url,
-                    color=Utils.get_random_hex(song.id)
-                )
-                embed.set_thumbnail(url=song.thumbnail)
-                self.last_np_message = await self.send_location.send(silent=True, embed=embed)
-                del embed
-
+            if song.expiry_epoch is None and song.source in ('Youtube', 'Soundcloud'):
                 # Populate the song again to refresh the timer
                 try:
                     await song.populate()
@@ -185,10 +174,12 @@ class Player:
                     await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
                     self.queue.remove(0)
                     continue
-
-                # If even after repopulating, the song was going to pass the expiry time
-                if song.expiry_epoch - time.time() - song.duration < 30:
-                    await song.channel.send(f"Song {song.title} -- {song.uploader} ({song.original_url}) was unable to load because it would expire before playback completed (too long)")
+                
+                # If the song gained an expiry epoch (will not happen for soundcloud)
+                if song.expiry_epoch:
+                    # If even after repopulating, the song was going to pass the expiry time
+                    if song.expiry_epoch - time.time() - song.duration < 30:
+                        await song.channel.send(f"Song {song.title} -- {song.uploader} ({song.original_url}) was unable to load because it would expire before playback completed (too long)")
 
             del song
 
@@ -196,17 +187,7 @@ class Player:
             self.song = self.queue.remove(0)
 
             # Send the new NP
-            # TODO I don't like accounting for the "Preparing next song" embed like this
-            if self.last_np_message:
-                self.last_np_message = await self.last_np_message.edit( 
-                                            embed=Utils.get_now_playing_embed(self), 
-                                            view=Buttons.NowPlayingButtons(self)
-                                        )
-            else:
-                self.last_np_message = await self.send_location.send(silent=True, 
-                                            embed=Utils.get_now_playing_embed(self), 
-                                            view=Buttons.NowPlayingButtons(self)
-                                        )
+            self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
             
 
             # Clear player_song_end here because this is when we start playing audio again
