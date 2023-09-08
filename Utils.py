@@ -1,3 +1,4 @@
+import asyncio
 import discord
 import math
 import random
@@ -10,6 +11,7 @@ from Player import Player
 from Servers import Servers
 from Song import Song
 
+asyncio_tasks = set()
 
 def pront(content, lvl="DEBUG", end="\n") -> None:
     """
@@ -222,6 +224,40 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
         embed.set_footer(text=get_progress_bar(player.song))
     return embed
 
+def populate_song_list(songs: list[Song], guild_id: int) -> None:
+    """
+    Creates a task to populate a list of songs in parallel.
+    Is cognizant of a player and will halt itself in the event of its expiry.
+    
+    Parameters
+    ----------
+    songs : list[Song]
+        The list of songs to iterate over.
+    guild_id : int
+        The id of the guild that the player to watch belongs to.
+    """
+
+    async def __primary_loop(songs: list[Song], guild_id: int) -> None:
+        """
+        Iterates over a list of Songs and populates them while checking if the Player they belong to still exists.
+        
+        Parameters
+        ----------
+        songs : list[Song]
+            The list of songs to iterate over.
+        guild_id : int 
+            The id of the guild that the player to watch belongs to.
+        """
+        for i in range(len(songs)):
+            if Servers.get_player(guild_id) is None:
+                return
+            pront(f"populating {songs[i].title}")
+            await songs[i].populate()
+            songs[i] = None
+
+    task = asyncio.create_task(__primary_loop(songs, guild_id))
+    asyncio_tasks.add(task)
+    task.add_done_callback(asyncio_tasks.discard)
 
 # Cleans up and closes a player
 async def clean(player: Player) -> None:
@@ -233,6 +269,7 @@ async def clean(player: Player) -> None:
     player : Player
         The Player to close.
     """
+    pront('cleaning')
     # Immediately remove the Player from Servers to avoid a race condition
     # which leads to the defunct player being re-used
     Servers.remove(player)
@@ -247,9 +284,7 @@ async def clean(player: Player) -> None:
     # godawful reason it refuses to disconnect otherwise
     player.player_task.cancel()
 
-# Moved the logic for skip into here to be used by NowPlayingButtons
-
-
+# Moved the logic for skip into here to be used by NowPlayingButtons and PlayerManagement
 async def skip_logic(player: Player, interaction: discord.Interaction):
     """
     Performs all of the complex logic for permitting or denying skips.

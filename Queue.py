@@ -34,16 +34,26 @@ class Queue:
         self.list = []
         self.has_songs = Event()
 
-    def add(self, song: Song) -> None:
+    def add(self, song: Song | list[Song]) -> None:
         """
         Adds a Song to the end of the Queue.
         
         Parameters
         ----------
-        song : Song
-            The Song to add to the Queue.
+        song : Song | list[Song]
+            The Song or list of Songs to add to the Queue.
         """
-        self.list.append(song)
+        # If we were passed a Song or a list
+        if isinstance(song, Song):
+            self.list.append(song)
+            self.has_songs.set()
+            return
+        
+        # Safety check for if we got an empty list
+        if len(song) == 0:
+            return
+            
+        self.list.extend(song)
         self.has_songs.set()
 
     def add_at(self, song: Song, index: int) -> None:

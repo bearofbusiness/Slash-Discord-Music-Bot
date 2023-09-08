@@ -130,18 +130,26 @@ class QueueManagement(commands.Cog):
         if shuffle:
             random.shuffle(playlist.get("entries"))
 
-        for entry in playlist.get("entries"):
+        entries = playlist.get("entries")
 
+        # If the player doesn't exist, make one
+        if Servers.get_player(interaction.guild_id) is None:
+            # Get the top song and create a Player from it
+            song = Song(interaction, link, entries[0])
+            Servers.add(interaction.guild_id, Player(
+                    interaction.guild.voice_client, song))
+            entries.pop(0)
+        
+        songs = []
+
+        for entry in entries:
             # Feed the Song the entire entry, saves time by not needing to create and fill a dict
             song = Song(interaction, link, entry)
-
-            # If player does not exist, create one.
-            if Servers.get_player(interaction.guild_id) is None:
-                Servers.add(interaction.guild_id, Player(
-                    interaction.guild.voice_client, song))
-            # If it does, add the song to queue
-            else:
-                Servers.get_player(interaction.guild_id).queue.add(song)
+            songs.append(song)
+        
+        # Double check that there were other entries to add
+        if songs:
+            Servers.get_player(interaction.guild_id).queue.add(songs)
 
         embed = Utils.get_embed(
             interaction,
@@ -162,6 +170,9 @@ class QueueManagement(commands.Cog):
         embed.set_thumbnail(url=thumbnail)
 
         await interaction.followup.send(embed=embed)
+
+        # Once all is said and done, start the populator thread
+        Utils.populate_song_list(songs, interaction.guild_id)
 
     @app_commands.command(name="search", description="Searches YouTube for a given query")
     async def search(self, interaction: discord.Interaction, query: str) -> None:
@@ -347,7 +358,7 @@ class QueueManagement(commands.Cog):
             return
         
         embed = Utils.get_embed(interaction, 
-                                title=f'Inspecting song #{number_in_queue}:',
+                                title=f'Inspecting song #{number_in_queue + 1}:',
                                 url=song.original_url,
                                 content=f'{song.title} -- {song.uploader}',
                                 color=Utils.get_random_hex(song.id)

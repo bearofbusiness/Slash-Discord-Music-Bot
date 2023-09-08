@@ -236,12 +236,10 @@ class Song:
         NoneType:
             If the epoch was unable to be parsed from the URL
         """
-        print(url)
         url = url[url.find('expire=') + 7: url.find('&')]
         if not url.isnumeric():
             return None
         
-        print(f"expires in {Song.parse_duration(int(url) - int(time.time()))}")
         return int(url)
 
 
