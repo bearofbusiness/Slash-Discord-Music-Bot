@@ -94,6 +94,5 @@ class Servers():
                 if value == server:
                     del Servers.dict[key]
                     return
-            print("Something went wrong, attempted to delete nonexistent Player.")
-            raise IndexError
+            raise IndexError("Something went wrong, attempted to delete nonexistent Player.")
         del Servers.dict[str(server)]
