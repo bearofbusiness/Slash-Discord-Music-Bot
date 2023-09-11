@@ -12,15 +12,15 @@ class Queue:
 
     Methods
     -------
-    add(song: Song):
+    add(song: `Song`):
         Adds a Song to the end of the Queue.
-    add(song: Song, index: int):
+    add(song: `Song`, index: `int`):
         Adds a Song to the Queue at the index.
-    get(index: int | None):
+    get(index: `int` | `None`):
         Retrieves Songs inside the Queue.
     shuffle():
         Shuffles the Queue.
-    remove(index: int):
+    remove(index: `int`):
         Removes the Song at the index from the Queue and returns it.
     clear():
         Removes all Songs from the Queue.
@@ -40,7 +40,7 @@ class Queue:
         
         Parameters
         ----------
-        song : Song | list[Song]
+        song : `Song` | `list[Song]`
             The Song or list of Songs to add to the Queue.
         """
         # If we were passed a Song or a list
@@ -62,9 +62,9 @@ class Queue:
         
         Parameters
         ----------
-        song : Song
+        song : `Song`
             The Song to add to the Queue.
-        index : int
+        index : `int`
             The index to add the Song at.
         """
         self.list.insert(index, song)
@@ -76,19 +76,19 @@ class Queue:
 
         Parameters
         ----------
-        index : int | None, optional
+        index : `int` | `None`, optional
             The index of the Song to retrieve.
 
         Raises
         ------
-        IndexError
+        `IndexError`
             If the requested index is out of range.
 
         Returns
         -------
-        Song:
+        `Song`:
             When provided with an integer, return the Song at that index.
-        list[Song]:
+        `list[Song]`:
             When provided with a NoneType, return all of the Songs in a list.
 
         """
@@ -111,17 +111,17 @@ class Queue:
         
         Parameters
         ----------
-        index : int
+        index : `int`
             The index to remove the Song from.
 
         Raises
         ------
-        IndexError
+        `IndexError`
             If the requested index is out of range.
         
         Returns
         -------
-        Song:
+        `Song`:
             The removed Song.
 
         """
@@ -147,7 +147,7 @@ class Queue:
 
         Returns
         -------
-        True:
+        `True`:
             Returns True once the wait is resolved.
         """
         return await self.has_songs.wait()

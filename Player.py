@@ -32,22 +32,22 @@ class Player:
 
     Attributes
     ----------
-    queue : Queue
+    queue : `Queue`
         The Queue that the Player is responsible for.
-    song : Song | None
+    song : `Song` | `None`
         The song that is currently playing, if there is not one this is a NoneType.
         This is slightly innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
-    last_np_message: discord.Message | None
+    last_np_message: `discord.Message` | `None`
         The last automatic now-playing Message the Player has sent.  NoneType if it has not sent one.
-    looping : bool
+    looping : `bool`
         Whether the Player is looping the currently playing Song.
-    queue_looping : bool
+    queue_looping : `bool`
         Whether the Player is looping the Queue.
-    true_looping : bool
+    true_looping : `bool`
         Whether the Player is shuffling completed Songs back into the Queue.
-    vc : discord.VoiceClient
+    vc : `discord.VoiceClient`
         The VoiceClient this Player is managing.
-    send_location : discord.abc.GuildChannel
+    send_location : `discord.abc.GuildChannel`
         The location the bot will send auto Now Playing messages.  Updated every song.
 
     Methods
@@ -58,11 +58,11 @@ class Player:
         Pauses the player.
     resume():
         Resumes the player
-    set_loop(state: bool):
+    set_loop(state: `bool`):
         Sets whether the Player should be looping the Song at song.
-    set_true_loop(state: bool):
+    set_true_loop(state: `bool`):
         Sets whether the Player should be shuffling completed Songs back into the Queue.
-    set_queue_loop(state: bool):
+    set_queue_loop(state: `bool`):
         Sets whether the Player should be adding completed Songs to the end of the Queue.
         
     """
@@ -72,9 +72,9 @@ class Player:
 
         Parameters
         ----------
-        vc : discord.VoiceClient
+        vc : `discord.VoiceClient`
             The VoiceClient to bind the Player to
-        song : Song
+        song : `Song`
             The Song to initalize the Player with.
         """
         self.player_song_end = asyncio.Event()
@@ -109,12 +109,12 @@ class Player:
 
         Parameters
         ----------
-        awaitable : any
+        awaitable : `any`
             The awaitable object to run within the wrapper.
 
         Return
         ------
-        any:
+        `any`:
             The result of the awaitable.
         """
         try:
@@ -229,7 +229,7 @@ class Player:
 
         Returns
         -------
-        bool:
+        `bool`:
             True if the Player is playing audio or paused.
 
             False if the Player is between songs.
@@ -258,7 +258,7 @@ class Player:
 
         Parameters
         ----------
-        state : bool
+        state : `bool`
             Whether the player should be looping or not.
         """
         self.looping = state
@@ -271,7 +271,7 @@ class Player:
 
         Parameters
         ----------
-        state : bool
+        state : `bool`
             Whether the player should be true looping or not.
         """
         self.true_looping = state
@@ -284,7 +284,7 @@ class Player:
 
         Parameters
         ----------
-        state : bool
+        state : `bool`
             Whether the player should be queue looping or not.
         """
         self.queue_looping = state

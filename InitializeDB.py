@@ -1,5 +1,7 @@
 import sqlite3
-
+"""
+Small script for setting up the initial database table.
+"""
 db = sqlite3.connect('settings.db')
 cursor = db.cursor()
 try:

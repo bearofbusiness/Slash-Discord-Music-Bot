@@ -9,14 +9,14 @@ class Vote:
     
     Attributes
     ----------
-    initiator : discord.Member
+    initiator : `discord.Member`
         The Member who initiated the Vote.
-    voters :  list[discord.Member]
+    voters :  `list[discord.Member]`
         A list of all members who have voted, from first to last.    
 
     Methods
     -------
-    add(member: discord.Member)
+    add(member: `discord.Member`)
         Adds a Member to the list of voters.
     get()
         Returns the list of voters
@@ -25,7 +25,7 @@ class Vote:
         """
         Parameters
         ----------
-        initiator : discord.Member
+        initiator : `discord.Member`
             The Member who initiated the Vote.
         """
         self.initiator = initiator
@@ -38,7 +38,7 @@ class Vote:
         """
         Parameters
         ----------
-        member : discord.Member
+        member : `discord.Member`
             The Member to be added to the list of voters.
         """
         self.voters.append(member)
@@ -48,7 +48,7 @@ class Vote:
         """
         Returns
         -------
-        list[discord.Member]:
+        `list[discord.Member]`:
             A list of all members who have voted, from first to last.
         """
         return self.voters

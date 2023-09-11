@@ -13,13 +13,13 @@ class Servers():
 
     Methods
     -------
-    add(server: int, player: Player):
+    add(server: `int`, player: `Player`):
         Registers a Player to the provided guild id.
-    get_player(server: int):
+    get_player(server: `int`):
         Get the Player associated with the provided guild id, if any.
-    set_player(server: int, player: Player):
+    set_player(server: `int`, player: `Player`):
         Replaces/registers a Player to the provided guild id.
-    remove(server: id | Player):
+    remove(server: `int` | `Player`):
         Unregisters a Player by guild id or Object.
     """
     dict = {}
@@ -31,9 +31,9 @@ class Servers():
         
         Parameters
         ----------
-        server : int
+        server : `int`
             The guild ID to associate the Player with.
-        player : Player
+        player : `Player`
             The player to be associated with the guild ID.
         """
         Servers.dict[server] = player
@@ -45,14 +45,14 @@ class Servers():
 
         Parameters
         ----------
-        server: int
+        server: `int`
             The guild id to search for a Player under.
 
         Return
         ------
-        Player:
+        `Player`:
             The Player associated with the guild.
-        None:
+        `None`:
             Returned if there is no Player associated with the guild id.
         """
         return Servers.dict.get(server)
@@ -64,9 +64,9 @@ class Servers():
 
         Parameters
         ----------
-        server : int
+        server : `int`
             The guild ID to associate the Player with.
-        player : Player
+        player : `Player`
             The player to be associated with the guild ID.
         """
         Servers.dict.update({server : player})
@@ -78,12 +78,12 @@ class Servers():
 
         Parameters
         ----------
-        server : int | Player
+        server : `int` | `Player`
             The id of the guild associated with the Player or the Player itself.
 
         Raises
         ------
-        IndexError
+        `IndexError`
             If the id or Player were not found within the dict.
 
         """
