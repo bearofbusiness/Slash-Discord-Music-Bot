@@ -358,6 +358,59 @@ async def skip_logic(player: Player, interaction: discord.Interaction):
 
     await skip_msg("Vote added.", f"{votes_required - len(player.song.vote)}/{votes_required} votes to skip.")
 
+def double_select(x:int, zero:str, one:str) -> str:
+    """
+    Small function for converting an integer between 0 and 1 into two strings depending on its value.
+    
+    Parameters
+    ----------
+    x : `int`
+        The value to compare against.
+    zero : `str`
+        The string to return if x == 0.
+    one : `str`
+        The string to return if x == 1.
+
+    Raises
+    ------
+    IndexError:
+        Raises IndexError if the string is not a 0 or 1.
+
+    Returns
+    -------
+    `str`:
+        The appropriate string compared to x.
+    """
+    return [zero, one][x]
+
+def triple_select(x:int, zero:str, one:str, two:str) -> str:
+    """
+    Small function for converting an integer into three strings depending on its value
+    Performs the same actions as Utils.double_select but has a range of 0-2 rather than 0-1.
+    
+    Parameters
+    ----------
+    x : `int`
+        The value to compare against.
+    zero : `str`
+        The string to return if x == 0.
+    one : `str`
+        The string to return if x == 1.
+    two : `str`
+        The string to return if x == 2.
+
+    Raises
+    ------
+    IndexError:
+        Raises IndexError if the string is not a 0, 1 or 2.
+
+    Returns
+    -------
+    `str`:
+        The appropriate string compared to x.
+    """
+    return [zero, one, two][x]    
+
 # Makes things more organized by being able to access Utils.Pretests.[name of pretest]
 class Pretests:
     """
@@ -393,7 +446,8 @@ class Pretests:
         `bool`:
             Whether the interaction.user should have discretionary authority.
         """
-        if len(interaction.user.voice.channel.members) <= 3:
+
+        if interaction.user.voice and len(interaction.user.voice.channel.members) <= 3:
             return True
         for role in interaction.user.roles:
             if role.name.lower() == 'dj':

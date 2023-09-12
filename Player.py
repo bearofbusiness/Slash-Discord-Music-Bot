@@ -150,9 +150,16 @@ class Player:
                 await Utils.clean(self)
                 return
             
-            # Delete the last now playing if it exists
+            # Check if the last Now-Playing message exists
             if self.last_np_message:
-                await self.last_np_message.delete()
+                # If the guild wants song breadcrumbs sent
+                if DB.GuildSettings.get(self.vc.guild.id, setting='song_breadcrumbs'):
+                    embed = self.last_np_message.embeds[0]
+                    embed.title = "Song Breadcrumb:"
+                    embed.set_footer(text="This song has finished playing.  This breadcrumb has been left because of this server's settings.")
+                    await self.last_np_message.edit(embed=embed, view=None)
+                else:    
+                    await self.last_np_message.delete()
 
             song = self.queue.get(0)
 

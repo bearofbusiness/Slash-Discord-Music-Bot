@@ -204,9 +204,10 @@ class GuildSettingsView(discord.ui.View):
         super().__init__(timeout=180)
 
     @discord.ui.select(options=[
-            discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
+            discord.SelectOption(label='Now Playing Location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
             discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.'),
-            discord.SelectOption(label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.')
+            discord.SelectOption(label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.'),
+            discord.SelectOption(label='Leave Song Breadcrumbs', value='song_breadcrumbs', description='Whether the bot should leave breadcrumbs to previously played songs.')
         ], placeholder='Select a setting to edit.', )
     async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
         # Remove any existing Buttons before spawning a new one
@@ -228,9 +229,12 @@ class GuildSettingsView(discord.ui.View):
             case 'allow_playlist':
                 select.placeholder = "Allow Playlist"
                 self.add_item(TripleButton(current_state, value))
+            case 'song_breadcrumbs':
+                select.placeholder = 'Leave Song Breadcrumbs.'
+                self.add_item(ToggleButton(current_state, value))
             case default:
                 raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
-            
+
         await interaction.response.edit_message(view=self)
 
 class ToggleButton(discord.ui.Button):
@@ -249,7 +253,12 @@ class ToggleButton(discord.ui.Button):
 
     async def update(self, interaction: discord.Interaction):
         DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
-        await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self))
+        embed = Utils.get_embed(interaction, title='Settings')
+        embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{Utils.double_select(DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc'), 'Text', 'VC')}`")
+        embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
+        embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{Utils.triple_select(DB.GuildSettings.get(interaction.guild_id, 'allow_playlist'), 'No', 'Yes', 'DJ Only')}`")
+        embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
+        await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self), embed=embed)
 
 class TripleButton(ToggleButton):
     def __init__(self, state: int, value: str, messages: list[str] = ['False', 'True', 'DJ Only']):

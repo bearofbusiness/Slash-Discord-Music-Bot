@@ -87,6 +87,8 @@ class DB:
                     return setting
                 case 'allow_playlist':
                     return setting
+                case 'song_breadcrumbs':
+                    return setting
                 case default:
                     raise ValueError(f'Invalid setting value supplied ({default})')
 
@@ -109,6 +111,8 @@ class DB:
                     > np_sent_to_vc
 
                     > remove_orphaned_songs
+
+                    > song_breadcrumbs
             """
             DB._cursor.execute(f"SELECT {DB.GuildSettings.__setting_check(setting)} FROM GuildSettings WHERE guild_id = ?", (guild_id,))
             return DB._cursor.fetchone()[0]
@@ -132,6 +136,9 @@ class DB:
                     > np_sent_to_vc
 
                     > remove_orphaned_songs
+
+                    > song_breadcrumbs
+                    
             value : `str` | `bool` | `int`
                 The value to update the field with.
             """
