@@ -21,7 +21,7 @@ class DB:
     #     __cursor = __settings_db.cursor()
     #     print("Connected to database")
     def fix_column_values() -> None:
-        columns = [['np_sent_to_vc',"1"], ['remove_orphaned_songs',"0"], ['allow_playlist',"1"]]
+        columns = [['np_sent_to_vc',"1"], ['remove_orphaned_songs',"0"], ['allow_playlist',"1"], ['song_breadcrumbs', "1"]]
         for i in columns:
             try:
                 DB._cursor.execute(f"ALTER TABLE GuildSettings ADD COLUMN {i[0]} BOOLEAN DEFAULT '{i[1]}'")

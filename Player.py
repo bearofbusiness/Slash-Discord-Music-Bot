@@ -141,6 +141,32 @@ class Player:
             raise VoiceError(str(error))
         self.player_song_end.set()
 
+    
+    async def __last_np_message_handler(self):
+        """
+        Runs logic for the last_np_message variable, deciding whether to delete it, to change it to a breadcrumb, or to do nothing.
+        """
+        if not self.last_np_message:
+            return
+        if DB.GuildSettings.get(self.vc.guild.id, setting='song_breadcrumbs'):
+            embed = self.last_np_message.embeds[0]
+            embed.title = "Song Breadcrumb:"
+            embed.set_thumbnail(url=embed.image.url if embed.image else None)
+            embed.set_image(url=None)
+            embed.set_footer(text="This song has finished playing.  This breadcrumb has been left because of this server's settings.")
+            try:
+                await self.last_np_message.edit(embed=embed, view=None)
+            except discord.NotFound:
+                Utils.pront("Player's last_np_message was not NoneType but discord returned 404", "ERROR")
+            return
+        
+        try:
+            self.last_np_message.delete()
+        except discord.NotFound:
+            Utils.pront("Player's last_np_message was not NoneType but discord returned 404", "ERROR")
+        
+
+
     async def __player(self) -> None:
         """
         This is where the magic happens.  Contains all of the logic for the playback loop.
@@ -153,16 +179,8 @@ class Player:
                 await self.clean()
                 return
             
-            # Check if the last Now-Playing message exists
-            if self.last_np_message:
-                # If the guild wants song breadcrumbs sent
-                if DB.GuildSettings.get(self.vc.guild.id, setting='song_breadcrumbs'):
-                    embed = self.last_np_message.embeds[0]
-                    embed.title = "Song Breadcrumb:"
-                    embed.set_footer(text="This song has finished playing.  This breadcrumb has been left because of this server's settings.")
-                    await self.last_np_message.edit(embed=embed, view=None)
-                else:    
-                    await self.last_np_message.delete()
+            # Run logic for the previous np (if it exists)
+            await self.__last_np_message_handler()
 
             song = self.queue.get(0)
 
@@ -246,9 +264,8 @@ class Player:
         # (it won't be if it was disconnected by an admin)
         if self.vc.is_connected():
             await self.vc.disconnect()
-        # Delete a to-be defunct now_playing message
-        if self.last_np_message:
-            await self.last_np_message.delete()
+        # Run logic on the to-be defunct np
+        await self.__last_np_message_handler()
         # Needs to be after at least player.vc.disconnect() because for some
         # godawful reason it refuses to disconnect otherwise
         self.player_task.cancel()

@@ -230,7 +230,7 @@ class GuildSettingsView(discord.ui.View):
                 select.placeholder = "Allow Playlist"
                 self.add_item(TripleButton(current_state, value))
             case 'song_breadcrumbs':
-                select.placeholder = 'Leave Song Breadcrumbs.'
+                select.placeholder = 'Leave Song Breadcrumbs'
                 self.add_item(ToggleButton(current_state, value))
             case default:
                 raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
