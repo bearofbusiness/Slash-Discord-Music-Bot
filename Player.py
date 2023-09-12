@@ -9,6 +9,7 @@ import time
 # Our imports
 import Buttons
 import Utils
+from Servers import Servers
 from Queue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
@@ -52,6 +53,8 @@ class Player:
 
     Methods
     -------
+    async clean():
+        Cleans up and closes the player.
     is_playing():
         Whether the player is playing audio or in-between songs. Pausing the Song does not effect this.
     pause():
@@ -124,7 +127,7 @@ class Player:
             await self.vc.channel.send(embed=embed)
             # Traceback print here so we get the full error without causing an infinite loop of exception raises
             traceback.print_exc()
-            await Utils.clean(self)
+            await self.clean()
             
 
     def __song_complete(self, error=None):
@@ -147,7 +150,7 @@ class Player:
             # Check if the queue is empty
             if not self.queue.get():
                 # Clean up and delete player
-                await Utils.clean(self)
+                await self.clean()
                 return
             
             # Check if the last Now-Playing message exists
@@ -229,6 +232,26 @@ class Player:
                 self.queue.add(self.song)
 
             self.song = None
+
+    # Cleans up and closes a player
+    async def clean(self) -> None:
+        """
+        Cleans up and closes a player.
+        """
+        Utils.pront('cleaning')
+        # Immediately remove the Player from Servers to avoid a race condition
+        # which leads to the defunct player being re-used
+        Servers.remove(self)
+        # Only disconnect if bot is connected to vc
+        # (it won't be if it was disconnected by an admin)
+        if self.vc.is_connected():
+            await self.vc.disconnect()
+        # Delete a to-be defunct now_playing message
+        if self.last_np_message:
+            await self.last_np_message.delete()
+        # Needs to be after at least player.vc.disconnect() because for some
+        # godawful reason it refuses to disconnect otherwise
+        self.player_task.cancel()
 
     def is_playing(self) -> bool:
         """

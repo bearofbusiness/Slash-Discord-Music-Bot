@@ -259,31 +259,6 @@ def populate_song_list(songs: list[Song], guild_id: int) -> None:
     asyncio_tasks.add(task)
     task.add_done_callback(asyncio_tasks.discard)
 
-# Cleans up and closes a player
-async def clean(player: Player) -> None:
-    """
-    Cleans up and closes a player.
-    
-    Parameters
-    ----------
-    player : `Player`
-        The Player to close.
-    """
-    pront('cleaning')
-    # Immediately remove the Player from Servers to avoid a race condition
-    # which leads to the defunct player being re-used
-    Servers.remove(player)
-    # Only disconnect if bot is connected to vc
-    # (it won't be if it was disconnected by an admin)
-    if player.vc.is_connected():
-        await player.vc.disconnect()
-    # Delete a to-be defunct now_playing message
-    if player.last_np_message:
-        await player.last_np_message.delete()
-    # Needs to be after at least player.vc.disconnect() because for some
-    # godawful reason it refuses to disconnect otherwise
-    player.player_task.cancel()
-
 # Moved the logic for skip into here to be used by NowPlayingButtons and PlayerManagement
 async def skip_logic(player: Player, interaction: discord.Interaction):
     """

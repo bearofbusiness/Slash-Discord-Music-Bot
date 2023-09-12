@@ -19,8 +19,8 @@ XX = '''
 #-fnt stands for finished not tested
 #-f is just finished
 TODO:
+    7- figure out how to get around Player raising errors because it tries to delete a np that doesn't exist if the user deletes it manually
     6- fnt alert user when songs were unable to be added inside _playlist()
-    4- migrate Utils.clean() into a method
     3- clean up todos in various parts of code
     2- write more pydocs
     -make more commands
@@ -110,7 +110,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 return
             # If there is one, properly close it up
             else:
-                await Utils.clean(player)
+                await player.clean()
                 return
 
     # If the user was in the same VC as the bot and disconnected
@@ -121,7 +121,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             if player is None:
                 await member.guild.voice_client.disconnect()
             else:
-                await Utils.clean(player)
+                await player.clean()
         
         # If the bot should purge their queued songs
         if DB.GuildSettings.get(member.guild.id, 'remove_orphaned_songs'):
