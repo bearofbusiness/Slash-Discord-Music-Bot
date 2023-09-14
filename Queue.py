@@ -151,6 +151,44 @@ class Queue:
             Returns True once the wait is resolved.
         """
         return await self.has_songs.wait()
+    
+    def move(self, song: int, position: int) -> int:
+        """
+        Moves a Song in the Queue to a different position.
+        
+        Parameters
+        ----------
+        song : `int`
+            The index of the Song to move.
+        position : `int`
+            The index to move the Song to.
+
+        Raises
+        ------
+        `IndexError`
+            If the requested index is out of range.
+        
+        Returns
+        -------
+        `int`:
+            The new index of the Song.
+        """
+        # If the song is already at the position
+        if song == position:
+            return position
+        if position <= 0:
+            self.list.insert(0, self.list.pop(song))
+            return 0
+        # If the song is being moved to the end or beyond
+        if position >= len(self.list):
+            self.list.append(self.list.pop(song))
+            return len(self.list)
+        self.list.insert(position, self.list.pop(song))
+        return position
+
+
+    def __iter__(self) -> iter:
+        return iter(self.list)
 
     def __len__(self) -> int:
         return len(self.list)
