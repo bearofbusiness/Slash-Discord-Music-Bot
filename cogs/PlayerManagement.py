@@ -13,9 +13,6 @@ class PlayerManagement(commands.Cog):
     async def _now(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.player_exists(interaction):
             return
-        if (Servers.get_player(interaction.guild_id).song is None):
-            await Utils.send(interaction, title="Nothing is playing", content="You should add something", progress=False)
-            return
         await interaction.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(interaction.guild_id), progress=True))
 
     @app_commands.command(name="loop", description="Loops the current song")

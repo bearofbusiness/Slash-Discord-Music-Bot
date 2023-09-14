@@ -156,7 +156,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = Servers.get_player(interaction.guild_id)
-        if player and player.song:
+        if player:
             footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,

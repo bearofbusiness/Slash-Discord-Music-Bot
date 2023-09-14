@@ -35,9 +35,9 @@ class Player:
     ----------
     queue : `Queue`
         The Queue that the Player is responsible for.
-    song : `Song` | `None`
-        The song that is currently playing, if there is not one this is a NoneType.
-        This is slightly innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
+    song : `Song`
+        The song that is playing, or about to play.
+        This is innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
     last_np_message: `discord.Message` | `None`
         The last automatic now-playing Message the Player has sent.  NoneType if it has not sent one.
     looping : `bool`
@@ -87,8 +87,6 @@ class Player:
         self.queue = Queue()
         self.queue.add(song)
 
-        # Shouldn't be set but it fixes a race condition
-        #TODO is this still true?
         self.song = song
 
         self.last_np_message = None
@@ -179,40 +177,38 @@ class Player:
                 await self.clean()
                 return
             
+            # Get the next song in queue
+            self.song = self.queue.remove(0)
+
             # Run logic for the previous np (if it exists)
             await self.__last_np_message_handler()
 
-            song = self.queue.get(0)
-
             # Update send location preference
-            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else song.channel
+            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
 
             # If the song will expire while playing
-            if song.expiry_epoch is not None and song.expiry_epoch - time.time() - song.duration < 30:
-                song.expiry_epoch = None
+            if self.song.expiry_epoch is not None and self.song.expiry_epoch - time.time() - self.song.duration < 30:
+                self.song.expiry_epoch = None
 
             # Only repopulate YouTube links
-            if song.expiry_epoch is None and song.source in ('Youtube', 'Soundcloud'):
+            if self.song.expiry_epoch is None and self.song.source in ('Youtube', 'Soundcloud'):
                 # Populate the song again to refresh the timer
                 try:
-                    await song.populate()
+                    await self.song.populate()
                 # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
                 except Exception as e:
-                    errored_song = song
+                    errored_song = self.song
                     await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
                     self.queue.remove(0)
                     continue
                 
                 # If the song gained an expiry epoch (will not happen for soundcloud)
-                if song.expiry_epoch:
+                if self.song.expiry_epoch:
                     # If even after repopulating, the song was going to pass the expiry time
-                    if song.expiry_epoch - time.time() - song.duration < 30:
-                        await song.channel.send(f"Song {song.title} -- {song.uploader} ({song.original_url}) was unable to load because it would expire before playback completed (too long)")
+                    if self.song.expiry_epoch - time.time() - self.song.duration < 30:
+                        await self.song.channel.send(f"Song {self.song.title} -- {self.song.uploader} ({self.song.original_url}) was unable to load because it would expire before playback completed (too long)")
 
-            del song
 
-            # Set the top song to the playing song
-            self.song = self.queue.remove(0)
 
             # Send the new NP
             self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
@@ -248,8 +244,6 @@ class Player:
             # If we're queue looping, re-add the removed song to bottom of queue
             elif self.queue_looping:
                 self.queue.add(self.song)
-
-            self.song = None
 
     # Cleans up and closes a player
     async def clean(self) -> None:
