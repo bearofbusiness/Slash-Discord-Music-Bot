@@ -172,8 +172,7 @@ class QueueButtons(discord.ui.View):
         # The index to stop reading from Queue
         max_queue_index = min_queue_index + page_size
 
-        embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
-            player.song.id), progress=False)
+        embed = Utils.get_embed(interaction, title='Queue', progress=False)
 
         # Loop through the region of songs in this page
         for i in range(min_queue_index, max_queue_index):
