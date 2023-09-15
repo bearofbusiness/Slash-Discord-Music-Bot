@@ -3,6 +3,7 @@ import discord
 import math
 import random
 import time
+import yt_dlp.utils
 
 from datetime import datetime
 
@@ -252,7 +253,12 @@ def populate_song_list(songs: list[Song], guild_id: int) -> None:
             if Servers.get_player(guild_id) is None:
                 return
             pront(f"populating {songs[i].title}")
-            await songs[i].populate()
+            try:
+                await songs[i].populate()
+            except yt_dlp.utils.ExtractorError:
+                pront('raised ExtractorError', 'ERROR')
+            except yt_dlp.utils.DownloadError:
+                pront('raised DownloadError', 'ERROR')
             songs[i] = None
 
     task = asyncio.create_task(__primary_loop(songs, guild_id))
