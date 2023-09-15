@@ -195,7 +195,7 @@ class QueueButtons(discord.ui.View):
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡")
     async def button_right(self,interaction:discord.Interaction,button:discord.ui.Button):
         self.page += 1
-        await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)\
+        await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
         
 
 class GuildSettingsView(discord.ui.View):
@@ -206,12 +206,12 @@ class GuildSettingsView(discord.ui.View):
 class GuildSettingsSelect(discord.ui.Select):
     def __init__(self, interaction: discord.Interaction) -> None:
         options = [
-            DBEmojiOption(interaction, label='Now Playing Location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
-            DBEmojiOption(interaction, label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave.'),
-            DBEmojiOption(interaction, label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.'),
-            DBEmojiOption(interaction, label='Leave Song Breadcrumbs', value='song_breadcrumbs', description='Whether the bot should leave breadcrumbs to songs.')
+            GuildSettingsSelect.__create_select_option(interaction, label='Now Playing Location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.', emojis=['#️⃣', '🔊']),
+            GuildSettingsSelect.__create_select_option(interaction, label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave.'),
+            GuildSettingsSelect.__create_select_option(interaction, label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.'),
+            GuildSettingsSelect.__create_select_option(interaction, label='Leave Song Breadcrumbs', value='song_breadcrumbs', description='Whether the bot should leave breadcrumbs to songs.')
         ]
-        super().__init__(placeholder='Select a setting to edit.', options=options)
+        super().__init__(placeholder='Select a setting to edit.', options=options, row=1)
 
     async def callback(self, interaction: discord.Interaction) -> None:
         # Remove any existing Buttons before spawning a new one
@@ -239,17 +239,11 @@ class GuildSettingsSelect(discord.ui.Select):
                 raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
 
         await interaction.response.edit_message(view=self.view)
-
-class DBEmojiOption(discord.SelectOption):
-    def __init__(self, interaction: discord.Interaction, *, label: str, value: str = ..., description: str | None = None, default: bool = False) -> None:
-        emoji = Utils.triple_select(DB.GuildSettings.get(interaction.guild_id, value), '✖', '✔', '💽')
-        super().__init__(label=label, value=value, description=description, emoji=emoji, default=default)
     
-    @classmethod
-    def from_option(cls, interaction: discord.Interaction,  option: discord.SelectOption) -> None:
-        return cls(interaction, label=option.label, value=option.value, description=option.description, default=option.default)
-        
-
+    @staticmethod
+    def __create_select_option(interaction: discord.Interaction, label: str, value: str, description: str, emojis: list[str] = ['❎', '✅', '💽']) -> discord.SelectOption:
+        emoji = emojis[DB.GuildSettings.get(interaction.guild_id, value)]
+        return discord.SelectOption(label=label, value=value, description=description, emoji=emoji)
 
 class ToggleButton(discord.ui.Button):
     def __init__(self, state: bool, value: str, messages: list[str] = ['False', 'True']):
@@ -257,7 +251,7 @@ class ToggleButton(discord.ui.Button):
         self.state = state
         self.messages = messages
         style = discord.ButtonStyle.green if state else discord.ButtonStyle.red
-        super().__init__(style=style, label=messages[state])
+        super().__init__(style=style, label=messages[state], row=2)
 
     async def callback(self, interaction: discord.Interaction):
         self.state = not self.state
@@ -271,18 +265,18 @@ class ToggleButton(discord.ui.Button):
 
         # Update Embed
         embed = Utils.get_embed(interaction, title='Settings')
-        embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{Utils.double_select(DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc'), 'Text', 'VC')}`")
+        embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{('Text', 'VC')[DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc')]}`")
         embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
-        embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{Utils.triple_select(DB.GuildSettings.get(interaction.guild_id, 'allow_playlist'), 'No', 'Yes', 'DJ Only')}`")
+        embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
         embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
         
-        # Update Select
-        select = self.view.children[0]
-        for i in range(len(select.options)):
-            if select.options[i].value == self.value:
-                select.options[i] = DBEmojiOption.from_option(interaction, select.options[i])
-                
-        await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self), embed=embed)
+        # Update Select by clearing the View
+        self.view.clear_items().add_item(GuildSettingsSelect(interaction))
+
+        # Add the button back to the View
+        self.view.add_item(self)
+
+        await interaction.response.edit_message(view=self.view, embed=embed)
 
 class TripleButton(ToggleButton):
     def __init__(self, state: int, value: str, messages: list[str] = ['False', 'True', 'DJ Only']):
