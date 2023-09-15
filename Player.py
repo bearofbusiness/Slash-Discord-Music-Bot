@@ -199,7 +199,6 @@ class Player:
                 except Exception as e:
                     errored_song = self.song
                     await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
-                    self.queue.remove(0)
                     continue
                 
                 # If the song gained an expiry epoch (will not happen for soundcloud)
