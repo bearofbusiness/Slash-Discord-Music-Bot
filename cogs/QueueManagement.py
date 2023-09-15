@@ -369,6 +369,31 @@ class QueueManagement(commands.Cog):
         embed.set_author(name=song.requester.display_name,
                         icon_url=song.requester.display_avatar.url)
         await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command(name="move", description="Moves a song in the queue to a different position. You should run queue command before using this command.")
+    async def move(self, interaction: discord.Interaction, song_number: int, new_position: int) -> None:
+        if not await Utils.Pretests.playing_audio(interaction):
+            return
+        player = Servers.get_player(interaction.guild_id)
+        if not Utils.Pretests.has_song_authority(interaction, player.queue.get(song_number)):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command or to modify this song.  Please refer to /help for more information.")
+            return
+        if (song_number < 0 or song_number > len(player.queue.get()) - 1):
+            await Utils.send(interaction, title='Invalid song number!', 
+                            content="Please enter a valid song number.")
+            return
+        if (new_position < -1):
+            await Utils.send(interaction, title='Invalid position!', 
+                            content="Please enter a valid position.")
+            return
+        
+        player.queue.move(song_number, new_position)#moves the song and gets the new position
+
+        if (new_position == -1):
+            new_position = len(player.queue.get()) - 1
+
+        await Utils.send(interaction, title=f'Moved song {song_number} to position {new_position}')
 
 
 

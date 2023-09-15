@@ -70,17 +70,7 @@ class PlaybackManagement(commands.Cog):
         Servers.get_player(interaction.guild_id).resume()
         await Utils.send(interaction, title='▶ Resumed')
 
-    @app_commands.command(name="move", description="moves a song in the queue to a different position. You sould print queue before using this command.")
-    async def move(self, interaction: discord.Interaction, song_number: int, new_position: int) -> None:
-        if not await Utils.Pretests.playing_audio(interaction):
-            return
-        player = Servers.get_player(interaction.guild_id)
-        if not Utils.Pretests.has_song_authority(interaction, player.queue.get(song_number)):
-            await Utils.send(interaction, title='Insufficient permissions!', 
-                            content="You don't have the correct permissions to use this command or to modify this song.  Please refer to /help for more information.")
-            return
-        new_position = player.queue.move(song_number, new_position)#moves the song and gets the new position
-        await Utils.send(interaction, title=f'Moved song {song_number} to position {new_position}')
+
 
 async def setup(bot):
     Utils.pront("Cog PlaybackManagement loading...")
