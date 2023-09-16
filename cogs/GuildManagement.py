@@ -34,7 +34,7 @@ class GuildManagement(commands.Cog):
                     await Utils.send(interaction, title='Insufficient permissions!', 
                                 content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
                     return
-            await Utils.clean(Servers.get_player(interaction.guild_id))
+            await Servers.get_player(interaction.guild_id).clean()
         # Otherwise, just leave VC
         else:
             await interaction.guild.voice_client.disconnect()
