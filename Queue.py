@@ -163,20 +163,6 @@ class Queue():
 
     def __contains__(self, song: Song) -> bool:
         return song in self.list
-    
-    def __add__(self, other: Song | list[Song]) -> None:
-        self.add(other)
-
-    def __iadd__(self, other: Song | list[Song]) -> None:
-        self.add(other)
-
-    def __sub__(self, other: Song | list[Song]) -> None:
-        if isinstance(other, Song):
-            self.remove(self.list.index(other))
-            return
-
-        for song in other:
-            self.remove(self.list.index(song))
 
     def __iter__(self) -> iter:
         return iter(self.list)
