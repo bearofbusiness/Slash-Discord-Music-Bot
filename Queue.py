@@ -4,7 +4,7 @@ from asyncio import Event
 from Song import Song
 
 
-class Queue:
+class Queue():
     """
     A class for containing and managing a list of Songs.
 
@@ -151,31 +151,41 @@ class Queue:
             Returns True once the wait is resolved.
         """
         return await self.has_songs.wait()
+
+    def __getitem__(self, index: int) -> Song:
+        return self.list[index]
     
-    def move(self, song: int, position: int) -> None:
-        """
-        Moves a Song in the Queue to a different position.
-        
-        Parameters
-        ----------
-        song : `int`
-            The index of the Song to move.
-        position : `int`
-            The index to move the Song to.
+    def __setitem__(self, index: int, song: Song) -> None:
+        self.list[index] = song
 
-        Raises
-        ------
-        `IndexError`
-            If the requested index is out of range.
-        """
-        self.list.insert(position, self.list.pop(song))
+    def __delitem__(self, index: int) -> None:
+        del self.list[index]
 
+    def __contains__(self, song: Song) -> bool:
+        return song in self.list
+    
+    def __add__(self, other: Song | list[Song]) -> None:
+        self.add(other)
+
+    def __iadd__(self, other: Song | list[Song]) -> None:
+        self.add(other)
+
+    def __sub__(self, other: Song | list[Song]) -> None:
+        if isinstance(other, Song):
+            self.remove(self.list.index(other))
+            return
+
+        for song in other:
+            self.remove(self.list.index(song))
 
     def __iter__(self) -> iter:
         return iter(self.list)
 
     def __len__(self) -> int:
         return len(self.list)
+    
+    def __repr__(self) -> str:
+        return str(self.list)
 
     def __str__(self) -> str:
         return str([str(song) for song in self.list])
