@@ -167,11 +167,6 @@ class Queue:
         ------
         `IndexError`
             If the requested index is out of range.
-        
-        Returns
-        -------
-        `int`:
-            The new index of the Song.
         """
         self.list.insert(position, self.list.pop(song))
 
