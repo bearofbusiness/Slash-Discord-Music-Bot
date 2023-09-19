@@ -260,23 +260,21 @@ class QueueManagement(commands.Cog):
 
         removed_song = Servers.get_player(
             interaction.guild_id).queue.remove(number_in_queue)
-        # TODO, Why do we do this?
-        if removed_song is not None:
-            embed = discord.Embed(
-                title='Removed from Queue:',
-                url=removed_song.original_url,
-                color=Utils.get_random_hex(removed_song.id)
-            )
-            embed.add_field(name=removed_song.uploader,
-                            value=removed_song.title, inline=False)
-            embed.add_field(name='Requested by:',
-                            value=removed_song.requester.mention)
-            embed.add_field(name='Duration:',
-                            value=Song.parse_duration(removed_song.duration))
-            embed.set_thumbnail(url=removed_song.thumbnail)
-            embed.set_author(name=removed_song.requester.display_name,
-                            icon_url=removed_song.requester.display_avatar.url)
-            await interaction.response.send_message(embed=embed)
+        embed = discord.Embed(
+            title='Removed from Queue:',
+            url=removed_song.original_url,
+            color=Utils.get_random_hex(removed_song.id)
+        )
+        embed.add_field(name=removed_song.uploader,
+                        value=removed_song.title, inline=False)
+        embed.add_field(name='Requested by:',
+                        value=removed_song.requester.mention)
+        embed.add_field(name='Duration:',
+                        value=Song.parse_duration(removed_song.duration))
+        embed.set_thumbnail(url=removed_song.thumbnail)
+        embed.set_author(name=removed_song.requester.display_name,
+                        icon_url=removed_song.requester.display_avatar.url)
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="removeuser", description="Removes all of the songs added by a specific user")
     async def remove_user(self, interaction: discord.Interaction, member: discord.Member):
@@ -290,19 +288,19 @@ class QueueManagement(commands.Cog):
         
         queue = Servers.get_player(interaction.guild.id).queue
 
-        # TODO either make this an int or fill out the send embed more
         removed = []
-        i = 0
-        while i < len(queue.get()):
+        for i in range(len(queue.get()) - 1, 0, -1):
+            pass
             if queue.get(i).requester == member:
                 removed.append(queue.remove(i))
-                continue
 
-            # Only increment i when song.requester != member
-            i += 1
-
-        await Utils.send(interaction,
-                        title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"}.')
+        embed = Utils.get_embed(interaction, title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"} queued by user {member.mention}.')
+        for index in range(len(removed)):
+            if index == 24:
+                embed.add_field(name='And more...', value='...', inline=False)
+                break
+            embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="removeduplicates", description="Removes duplicate songs from the queue")
     async def remove_dupes(self, interaction: discord.Interaction):
@@ -317,7 +315,6 @@ class QueueManagement(commands.Cog):
 
         #O(n) algorithm using a hash table
         table = {player.song.id : player.song} if player.song else {}
-        # TODO either make this an int or fill out the send embed more
         removed = []
         i = 0
         while i < len(queue.get()):
@@ -327,9 +324,15 @@ class QueueManagement(commands.Cog):
                 i += 1
                 continue
             removed.append(queue.remove(i))
-        await Utils.send(interaction,
-                        title=f'Removed {len(removed)} duplicate song{"" if len(removed) == 1 else "s"}.')
-    @app_commands.command(name="clear", description="Clears the queue")
+        
+        embed = Utils.get_embed(interaction, title=f'Removed {len(removed)} duplicate song{"" if len(removed) == 1 else "s"}.')
+        for index in range(len(removed)):
+            if index == 24:
+                embed.add_field(name='And more...', value='...', inline=False)
+                break
+            embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
+        await interaction.response.send_message(embed=embed)
+
     async def clear(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.player_exists(interaction):
             return

@@ -4,7 +4,7 @@ from asyncio import Event
 from Song import Song
 
 
-class Queue():
+class Queue:
     """
     A class for containing and managing a list of Songs.
 
