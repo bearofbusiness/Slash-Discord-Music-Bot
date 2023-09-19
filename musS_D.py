@@ -17,16 +17,14 @@ import yt_dlp
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
-#-f is just finished
 TODO:
     6- fnt alert user when songs were unable to be added inside _playlist()
-    5- rearrange functions, their order here decides what order they show up in when people type / in discord
     3- clean up todos in various parts of code
-    2- write pydocs
+    2- write more pydocs
     -make more commands
-        1- create add-at(?) (merge with playtop? ask for int instead of bool?)
+        1- create add-at(?) (merge with playtop? ask for int instead of bool?)#no make it a different thing
+        1- playnow puts the current song at top of queue and plays the this song
         1- help #bear //done but needs to be updated
-        1- settings #bear
         1- move command #bear 
         1- write pause and play methods in player to consolidate controlls into one place
     -other
@@ -36,55 +34,6 @@ TODO:
         5- right more help including dj role
 
         
-
-
-DONE:
-    9-f make listener for player.start returning to call clean() // found alternative that probably works better
-    9-f fix automatic now_playing messages
-    8-f make forceskip admin-only
-    8-f make play and playlist only join VC if the provided queries are valid (prevents bot from joining to just do nothing)
-    8-f make YTDLInterface.query_link calls cognizant of entries[] and able to handle it's appearance
-    8-f likewise, make query_search able to handle a lack of entries[] // Never going to happen; (hopefully) a non issue
-    7-fnt create general on_error event method
-     - make more commands
-        9-f pause #bear //vc.pause() and vc.resume()
-        9-f resume #bear
-        9-f now #bear
-        9-f skip (force skip) #sming
-        8-f search #sming
-        8-f queue #bear
-        8-f remove #bear
-        8-f play_top #bear
-        7-f remove user's songs from queue
-        7-f play_list #sming
-        7-f play_list_shuffle #sming
-        6-f clear #bear
-        5-f shuffle #bear
-        4-f loop (queue, song) #bear
-        1-f fix queue emojis being backwards
-        1-f option to decide if __send_np goes into vc.channel or song.channel #sming
-        1-f remove_duplicates #bear (sming finished it)
-        1-f remove author's songs from queue when author leaves vc #sming //can't be done until we have settings
-
-     - Be able to play music from youtube
-        - play music
-        - stop music
-    (kind but found a better way)- get downloading to work
-     - Be able to join vc and play sound
-        - join vc
-        - leave vc
-        - play sound
-    - other
-        9-f footer that states the progress of the song #bear
-        8-f author doesn't need to vote to skip#sming
-        8-f fix auto now playing messages not deleting //found why, it's because the player.wait_until_termination() returns instantly once we tell the player to close
-        8-f auto-leave VC if bot is alone #sming
-        7-f only generate a player when audio is playing, remove the player_event, force initialization with a Song or Queue
-        6-f Implement discord.Button with queue
-        5-f access currently playing song via player.song rather than player.queue.top() (maybe remove current song from queue while we're at it?)
-        4-f remove unneeded async defs
-        3-f make it multi server #bear
-
 '''
 del XX
 
@@ -153,13 +102,14 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         # If we've been forcibly removed from a VC
         # (this leaves a hanging voice_client)
         if after.channel == None and member.guild.voice_client is not None:
+            Utils.pront("bot was forcibly removed")
             player = Servers.get_player(member.guild.id)
             # No player? No problem.
             if player is None:
                 return
             # If there is one, properly close it up
             else:
-                await Utils.clean(player)
+                await player.clean()
                 return
 
     # If the user was in the same VC as the bot and disconnected
@@ -170,7 +120,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             if player is None:
                 await member.guild.voice_client.disconnect()
             else:
-                await Utils.clean(player)
+                await player.clean()
         
         # If the bot should purge their queued songs
         if DB.GuildSettings.get(member.guild.id, 'remove_orphaned_songs'):
@@ -222,7 +172,7 @@ async def on_tree_error(interaction: discord.Interaction, error: discord.app_com
         return
 
     # Fallback default error
-    await interaction.followup.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
+    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
     # Allows entire error to be printed without raising an exception
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()

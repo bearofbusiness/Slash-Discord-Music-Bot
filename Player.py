@@ -3,11 +3,13 @@ import discord
 import math
 import random
 import traceback
+import time
 
 
 # Our imports
 import Buttons
 import Utils
+from Servers import Servers
 from Queue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
@@ -31,33 +33,39 @@ class Player:
 
     Attributes
     ----------
-    queue : Queue
+    queue : `Queue`
         The Queue that the Player is responsible for.
-    song : Song | None
-        The song that is currently playing, if there is not one this is a NoneType.
-        This is slightly innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
-    last_np_message: discord.Message | None
+    song : `Song`
+        The song that is playing, or about to play.
+        This is innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
+    last_np_message: `discord.Message` | `None`
         The last automatic now-playing Message the Player has sent.  NoneType if it has not sent one.
-    looping : bool
+    looping : `bool`
         Whether the Player is looping the currently playing Song.
-    queue_looping : bool
+    queue_looping : `bool`
         Whether the Player is looping the Queue.
-    true_looping : bool
+    true_looping : `bool`
         Whether the Player is shuffling completed Songs back into the Queue.
-    vc : discord.VoiceClient
+    vc : `discord.VoiceClient`
         The VoiceClient this Player is managing.
-    send_location : discord.abc.GuildChannel
+    send_location : `discord.abc.GuildChannel`
         The location the bot will send auto Now Playing messages.  Updated every song.
 
     Methods
     -------
+    async clean():
+        Cleans up and closes the player.
     is_playing():
         Whether the player is playing audio or in-between songs. Pausing the Song does not effect this.
-    set_loop(state: bool):
+    pause():
+        Pauses the player.
+    resume():
+        Resumes the player
+    set_loop(state: `bool`):
         Sets whether the Player should be looping the Song at song.
-    set_true_loop(state: bool):
+    set_true_loop(state: `bool`):
         Sets whether the Player should be shuffling completed Songs back into the Queue.
-    set_queue_loop(state: bool):
+    set_queue_loop(state: `bool`):
         Sets whether the Player should be adding completed Songs to the end of the Queue.
         
     """
@@ -67,9 +75,9 @@ class Player:
 
         Parameters
         ----------
-        vc : discord.VoiceClient
+        vc : `discord.VoiceClient`
             The VoiceClient to bind the Player to
-        song : Song
+        song : `Song`
             The Song to initalize the Player with.
         """
         self.player_song_end = asyncio.Event()
@@ -79,7 +87,6 @@ class Player:
         self.queue = Queue()
         self.queue.add(song)
 
-        # Shouldn't be set but it fixes a race condition
         self.song = song
 
         self.last_np_message = None
@@ -103,12 +110,12 @@ class Player:
 
         Parameters
         ----------
-        awaitable : any
+        awaitable : `any`
             The awaitable object to run within the wrapper.
 
         Return
         ------
-        any:
+        `any`:
             The result of the awaitable.
         """
         try:
@@ -118,7 +125,7 @@ class Player:
             await self.vc.channel.send(embed=embed)
             # Traceback print here so we get the full error without causing an infinite loop of exception raises
             traceback.print_exc()
-            await Utils.clean(self)
+            await self.clean()
             
 
     def __song_complete(self, error=None):
@@ -132,6 +139,32 @@ class Player:
             raise VoiceError(str(error))
         self.player_song_end.set()
 
+    
+    async def __last_np_message_handler(self):
+        """
+        Runs logic for the last_np_message variable, deciding whether to delete it, to change it to a breadcrumb, or to do nothing.
+        """
+        if not self.last_np_message:
+            return
+        if DB.GuildSettings.get(self.vc.guild.id, setting='song_breadcrumbs'):
+            embed = self.last_np_message.embeds[0]
+            embed.title = "Song Breadcrumb:"
+            embed.set_thumbnail(url=embed.image.url if embed.image else None)
+            embed.set_image(url=None)
+            embed.set_footer(text="This song has finished playing.  This breadcrumb has been left because of this server's settings.")
+            try:
+                await self.last_np_message.edit(embed=embed, view=None)
+            except discord.NotFound:
+                Utils.pront("Player's last_np_message was not NoneType but discord returned 404", "ERROR")
+            return
+        
+        try:
+            self.last_np_message.delete()
+        except discord.NotFound:
+            Utils.pront("Player's last_np_message was not NoneType but discord returned 404", "ERROR")
+        
+
+
     async def __player(self) -> None:
         """
         This is where the magic happens.  Contains all of the logic for the playback loop.
@@ -141,50 +174,44 @@ class Player:
             # Check if the queue is empty
             if not self.queue.get():
                 # Clean up and delete player
-                await Utils.clean(self)
+                await self.clean()
                 return
-
-            # BE CAREFUL, this song is not self.song!!!
-            song = self.queue.get(0)
-            embed = discord.Embed(
-                title="Preparing next song...",
-                description=f"{song.title} -- {song.uploader} is up next.",
-                url=song.original_url,
-                color=Utils.get_random_hex(song.id)
-            )
-
-            embed.set_thumbnail(url=song.thumbnail)
-            # Delete the old NP if it exists
-            if self.last_np_message is not None:
-                await self.last_np_message.delete()
-
-            # Update send location preference
-            # Purposefully uses song rather than self.song here to get the channel of the upcoming song, not the old one.
-            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else song.channel
-
-            self.last_np_message = await self.send_location.send(silent=True, embed=embed)
-            del embed
-            del song
-
-            # Get the top song in queue ready to play
-            try:
-                await self.queue.get(0).populate()
-            # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
-            except Exception as e:
-                errored_song = self.queue.get(0)
-                await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
-                self.queue.remove(0)
-                continue
-
-            # Set the now-populated top song to the playing song
+            
+            # Get the next song in queue
             self.song = self.queue.remove(0)
 
+            # Run logic for the previous np (if it exists)
+            await self.__last_np_message_handler()
+
+            # Update send location preference
+            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
+
+            # If the song will expire while playing
+            if self.song.expiry_epoch is not None and self.song.expiry_epoch - time.time() - self.song.duration < 30:
+                self.song.expiry_epoch = None
+
+            # Only repopulate YouTube links
+            if self.song.expiry_epoch is None and self.song.source in ('Youtube', 'Soundcloud'):
+                # Populate the song again to refresh the timer
+                try:
+                    await self.song.populate()
+                # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
+                except Exception as e:
+                    errored_song = self.song
+                    await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
+                    continue
+                
+                # If the song gained an expiry epoch (will not happen for soundcloud)
+                if self.song.expiry_epoch:
+                    # If even after repopulating, the song was going to pass the expiry time
+                    if self.song.expiry_epoch - time.time() - self.song.duration < 30:
+                        await self.song.channel.send(f"Song {self.song.title} -- {self.song.uploader} ({self.song.original_url}) was unable to load because it would expire before playback completed (too long)")
+
+
+
             # Send the new NP
-            embed = Utils.get_now_playing_embed(self)
-            try:
-                self.last_np_message = await self.last_np_message.edit(embed=embed, view=Buttons.NowPlayingButtons(self))
-            except discord.errors.NotFound:
-                self.last_np_message = await self.send_location.send(silent=True, embed=embed)
+            self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
+            
 
             # Clear player_song_end here because this is when we start playing audio again
             self.player_song_end.clear()
@@ -217,7 +244,24 @@ class Player:
             elif self.queue_looping:
                 self.queue.add(self.song)
 
-            self.song = None
+    # Cleans up and closes a player
+    async def clean(self) -> None:
+        """
+        Cleans up and closes a player.
+        """
+        Utils.pront('cleaning')
+        # Immediately remove the Player from Servers to avoid a race condition
+        # which leads to the defunct player being re-used
+        Servers.remove(self)
+        # Only disconnect if bot is connected to vc
+        # (it won't be if it was disconnected by an admin)
+        if self.vc.is_connected():
+            await self.vc.disconnect()
+        # Run logic on the to-be defunct np
+        await self.__last_np_message_handler()
+        # Needs to be after at least player.vc.disconnect() because for some
+        # godawful reason it refuses to disconnect otherwise
+        self.player_task.cancel()
 
     def is_playing(self) -> bool:
         """
@@ -225,12 +269,26 @@ class Player:
 
         Returns
         -------
-        bool:
+        `bool`:
             True if the Player is playing audio or paused.
 
             False if the Player is between songs.
         """
         return not self.player_song_end.is_set()
+
+    def pause(self) -> None:
+        """
+        Pauses the player.
+        """
+        self.vc.pause()
+        self.song.pause()
+    
+    def resume(self) -> None:
+        """
+        Resumes the player.
+        """
+        self.vc.resume()
+        self.song.resume()
 
     def set_loop(self, state: bool) -> None:
         """
@@ -240,7 +298,7 @@ class Player:
 
         Parameters
         ----------
-        state : bool
+        state : `bool`
             Whether the player should be looping or not.
         """
         self.looping = state
@@ -253,7 +311,7 @@ class Player:
 
         Parameters
         ----------
-        state : bool
+        state : `bool`
             Whether the player should be true looping or not.
         """
         self.true_looping = state
@@ -266,7 +324,7 @@ class Player:
 
         Parameters
         ----------
-        state : bool
+        state : `bool`
             Whether the player should be queue looping or not.
         """
         self.queue_looping = state

@@ -130,18 +130,26 @@ class QueueManagement(commands.Cog):
         if shuffle:
             random.shuffle(playlist.get("entries"))
 
-        for entry in playlist.get("entries"):
+        entries = playlist.get("entries")
 
+        # If the player doesn't exist, make one
+        if Servers.get_player(interaction.guild_id) is None:
+            # Get the top song and create a Player from it
+            song = Song(interaction, link, entries[0])
+            Servers.add(interaction.guild_id, Player(
+                    interaction.guild.voice_client, song))
+            entries.pop(0)
+        
+        songs = []
+
+        for entry in entries:
             # Feed the Song the entire entry, saves time by not needing to create and fill a dict
             song = Song(interaction, link, entry)
-
-            # If player does not exist, create one.
-            if Servers.get_player(interaction.guild_id) is None:
-                Servers.add(interaction.guild_id, Player(
-                    interaction.guild.voice_client, song))
-            # If it does, add the song to queue
-            else:
-                Servers.get_player(interaction.guild_id).queue.add(song)
+            songs.append(song)
+        
+        # Double check that there were other entries to add
+        if songs:
+            Servers.get_player(interaction.guild_id).queue.add(songs)
 
         embed = Utils.get_embed(
             interaction,
@@ -162,6 +170,9 @@ class QueueManagement(commands.Cog):
         embed.set_thumbnail(url=thumbnail)
 
         await interaction.followup.send(embed=embed)
+
+        # Once all is said and done, start the populator thread
+        Utils.populate_song_list(songs, interaction.guild_id)
 
     @app_commands.command(name="search", description="Searches YouTube for a given query")
     async def search(self, interaction: discord.Interaction, query: str) -> None:
@@ -249,23 +260,21 @@ class QueueManagement(commands.Cog):
 
         removed_song = Servers.get_player(
             interaction.guild_id).queue.remove(number_in_queue)
-        # TODO, Why do we do this?
-        if removed_song is not None:
-            embed = discord.Embed(
-                title='Removed from Queue:',
-                url=removed_song.original_url,
-                color=Utils.get_random_hex(removed_song.id)
-            )
-            embed.add_field(name=removed_song.uploader,
-                            value=removed_song.title, inline=False)
-            embed.add_field(name='Requested by:',
-                            value=removed_song.requester.mention)
-            embed.add_field(name='Duration:',
-                            value=Song.parse_duration(removed_song.duration))
-            embed.set_thumbnail(url=removed_song.thumbnail)
-            embed.set_author(name=removed_song.requester.display_name,
-                            icon_url=removed_song.requester.display_avatar.url)
-            await interaction.response.send_message(embed=embed)
+        embed = discord.Embed(
+            title='Removed from Queue:',
+            url=removed_song.original_url,
+            color=Utils.get_random_hex(removed_song.id)
+        )
+        embed.add_field(name=removed_song.uploader,
+                        value=removed_song.title, inline=False)
+        embed.add_field(name='Requested by:',
+                        value=removed_song.requester.mention)
+        embed.add_field(name='Duration:',
+                        value=Song.parse_duration(removed_song.duration))
+        embed.set_thumbnail(url=removed_song.thumbnail)
+        embed.set_author(name=removed_song.requester.display_name,
+                        icon_url=removed_song.requester.display_avatar.url)
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="removeuser", description="Removes all of the songs added by a specific user")
     async def remove_user(self, interaction: discord.Interaction, member: discord.Member):
@@ -279,19 +288,19 @@ class QueueManagement(commands.Cog):
         
         queue = Servers.get_player(interaction.guild.id).queue
 
-        # TODO either make this an int or fill out the send embed more
         removed = []
-        i = 0
-        while i < len(queue.get()):
+        for i in range(len(queue.get()) - 1, 0, -1):
+            pass
             if queue.get(i).requester == member:
                 removed.append(queue.remove(i))
-                continue
 
-            # Only increment i when song.requester != member
-            i += 1
-
-        await Utils.send(interaction,
-                        title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"}.')
+        embed = Utils.get_embed(interaction, title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"} queued by user {member.mention}.')
+        for index in range(len(removed)):
+            if index == 24:
+                embed.add_field(name='And more...', value='...', inline=False)
+                break
+            embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
+        await interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="removeduplicates", description="Removes duplicate songs from the queue")
     async def remove_dupes(self, interaction: discord.Interaction):
@@ -306,7 +315,6 @@ class QueueManagement(commands.Cog):
 
         #O(n) algorithm using a hash table
         table = {player.song.id : player.song} if player.song else {}
-        # TODO either make this an int or fill out the send embed more
         removed = []
         i = 0
         while i < len(queue.get()):
@@ -316,9 +324,15 @@ class QueueManagement(commands.Cog):
                 i += 1
                 continue
             removed.append(queue.remove(i))
-        await Utils.send(interaction,
-                        title=f'Removed {len(removed)} duplicate song{"" if len(removed) == 1 else "s"}.')
-    @app_commands.command(name="clear", description="Clears the queue")
+        
+        embed = Utils.get_embed(interaction, title=f'Removed {len(removed)} duplicate song{"" if len(removed) == 1 else "s"}.')
+        for index in range(len(removed)):
+            if index == 24:
+                embed.add_field(name='And more...', value='...', inline=False)
+                break
+            embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
+        await interaction.response.send_message(embed=embed)
+
     async def clear(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.player_exists(interaction):
             return
@@ -347,7 +361,7 @@ class QueueManagement(commands.Cog):
             return
         
         embed = Utils.get_embed(interaction, 
-                                title=f'Inspecting song #{number_in_queue}:',
+                                title=f'Inspecting song #{number_in_queue + 1}:',
                                 url=song.original_url,
                                 content=f'{song.title} -- {song.uploader}',
                                 color=Utils.get_random_hex(song.id)
@@ -358,6 +372,37 @@ class QueueManagement(commands.Cog):
         embed.set_author(name=song.requester.display_name,
                         icon_url=song.requester.display_avatar.url)
         await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command(name="move", description="Moves a song in the queue to a different position. run queue command before using this command.")
+    async def move(self, interaction: discord.Interaction, song_number: int, new_position: int) -> None:
+        if not await Utils.Pretests.playing_audio(interaction):
+            return
+        player = Servers.get_player(interaction.guild_id)
+        if not Utils.Pretests.has_song_authority(interaction, player.queue.get(song_number)):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command or to modify this song.  Please refer to /help for more information.")
+            return
+        song_number -= 1
+        new_position -= 1
+        if (song_number < 0 or song_number > len(player.queue) - 1):
+            await Utils.send(interaction, title='Invalid song number!', 
+                            content="Please enter a valid song number.")
+            return
+        if (new_position < 0 and not new_position == -1):
+            await Utils.send(interaction, title='Invalid position!', 
+                            content="Please enter a valid position.")
+            return
+        
+        if (new_position > len(player.queue) - 1):
+            new_position = len(player.queue) - 1
+
+        song = player.queue.remove(song_number)
+        player.queue.add_at(song, new_position)
+
+        if (new_position == -1):
+            new_position = len(player.queue) - 1
+        
+        await Utils.send(interaction, title=f'Moved song {song_number + 1} to position {new_position + 1}')
 
 
 

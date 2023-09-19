@@ -15,65 +15,80 @@ class NowPlayingButtons(discord.ui.View):
         super().__init__(timeout=None)
         self.player = player
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪")
-    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪", row=1)
+    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None: 
+        if not await Utils.Pretests.playing_audio(interaction):
+            return
+        
+        if not Utils.Pretests.has_song_authority(interaction, self.player.song):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.", ephemeral=True)
+            return
+        
         self.player.queue.add_at(self.player.song, 0)
         self.player.vc.stop()
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏪ Rewound"))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", row=1)
     async def pause_play_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.playing_audio(interaction):
+            return
         if self.player.vc.is_paused():
-            self.player.vc.resume()
-            self.player.song.resume()
+            self.player.resume()
             button.emoji = "⏸"
             self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
             await interaction.response.send_message(embed=Utils.get_embed(interaction, title="▶ Resumed"))
             return
-        self.player.vc.pause()
-        self.player.song.pause()
+        self.player.pause()
         button.emoji = "▶"
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏸ Paused"))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏩")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏩", row=1)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.playing_audio(interaction):
+            return
         await Utils.skip_logic(self.player, interaction)
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔂")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔂", row=2)
     async def loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         self.player.set_loop(not self.player.looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", row=2)
     async def queue_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         self.player.set_queue_loop(not self.player.queue_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾')
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', row=2)
     async def true_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         self.player.set_true_loop(not self.player.true_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", row=3)
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        if not await Utils.Pretests.voice_channel(interaction):
+            return
         player = Servers.get_player(interaction.guild_id)
-        # If there's enough people, require authority to shuffle
-        if len(player.vc.channel.members) > 4:
-            if not Utils.Pretests.has_discretionary_authority(interaction):
-                await Utils.send(interaction, title='Insufficient permissions!', 
-                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
-                return
-                
+        if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            return
         player.queue.shuffle()
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title='🔀 Queue shuffled'))
 
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺")
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺", row=3)
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(delete_after=1, ephemeral=True, embed=Utils.get_embed(interaction, '⏺ Refreshed', progress=False))
@@ -157,8 +172,7 @@ class QueueButtons(discord.ui.View):
         # The index to stop reading from Queue
         max_queue_index = min_queue_index + page_size
 
-        embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(
-            player.song.id), progress=False)
+        embed = Utils.get_embed(interaction, title='Queue', color=Utils.get_random_hex(player.song.id), progress=False)
 
         # Loop through the region of songs in this page
         for i in range(min_queue_index, max_queue_index):
@@ -182,41 +196,54 @@ class QueueButtons(discord.ui.View):
     async def button_right(self,interaction:discord.Interaction,button:discord.ui.Button):
         self.page += 1
         await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
-
+        
 
 class GuildSettingsView(discord.ui.View):
-    def __init__(self) -> None:
+    def __init__(self, interaction: discord.Interaction) -> None:
         super().__init__(timeout=180)
+        self.add_item(GuildSettingsSelect(interaction))
 
-    @discord.ui.select(options=[
-            discord.SelectOption(label='Now Playing location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.'),
-            discord.SelectOption(label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave the VC.'),
-            discord.SelectOption(label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.')
-        ], placeholder='Select a setting to edit.', )
-    async def setting_selection(self, interaction: discord.Interaction, select: discord.ui.Select):
+class GuildSettingsSelect(discord.ui.Select):
+    def __init__(self, interaction: discord.Interaction) -> None:
+        options = [
+            GuildSettingsSelect.__create_select_option(interaction, label='Now Playing Location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.', emojis=['#️⃣', '🔊']),
+            GuildSettingsSelect.__create_select_option(interaction, label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave.'),
+            GuildSettingsSelect.__create_select_option(interaction, label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.'),
+            GuildSettingsSelect.__create_select_option(interaction, label='Leave Song Breadcrumbs', value='song_breadcrumbs', description='Whether the bot should leave breadcrumbs to songs.')
+        ]
+        super().__init__(placeholder='Select a setting to edit.', options=options, row=1)
+
+    async def callback(self, interaction: discord.Interaction) -> None:
         # Remove any existing Buttons before spawning a new one
-        item = self.children[0]
-        self.clear_items().add_item(item)
+        self.view.clear_items().add_item(self)
 
         # Get current state from DB
-        value = select.values[0]
+        value = self.values[0]
         current_state = DB.GuildSettings.get(interaction.guild_id, value)
 
         # Define the messages for the ToggleButton
         match value:
             case 'np_sent_to_vc':
-                select.placeholder = "Now Playing Location"
-                self.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
+                self.placeholder = "Now Playing Location"
+                self.view.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
             case 'remove_orphaned_songs':
-                select.placeholder = "Remove Orphaned Songs"
-                self.add_item(ToggleButton(current_state, value))
+                self.placeholder = "Remove Orphaned Songs"
+                self.view.add_item(ToggleButton(current_state, value))
             case 'allow_playlist':
-                select.placeholder = "Allow Playlist"
-                self.add_item(TripleButton(current_state, value))
+                self.placeholder = "Allow Playlist"
+                self.view.add_item(TripleButton(current_state, value))
+            case 'song_breadcrumbs':
+                self.placeholder = 'Leave Song Breadcrumbs'
+                self.view.add_item(ToggleButton(current_state, value))
             case default:
                 raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
-            
-        await interaction.response.edit_message(view=self)
+
+        await interaction.response.edit_message(view=self.view)
+    
+    @staticmethod
+    def __create_select_option(interaction: discord.Interaction, label: str, value: str, description: str, emojis: list[str] = ['❎', '✅', '💽']) -> discord.SelectOption:
+        emoji = emojis[DB.GuildSettings.get(interaction.guild_id, value)]
+        return discord.SelectOption(label=label, value=value, description=description, emoji=emoji)
 
 class ToggleButton(discord.ui.Button):
     def __init__(self, state: bool, value: str, messages: list[str] = ['False', 'True']):
@@ -224,7 +251,7 @@ class ToggleButton(discord.ui.Button):
         self.state = state
         self.messages = messages
         style = discord.ButtonStyle.green if state else discord.ButtonStyle.red
-        super().__init__(style=style, label=messages[state])
+        super().__init__(style=style, label=messages[state], row=2)
 
     async def callback(self, interaction: discord.Interaction):
         self.state = not self.state
@@ -233,8 +260,23 @@ class ToggleButton(discord.ui.Button):
         await self.update(interaction)
 
     async def update(self, interaction: discord.Interaction):
+        # Update DB
         DB.GuildSettings.set(interaction.guild_id, self.value, self.state)
-        await interaction.response.edit_message(view=self.view.remove_item(self).add_item(self))
+
+        # Update Embed
+        embed = Utils.get_embed(interaction, title='Settings')
+        embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{('Text', 'VC')[DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc')]}`")
+        embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
+        embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
+        embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
+        
+        # Update Select by clearing the View
+        self.view.clear_items().add_item(GuildSettingsSelect(interaction))
+
+        # Add the button back to the View
+        self.view.add_item(self)
+
+        await interaction.response.edit_message(view=self.view, embed=embed)
 
 class TripleButton(ToggleButton):
     def __init__(self, state: int, value: str, messages: list[str] = ['False', 'True', 'DJ Only']):

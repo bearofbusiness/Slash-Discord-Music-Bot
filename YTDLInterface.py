@@ -23,7 +23,7 @@ class YTDLInterface:
     async query_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
         Does a slower but more thorough query of the URL than scrape_link.
 
-    async scrape_search(query: str):
+    async scrape_search(query: `str`):
         Performs a quick scrape-based search for a provided query.
     """
     retrieve_options = {
@@ -32,7 +32,7 @@ class YTDLInterface:
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
-        'quiet': False,
+        'quiet': True,
         'no_warnings': False,
         'default_search': 'auto',
         'source_address': '0.0.0.0',
@@ -46,7 +46,7 @@ class YTDLInterface:
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
-        'quiet': False,
+        'quiet': True,
         'no_warnings': False,
         'default_search': 'auto',
         'source_address': '0.0.0.0',
@@ -68,12 +68,12 @@ class YTDLInterface:
         
         Parameters
         ----------
-            link : str
+            link : `str`
                 The URL to be scraped, note that searches do not work when scraping.
 
         Returns
         -------
-        dict:
+        `dict`:
             A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, link)
@@ -87,12 +87,12 @@ class YTDLInterface:
         
         Parameters
         ----------
-            link : str
+            link : `str`
                 The URL to be queried, non-links will be searched and the first result returned.
 
         Returns
         -------
-        dict:
+        `dict`:
             A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
@@ -106,12 +106,12 @@ class YTDLInterface:
         
         Parameters
         ----------
-            query : str
+            `query` : `str`
                 The text to be searched.  The method will return the top 5 search results.
 
         Returns
         -------
-        dict:
+        `dict`:
             A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, f'ytsearch5:{query}')
@@ -124,19 +124,19 @@ class YTDLInterface:
 
         Parameters
         ----------
-            options : dict
+            options : `dict`
                 A dictionary of yt-dlp arguments. Listed at https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py
-            link : str
+            link : `str`
                 A string containing a URL or query that yt-dlp will interpret.
 
         Returns
         -------
-        dict:
+        `dict`:
             A dictionary containing the result of the yt-dlp call.
         
         Raises
         ------
-        YTDLError:
+        `YTDLError`:
             If yt-dlp returned an empty or incomplete dictionary
         """
         # Define asyncio loop
