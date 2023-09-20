@@ -308,6 +308,9 @@ class Song:
         duration.append(f'{seconds:02d}')
 
         return ':'.join(duration)
+    
+    def __eq__(self, other: Song) -> bool:
+        return self.link == other.link
 
     def __str__(self) -> str:
         return f'{self.title} by {self.uploader}'
