@@ -17,9 +17,7 @@ import yt_dlp
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
 XX = '''
 #-fnt stands for finished not tested
-#-f is just finished
 TODO:
-    7- figure out how to get around Player raising errors because it tries to delete a np that doesn't exist if the user deletes it manually
     6- fnt alert user when songs were unable to be added inside _playlist()
     3- clean up todos in various parts of code
     2- write more pydocs
@@ -27,8 +25,9 @@ TODO:
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)#no make it a different thing
         1- playnow puts the current song at top of queue and plays the this song
         1- help #bear //done but needs to be updated
-        1- move command #bear 
+        1-fnt<kinda> move command #bear 
         1- write pause and play methods in player to consolidate controlls into one place
+        1- implement a suggestions command that goes to a google forms or something.
     -other
         9- add info on permissions to help
         7- fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.
