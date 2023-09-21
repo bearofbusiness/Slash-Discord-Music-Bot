@@ -153,31 +153,124 @@ class Queue:
         return await self.has_songs.wait()
 
     def __getitem__(self, index: int) -> Song:
+        """
+        Magic method for getting a Song or list of Songs from the Queue.
+        
+        Parameters
+        ----------
+        index: int
+            The index of the Song to retrieve. also accepts int:int for slicing.
+
+        Returns
+        -------
+            Song: 
+                When provided with an integer, return the Song or list[Song] at that index.
+        """
         return self.queue[index]
     
     def __setitem__(self, index: int, song: Song) -> None:
+        """
+        Magic method for setting a Song in the Queue.
+
+        Parameters
+        ----------
+            index: int
+                index of the Queue to set to.
+            song: Song 
+                Song to set at the index.
+                
+        """
         self.queue[index] = song
 
     def __delitem__(self, index: int) -> None:
+        """
+        Magic method for deleting a Song from the Queue.
+
+        Parameters
+        ----------
+            index: int
+                index of a Song in the Queue to delete.
+        """
         del self.queue[index]
 
     def __contains__(self, song: Song) -> bool:
+        """
+        Magic method for checking if a Song is in the Queue.
+
+        Parameters
+        ----------
+            song: Song
+                Song to check for in the Queue.
+        
+        Returns
+        -------
+            bool:
+                True if the Song is in the Queue, False otherwise.
+        """
         return song in self.queue
 
     def __iter__(self) -> iter:
+        """
+        Magic method for iterating over the Queue.
+
+        Returns
+        -------
+            iter:
+                An iterator for the Queue.
+        """
         return iter(self.queue)
     
     def __reversed__(self) -> iter:
+        """
+        Magic method for iterating over the Queue in reverse.
+
+        Returns
+        -------
+            iter:
+                An iterator for the Queue in reverse.
+        """
         return reversed(self.queue)
     
     def __iadd__(self, song: Song | list[Song]) -> None:
+        """
+        Magic method for adding a Song to the Queue.
+
+        Parameters
+        ----------
+            song: Song | list[Song]
+                Song or list of Songs to add to the Queue.
+        """
         self.add(song)
 
     def __len__(self) -> int:
+        """
+        Magic method for getting the length of the Queue.
+
+        Returns
+        -------
+            int:
+                The length of the Queue.
+        """
         return len(self.queue)
     
     def __repr__(self) -> str:
+        """
+        Magic method for getting the representation of the Queue for debuging.
+
+        Returns
+        -------
+            str:
+                The representation of the Queue.
+        """
         return str(self.queue)
 
     def __str__(self) -> str:
+        """
+        Magic method for getting the string representation of the Queue for users if needed.
+
+        Returns
+        -------
+            str:
+                The string representation of the Queue.
+        """
         return str([str(song) for song in self.queue])
