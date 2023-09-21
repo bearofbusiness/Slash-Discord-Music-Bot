@@ -128,7 +128,6 @@ class Song:
         self.expiry_epoch = None
         if self.audio is not None:
             self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
-        
 
     @classmethod
     async def from_link(cls, interaction: Interaction, link: str):
@@ -309,7 +308,7 @@ class Song:
 
         return ':'.join(duration)
     
-    def __eq__(self, other: Song) -> bool:
+    def __eq__(self, other: "Song") -> bool:
         return self.link == other.link
 
     def __str__(self) -> str:
