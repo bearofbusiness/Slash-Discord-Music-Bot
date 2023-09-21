@@ -402,7 +402,6 @@ class QueueManagement(commands.Cog):
             new_position = len(player.queue) - 1
 
         song = player.queue.pop(song_number)
-        if (new_position == -1):
         player.queue.add_at(song, new_position)
 
         if (new_position == -1):
