@@ -300,9 +300,15 @@ class QueueManagement(commands.Cog):
 
             # Only increment i when song.requester != member
             i += 1
+        embed = Utils.get_embed(interaction, title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"} queued by user {member.mention}.')
 
-        await Utils.send(interaction,
-                        title=f'Removed {len(removed)} song{"" if len(removed) == 1 else "s"}.')
+        for index in range(len(removed)):
+            if index == 24:
+                embed.add_field(name='And more...', value='...', inline=False)
+                break
+            embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
+            
+        interaction.response.send_message(embed=embed)
 
     @app_commands.command(name="removeduplicates", description="Removes duplicate songs from the queue")
     async def remove_dupes(self, interaction: discord.Interaction):
@@ -372,6 +378,10 @@ class QueueManagement(commands.Cog):
     
     @app_commands.command(name="move", description="Moves a song in the queue to a different position. run queue command before using this command.")
     async def move(self, interaction: discord.Interaction, song_number: int, new_position: int) -> None:
+        # Convert to non-human-readable
+        song_number -= 1
+        new_position -= 1
+
         if not await Utils.Pretests.playing_audio(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
@@ -379,8 +389,6 @@ class QueueManagement(commands.Cog):
             await Utils.send(interaction, title='Insufficient permissions!', 
                             content="You don't have the correct permissions to use this command or to modify this song.  Please refer to /help for more information.")
             return
-        song_number -= 1
-        new_position -= 1
         if (song_number < 0 or song_number > len(player.queue) - 1):
             await Utils.send(interaction, title='Invalid song number!', 
                             content="Please enter a valid song number.")
@@ -393,7 +401,8 @@ class QueueManagement(commands.Cog):
         if (new_position > len(player.queue) - 1):
             new_position = len(player.queue) - 1
 
-        song = player.queue.remove(song_number)
+        song = player.queue.pop(song_number)
+        if (new_position == -1):
         player.queue.add_at(song, new_position)
 
         if (new_position == -1):
