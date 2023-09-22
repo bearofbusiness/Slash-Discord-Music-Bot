@@ -128,7 +128,6 @@ class Song:
         self.expiry_epoch = None
         if self.audio is not None:
             self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
-        
 
     @classmethod
     async def from_link(cls, interaction: Interaction, link: str):
@@ -308,6 +307,25 @@ class Song:
         duration.append(f'{seconds:02d}')
 
         return ':'.join(duration)
+    
+    def __eq__(self, other: "Song") -> bool:
+        """
+        Magic method for checking if two Songs are equal.
+        
+        Parameters
+        ----------
+        other : `Song`
+            The Song to compare to.
+        """
+        return self.link == other.link
 
     def __str__(self) -> str:
+        """
+        Magic method for getting a string representation of the Song.
+        
+        Returns
+        -------
+            str:
+                A string representation of the Song for User.
+        """
         return f'{self.title} by {self.uploader}'

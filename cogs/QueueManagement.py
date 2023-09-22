@@ -375,6 +375,9 @@ class QueueManagement(commands.Cog):
     
     @app_commands.command(name="move", description="Moves a song in the queue to a different position. run queue command before using this command.")
     async def move(self, interaction: discord.Interaction, song_number: int, new_position: int) -> None:
+        # Convert to non-human-readable
+        song_number -= 1
+        new_position -= 1
         if not await Utils.Pretests.playing_audio(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
@@ -382,8 +385,6 @@ class QueueManagement(commands.Cog):
             await Utils.send(interaction, title='Insufficient permissions!', 
                             content="You don't have the correct permissions to use this command or to modify this song.  Please refer to /help for more information.")
             return
-        song_number -= 1
-        new_position -= 1
         if (song_number < 0 or song_number > len(player.queue) - 1):
             await Utils.send(interaction, title='Invalid song number!', 
                             content="Please enter a valid song number.")
@@ -395,8 +396,8 @@ class QueueManagement(commands.Cog):
         
         if (new_position > len(player.queue) - 1):
             new_position = len(player.queue) - 1
-
-        song = player.queue.remove(song_number)
+            
+        song = player.queue.pop(song_number)
         player.queue.add_at(song, new_position)
 
         if (new_position == -1):

@@ -25,8 +25,9 @@ TODO:
         1- create add-at(?) (merge with playtop? ask for int instead of bool?)#no make it a different thing
         1- playnow puts the current song at top of queue and plays the this song
         1- help #bear //done but needs to be updated
-        1- move command #bear 
+        1-fnt<kinda> move command #bear 
         1- write pause and play methods in player to consolidate controlls into one place
+        1- implement a suggestions command that goes to a google forms or something.
     -other
         9- add info on permissions to help
         7- fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.

@@ -31,7 +31,7 @@ class Queue:
         """
         Creates a Queue object.
         """
-        self.list = []
+        self.queue = []
         self.has_songs = Event()
 
     def add(self, song: Song | list[Song]) -> None:
@@ -45,15 +45,14 @@ class Queue:
         """
         # If we were passed a Song or a list
         if isinstance(song, Song):
-            self.list.append(song)
+            self.queue.append(song)
             self.has_songs.set()
             return
         
         # Safety check for if we got an empty list
         if len(song) == 0:
             return
-            
-        self.list.extend(song)
+        self.queue.extend(song)
         self.has_songs.set()
 
     def add_at(self, song: Song, index: int) -> None:
@@ -67,7 +66,7 @@ class Queue:
         index : `int`
             The index to add the Song at.
         """
-        self.list.insert(index, song)
+        self.queue.insert(index, song)
         self.has_songs.set()
 
     def get(self, index: int | None = None) -> Song | list[Song]:
@@ -93,8 +92,8 @@ class Queue:
 
         """
         if index is None:
-            return self.list
-        return self.list[index]
+            return self.queue
+        return self.queue[index]
 
     def shuffle(self) -> None:
         """
@@ -102,7 +101,7 @@ class Queue:
 
         This only changes the internal Song list of the Queue.
         """
-        random.shuffle(self.list)
+        random.shuffle(self.queue)
 
 
     def remove(self, index: int) -> Song:
@@ -125,10 +124,10 @@ class Queue:
             The removed Song.
 
         """
-        song = self.list.pop(index)
-        # If this makes the list empty
-        if not self.list:
-            # Set the Event denoting the list is empty
+        song = self.queue.pop(index)
+        # If this makes the queue empty
+        if not self.queue:
+            # Set the Event denoting the queue is empty
             self.has_songs.clear()
         return song
 
@@ -136,7 +135,7 @@ class Queue:
         """
         Removes all Songs from the Queue.
         """
-        self.list.clear()
+        self.queue.clear()
         self.has_songs.clear()
 
     async def wait_until_has_songs(self) -> True:
@@ -153,25 +152,124 @@ class Queue:
         return await self.has_songs.wait()
 
     def __getitem__(self, index: int) -> Song:
-        return self.list[index]
+        """
+        Magic method for getting a Song or list of Songs from the Queue.
+        
+        Parameters
+        ----------
+        index: int
+            The index of the Song to retrieve. also accepts int:int for slicing.
+
+        Returns
+        -------
+            Song: 
+                When provided with an integer, return the Song or list[Song] at that index.
+        """
+        return self.queue[index]
     
     def __setitem__(self, index: int, song: Song) -> None:
-        self.list[index] = song
+        """
+        Magic method for setting a Song in the Queue.
+
+        Parameters
+        ----------
+            index: int
+                index of the Queue to set to.
+            song: Song 
+                Song to set at the index.
+                
+        """
+        self.queue[index] = song
 
     def __delitem__(self, index: int) -> None:
-        del self.list[index]
+        """
+        Magic method for deleting a Song from the Queue.
+
+        Parameters
+        ----------
+            index: int
+                index of a Song in the Queue to delete.
+        """
+        del self.queue[index]
 
     def __contains__(self, song: Song) -> bool:
-        return song in self.list
+        """
+        Magic method for checking if a Song is in the Queue.
+
+        Parameters
+        ----------
+            song: Song
+                Song to check for in the Queue.
+        
+        Returns
+        -------
+            bool:
+                True if the Song is in the Queue, False otherwise.
+        """
+        return song in self.queue
 
     def __iter__(self) -> iter:
-        return iter(self.list)
+        """
+        Magic method for iterating over the Queue.
+
+        Returns
+        -------
+            iter:
+                An iterator for the Queue.
+        """
+        return iter(self.queue)
+    
+    def __reversed__(self) -> iter:
+        """
+        Magic method for iterating over the Queue in reverse.
+
+        Returns
+        -------
+            iter:
+                An iterator for the Queue in reverse.
+        """
+        return reversed(self.queue)
+    
+    def __iadd__(self, song: Song | list[Song]) -> None:
+        """
+        Magic method for adding a Song to the Queue.
+
+        Parameters
+        ----------
+            song: Song | list[Song]
+                Song or list of Songs to add to the Queue.
+        """
+        self.add(song)
 
     def __len__(self) -> int:
-        return len(self.list)
+        """
+        Magic method for getting the length of the Queue.
+
+        Returns
+        -------
+            int:
+                The length of the Queue.
+        """
+        return len(self.queue)
     
     def __repr__(self) -> str:
-        return str(self.list)
+        """
+        Magic method for getting the representation of the Queue for debuging.
+
+        Returns
+        -------
+            str:
+                The representation of the Queue.
+        """
+        return str(self.queue)
 
     def __str__(self) -> str:
-        return str([str(song) for song in self.list])
+        """
+        Magic method for getting the string representation of the Queue for users if needed.
+
+        Returns
+        -------
+            str:
+                The string representation of the Queue.
+        """
+        return str([str(song) for song in self.queue])
