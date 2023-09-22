@@ -52,7 +52,6 @@ class Queue:
         # Safety check for if we got an empty list
         if len(song) == 0:
             return
-            
         self.queue.extend(song)
         self.has_songs.set()
 

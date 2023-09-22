@@ -378,7 +378,6 @@ class QueueManagement(commands.Cog):
         # Convert to non-human-readable
         song_number -= 1
         new_position -= 1
-
         if not await Utils.Pretests.playing_audio(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
@@ -397,7 +396,7 @@ class QueueManagement(commands.Cog):
         
         if (new_position > len(player.queue) - 1):
             new_position = len(player.queue) - 1
-
+            
         song = player.queue.pop(song_number)
         player.queue.add_at(song, new_position)
 
