@@ -54,7 +54,7 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
     async def on_ready(self):
         #Checking if database exists
 
-        Utils.pront("trying to create database")
+        Utils.pront("Attempting to locate or create database")
         import InitializeDB
         del InitializeDB
         
@@ -116,7 +116,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     # If the user was in the same VC as the bot and disconnected
     if before.channel == member.guild.voice_client.channel and after.channel != before.channel:
         # If the bot is now alone
-        if len(before.channel.members) == 1:
+        if len(after.channel.members) == 1:
             player = Servers.get_player(member.guild.id)
             if player is None:
                 await member.guild.voice_client.disconnect()
