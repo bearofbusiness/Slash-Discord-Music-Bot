@@ -1,3 +1,4 @@
+from __future__ import annotations
 import asyncio
 import discord
 import math
@@ -76,10 +77,11 @@ class Player:
         Parameters
         ----------
         vc : `discord.VoiceClient`
-            The VoiceClient to bind the Player to
+            The VoiceClient to bind the Player to.
         song : `Song`
             The Song to initalize the Player with.
         """
+        self.player_kill = asyncio.Event()
         self.player_song_end = asyncio.Event()
         # Immediately set the Event because audio is not currently playing
         self.player_song_end.set()
@@ -103,6 +105,48 @@ class Player:
         self.player_task = asyncio.create_task(
             self.__exception_handler_wrapper(self.__player()))
 
+    @classmethod
+    def from_player(cls, player: Player) -> Player:
+        """Creates a Player out of an existing Player.
+        
+        Parameters
+        ----------
+        player : `Player`
+            The Player to copy fields from.
+            
+        Returns
+        -------
+        `Player`:
+            The new Player.
+        """
+        # Force creation of an empty Player
+        self = cls.__new__(cls)
+        self.player_kill = asyncio.Event()
+        self.player_song_end = asyncio.Event()
+        self.player_song_end.set()
+
+        self.queue = player.queue
+        self.queue.add_at(player.song, 0)
+
+        self.song = player.song
+
+        self.last_np_message = player.last_np_message
+
+        self.looping = player.looping
+        self.queue_looping = player.queue_looping
+        self.true_looping = player.true_looping
+
+        self.vc = player.vc
+
+        self.send_location = player.send_location
+
+        # Create task to run __player
+        self.player_task = asyncio.create_task(
+            self.__exception_handler_wrapper(self.__player()))
+        
+        return self
+
+    
     # Custom exception handler
     async def __exception_handler_wrapper(self, awaitable) -> any:
         """
@@ -120,12 +164,13 @@ class Player:
         """
         try:
             return await awaitable
+        # catch any error because we're just printing it here and aborting
         except Exception as e:
             embed = discord.Embed(title="An unrecoverable Exception occurred", description=f"```ansi\n{e}\n```")
             await self.vc.channel.send(embed=embed)
             # Traceback print here so we get the full error without causing an infinite loop of exception raises
             traceback.print_exc()
-            await self.clean()
+            #await self.clean()
             
 
     def __song_complete(self, error=None):
@@ -153,96 +198,102 @@ class Player:
             embed.set_image(url=None)
             embed.set_footer(text="This song has finished playing.  This breadcrumb has been left because of this server's settings.")
             try:
-                await self.last_np_message.edit(embed=embed, view=None)
+                self.last_np_message = await self.last_np_message.edit(embed=embed, view=None)
             except discord.NotFound:
                 Utils.pront("Player's last_np_message was not NoneType but discord returned 404", "ERROR")
             return
         
         try:
-            self.last_np_message.delete()
+            await self.last_np_message.delete()
         except discord.NotFound:
             Utils.pront("Player's last_np_message was not NoneType but discord returned 404", "ERROR")
-        
+        finally:
+            self.last_np_message = None
 
 
     async def __player(self) -> None:
         """
         This is where the magic happens.  Contains all of the logic for the playback loop.
         """
-        Utils.pront("Player initialized.", "OKGREEN")
-        while True:
-            # Check if the queue is empty
-            if not self.queue.get():
-                # Clean up and delete player
-                await self.clean()
-                return
-            
-            # Get the next song in queue
-            self.song = self.queue.remove(0)
-
-            # Run logic for the previous np (if it exists)
-            await self.__last_np_message_handler()
-
-            # Update send location preference
-            self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
-
-            # If the song will expire while playing
-            if self.song.expiry_epoch is not None and self.song.expiry_epoch - time.time() - self.song.duration < 30:
-                self.song.expiry_epoch = None
-
-            # Only repopulate YouTube links
-            if self.song.expiry_epoch is None and self.song.source in ('Youtube', 'Soundcloud'):
-                # Populate the song again to refresh the timer
-                try:
-                    await self.song.populate()
-                # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
-                except Exception as e:
-                    errored_song = self.song
-                    await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
-                    continue
+        try:
+            Utils.pront("Player initialized.", "OKGREEN")
+            while not self.player_kill.is_set():
+                # Check if the queue is empty
+                if not self.queue.get():
+                    # Clean up and delete player
+                    Utils.pront('queue empty, killing player')
+                    await self.clean()
+                    return
                 
-                # If the song gained an expiry epoch (will not happen for soundcloud)
-                if self.song.expiry_epoch:
-                    # If even after repopulating, the song was going to pass the expiry time
-                    if self.song.expiry_epoch - time.time() - self.song.duration < 30:
-                        await self.song.channel.send(f"Song {self.song.title} -- {self.song.uploader} ({self.song.original_url}) was unable to load because it would expire before playback completed (too long)")
+                # Get the next song in queue
+                self.song = self.queue.remove(0)
+
+                # Run logic for the previous np (if it exists)
+                await self.__last_np_message_handler()
+
+                # Update send location preference
+                self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
+
+                # If the song will expire while playing
+                if self.song.expiry_epoch is not None and self.song.expiry_epoch - time.time() - self.song.duration < 30:
+                    self.song.expiry_epoch = None
+
+                # Only repopulate YouTube links
+                if self.song.expiry_epoch is None and self.song.source in ('Youtube', 'Soundcloud'):
+                    # Populate the song again to refresh the timer
+                    try:
+                        await self.song.populate()
+                    # If anything goes wrong, just skip it. (bad form but I am *not* enumerating every single error that can be raised by yt_dlp here)
+                    except Exception as e:
+                        errored_song = self.song
+                        await errored_song.channel.send(f"Song {errored_song.title} -- {errored_song.uploader} ({errored_song.original_url}) failed to load because of ```ansi\n{e}``` and was skipped.")
+                        continue
+                    
+                    # If the song gained an expiry epoch (will not happen for soundcloud)
+                    if self.song.expiry_epoch:
+                        # If even after repopulating, the song was going to pass the expiry time
+                        if self.song.expiry_epoch - time.time() - self.song.duration < 30:
+                            await self.song.channel.send(f"Song {self.song.title} -- {self.song.uploader} ({self.song.original_url}) was unable to load because it would expire before playback completed (too long)")
 
 
 
-            # Send the new NP
-            self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
-            
+                # Send the new NP
+                self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
+                
 
-            # Clear player_song_end here because this is when we start playing audio again
-            self.player_song_end.clear()
+                # Clear player_song_end here because this is when we start playing audio again
+                self.player_song_end.clear()
 
-            self.song.start()
+                self.song.start()
 
-            # Begin playing audio into Discord
-            self.vc.play(discord.FFmpegPCMAudio(
-                self.song.audio, **YTDLInterface.ffmpeg_options
-            ), after=self.__song_complete)
-            # () implicit parenthesis
+                # Begin playing audio into Discord
+                self.vc.play(discord.FFmpegPCMAudio(
+                    self.song.audio, **YTDLInterface.ffmpeg_options
+                ), after=self.__song_complete)
+                # () implicit parenthesis
 
-            # Sleep player until song ends
-            await self.player_song_end.wait()
+                # Sleep player until song ends
+                await self.player_song_end.wait()
 
-            # If song is looping, re-add song to the top of queue
-            if self.looping:
-                self.queue.add_at(self.song, 0)        
+                # If song is looping, re-add song to the top of queue
+                if self.looping:
+                    self.queue.add_at(self.song, 0)        
 
-            # If we're true looping, re-add the song to a random position in queue
-            elif self.true_looping:
-                if len(self.queue.get()) < 4:
+                # If we're true looping, re-add the song to a random position in queue
+                elif self.true_looping:
+                    if len(self.queue.get()) < 4:
+                        self.queue.add(self.song)
+                        continue
+                    queue_length = len(self.queue)
+                    index = random.randrange(math.ceil(queue_length/4), queue_length)
+                    self.queue.add_at(self.song, index)
+
+                # If we're queue looping, re-add the removed song to bottom of queue
+                elif self.queue_looping:
                     self.queue.add(self.song)
-                    continue
-                queue_length = len(self.queue)
-                index = random.randrange(math.ceil(queue_length/4), queue_length)
-                self.queue.add_at(self.song, index)
-
-            # If we're queue looping, re-add the removed song to bottom of queue
-            elif self.queue_looping:
-                self.queue.add(self.song)
+        except Exception as e:
+            Utils.pront(f'Caught exception {e} in __player method', 'ERROR')
+            raise e
 
     # Cleans up and closes a player
     async def clean(self) -> None:
@@ -250,6 +301,7 @@ class Player:
         Cleans up and closes a player.
         """
         Utils.pront('cleaning')
+        self.player_kill.set()
         # Immediately remove the Player from Servers to avoid a race condition
         # which leads to the defunct player being re-used
         Servers.remove(self)
@@ -275,6 +327,9 @@ class Player:
             False if the Player is between songs.
         """
         return not self.player_song_end.is_set()
+    
+    def is_dead(self) -> bool:
+        return self.player_kill.is_set()
 
     def pause(self) -> None:
         """

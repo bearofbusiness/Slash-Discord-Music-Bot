@@ -76,7 +76,8 @@ class Pages:
                 {"name": "replay", "value": "Restarts the current song"},
                 {"name": "pause", "value": "This command is used to pause the playing song"},
                 {"name": "resume", "value": "This command is used to resume the playing song"},
-                {"name": "now", "value": "This command is used to get the song that is currently playing"}
+                {"name": "now", "value": "This command is used to get the song that is currently playing"},
+                {"name": "force-reset-player", "value": "Did something go wrong while listening?  Run this command and it will (hopefully) sort it out!"}
 
                 ]
             },
