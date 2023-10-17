@@ -90,7 +90,7 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 bot = Bot()
 
 ## EVENT LISTENERS ##
-
+#TODO walk through this logic again
 @bot.event
 async def on_voice_state_update(member: discord.Member, before: discord.VoiceState, after: discord.VoiceState) -> None:
     # If we don't care that a voice state was updated
@@ -100,23 +100,22 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     
     # If it's the bot
     if member == bot.user:
+        # if we're disconnecting
+        if after.channel == None:
         # If we've been forcibly removed from a VC
         # (this leaves a hanging voice_client)
-        if after.channel == None and member.guild.voice_client is not None:
-            Utils.pront("bot was forcibly removed")
-            player = Servers.get_player(member.guild.id)
-            # No player? No problem.
-            if player is None:
-                return
-            # If there is one, properly close it up
-            else:
-                await player.clean()
-                return
+            if member.guild.voice_client is not None:
+                Utils.pront("bot was forcibly removed")
+                player = Servers.get_player(member.guild.id)
+                # Clean up the player if it exists
+                if player is not None:
+                    await player.clean()          
+        return
 
     # If the user was in the same VC as the bot and disconnected
     if before.channel == member.guild.voice_client.channel and after.channel != before.channel:
         # If the bot is now alone
-        if len(after.channel.members) == 1:
+        if len(before.channel.members) == 1:
             player = Servers.get_player(member.guild.id)
             if player is None:
                 await member.guild.voice_client.disconnect()
