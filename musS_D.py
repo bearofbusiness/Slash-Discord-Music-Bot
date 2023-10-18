@@ -140,8 +140,9 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 embed = discord.Embed(
                     title=f'Removed {removed} song{"" if removed == 1 else "s"} queued by user {member.mention}.'
                 )
-                embed.set_footer(icon_url=player.song.thumbnail,
-                    text=f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{Utils.get_progress_bar(player.song)}')
+                if player.is_playing():
+                    embed.set_footer(icon_url=player.song.thumbnail,
+                        text=f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{Utils.get_progress_bar(player.song)}')
                 await player.send_location.send(embed=embed)
 
 

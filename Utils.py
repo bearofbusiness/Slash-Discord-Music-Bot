@@ -76,7 +76,7 @@ def get_progress_bar(song: Song) -> str:
     percent_duration = (song.get_elapsed_time() / song.duration)*100
 
     if percent_duration > 100:#percent duration cant be greater than 100
-        percent_duration = 100
+        return 'The player has stalled, please run /force-reset-player.'
     
     ret = f'{song.parse_duration_short_hand(math.floor(song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
     ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
@@ -157,7 +157,7 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     # If the calling method wants the progress bar
     if progress:
         player = Servers.get_player(interaction.guild_id)
-        if player:
+        if player and player.is_playing():
             footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{get_progress_bar(player.song)}'
 
             embed.set_footer(text=footer_message,
@@ -208,6 +208,9 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
         The now-playing embed.
 
     """
+    # If the player isn't currently playing something
+    if not player.is_playing():
+        return discord.Embed(title='Nothing is playing.')
     title_message = f'Now Playing:\t{":repeat_one: " if player.looping else ""}{":repeat: " if player.queue_looping else ""}{":infinity: " if player.true_looping else ""}'
     embed = discord.Embed(
         title=title_message,
@@ -264,6 +267,20 @@ def populate_song_list(songs: list[Song], guild_id: int) -> None:
     task = asyncio.create_task(__primary_loop(songs, guild_id))
     asyncio_tasks.add(task)
     task.add_done_callback(asyncio_tasks.discard)
+
+async def force_reset_player(player: Player) -> None:
+    """Forcibly restarts a player without losing any of the queue information contained within.
+    
+    Parameters
+    ----------
+    player : `Player`
+        The player to restart.
+    """
+    await player.clean()
+    player.vc = await player.vc.channel.connect(self_deaf=True)
+    player = Player.from_player(player)
+    # TODO i hate getting the guild id like this...
+    Servers.set_player(player.vc.guild.id, player)
 
 # Moved the logic for skip into here to be used by NowPlayingButtons and PlayerManagement
 async def skip_logic(player: Player, interaction: discord.Interaction):
