@@ -240,6 +240,7 @@ class Player:
 
                 # Only repopulate YouTube links
                 if self.song.expiry_epoch is None and self.song.source in ('Youtube', 'Soundcloud'):
+                    Utils.pront(f"populating {self.song.title} within player")
                     # Populate the song again to refresh the timer
                     try:
                         await self.song.populate()
@@ -254,11 +255,6 @@ class Player:
                         # If even after repopulating, the song was going to pass the expiry time
                         if self.song.expiry_epoch - time.time() - self.song.duration < 30:
                             await self.song.channel.send(f"Song {self.song.title} -- {self.song.uploader} ({self.song.original_url}) was unable to load because it would expire before playback completed (too long)")
-
-
-
-                # Send the new NP
-                self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
                 
 
                 # Clear player_song_end here because this is when we start playing audio again
@@ -271,6 +267,9 @@ class Player:
                     self.song.audio, **YTDLInterface.ffmpeg_options
                 ), after=self.__song_complete)
                 # () implicit parenthesis
+
+                # Send the new NP
+                self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
 
                 # Sleep player until song ends
                 await self.player_song_end.wait()

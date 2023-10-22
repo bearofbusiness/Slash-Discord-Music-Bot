@@ -106,21 +106,18 @@ class QueueManagement(commands.Cog):
 
         await interaction.response.defer(thinking=True)
 
-        playlist = await YTDLInterface.scrape_link(link)
+        playlist = await YTDLInterface.skim_playlist(link)
 
         if playlist.get('_type') != "playlist":
             await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
             return
 
+        # Take the extracted webpage url and parse off of that
+        playlist = await YTDLInterface.scrape_link(playlist.get('webpage_url'))
+
         # Might not proc, there for extra protection
         if len(playlist.get("entries")) == 0:
             await interaction.followup.send("Playlist Entries [] empty.")
-
-        # Detect if this is a Mix
-        if playlist.get("uploader") is None:
-            # Truncate the playlist to just the top 50 Songs or fewer if there are less
-            playlist.update({"playlist_count": 50})
-            playlist.update({"entries": playlist.get("entries")[:50]})
 
         # If not in a VC, join
         if interaction.guild.voice_client is None:

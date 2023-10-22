@@ -18,7 +18,8 @@ import yt_dlp
 XX = '''
 #-fnt stands for finished not tested
 TODO:
-    6- fnt alert user when songs were unable to be added inside _playlist()
+    6- make a new way to limit mixes to 50 songs
+    5- make sure all pydocs are tabbed properly (parameters are tabbed in, same with returns)
     3- clean up todos in various parts of code
     2- write more pydocs
     -make more commands
