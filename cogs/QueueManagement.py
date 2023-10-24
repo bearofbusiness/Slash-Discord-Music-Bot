@@ -189,14 +189,16 @@ class QueueManagement(commands.Cog):
 
         embeds = []
         embeds.append(Utils.get_embed(interaction,
-                                    title="Search results:",
+                                    title=f"Search results for {query[200:]}:",
+                                    progress=False
                                     ))
         for i, entry in enumerate(query_result.get('entries')):
             embed = Utils.get_embed(interaction,
                                     title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
                                     url=entry.get('url'),
                                     color=Utils.get_random_hex(
-                                        entry.get("id"))
+                                        entry.get("id")),
+                                    progress=False
                                     )
             embed.add_field(name='Duration:', value=Song.parse_duration(
                 entry.get('duration')), inline=True)
