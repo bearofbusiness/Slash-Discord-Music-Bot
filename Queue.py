@@ -150,6 +150,28 @@ class Queue:
             Returns True once the wait is resolved.
         """
         return await self.has_songs.wait()
+    
+    def pop(self, index: int) -> Song:
+        """
+        Alias for remove(index).
+        
+        Parameters
+        ----------
+        index : `int`
+            The index to remove the Song from.
+
+        Raises
+        ------
+        `IndexError`
+            If the requested index is out of range.
+        
+        Returns
+        -------
+        `Song`:
+            The removed Song.
+
+        """
+        return self.remove(index)
 
     def __getitem__(self, index: int) -> Song:
         """
