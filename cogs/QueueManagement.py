@@ -106,21 +106,18 @@ class QueueManagement(commands.Cog):
 
         await interaction.response.defer(thinking=True)
 
-        playlist = await YTDLInterface.scrape_link(link)
+        playlist = await YTDLInterface.skim_playlist(link)
 
         if playlist.get('_type') != "playlist":
             await interaction.followup.send(embed=Utils.get_embed(interaction, "Not a playlist."), ephemeral=True)
             return
 
+        # Take the extracted webpage url and parse off of that
+        playlist = await YTDLInterface.scrape_link(playlist.get('webpage_url'))
+
         # Might not proc, there for extra protection
         if len(playlist.get("entries")) == 0:
             await interaction.followup.send("Playlist Entries [] empty.")
-
-        # Detect if this is a Mix
-        if playlist.get("uploader") is None:
-            # Truncate the playlist to just the top 50 Songs or fewer if there are less
-            playlist.update({"playlist_count": 50})
-            playlist.update({"entries": playlist.get("entries")[:50]})
 
         # If not in a VC, join
         if interaction.guild.voice_client is None:
@@ -192,14 +189,16 @@ class QueueManagement(commands.Cog):
 
         embeds = []
         embeds.append(Utils.get_embed(interaction,
-                                    title="Search results:",
+                                    title=f"Search results for {query[200:]}:",
+                                    progress=False
                                     ))
         for i, entry in enumerate(query_result.get('entries')):
             embed = Utils.get_embed(interaction,
                                     title=f'`[{i+1}]`  {entry.get("title")} -- {entry.get("channel")}',
                                     url=entry.get('url'),
                                     color=Utils.get_random_hex(
-                                        entry.get("id"))
+                                        entry.get("id")),
+                                    progress=False
                                     )
             embed.add_field(name='Duration:', value=Song.parse_duration(
                 entry.get('duration')), inline=True)

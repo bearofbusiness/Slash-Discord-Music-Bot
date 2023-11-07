@@ -23,6 +23,9 @@ class YTDLInterface:
     async query_link(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
         Does a slower but more thorough query of the URL than scrape_link.
 
+    async skim_playlist(link='https://www.youtube.com/watch?v=dQw4w9WgXcQ'):
+        Does a fast skim of information relating to a playlist.
+
     async scrape_search(query: `str`):
         Performs a quick scrape-based search for a provided query.
     """
@@ -55,7 +58,21 @@ class YTDLInterface:
 
     }
 
-    
+    skim_playlist_options = {
+        # Still include these for if someone decides
+        # to put a song into /playlist, speeds things up
+        'format': 'bestaudio/best',
+        'audioformat': 'mp3',
+        'nocheckcertificate': True,
+        'ignoreerrors': False,
+        'logtostderr': False,
+        'quiet': True,
+        'no_warnings': False,
+        'default_search': 'auto',
+        'source_address': '0.0.0.0',
+        'playlist_items' : '0',
+        'lazy_playlist': True,
+    }
 
     ffmpeg_options = {
         'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
@@ -73,8 +90,8 @@ class YTDLInterface:
 
         Returns
         -------
-        `dict`:
-            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+            `dict`:
+                A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, link)
 
@@ -92,11 +109,29 @@ class YTDLInterface:
 
         Returns
         -------
-        `dict`:
-            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+            `dict`:
+                A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
 
+    # Skims information about a playlist without retrieving any of its songs
+    @staticmethod
+    async def skim_playlist(link: str = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ') -> dict:
+        """
+        Does a fast scrape of a playlist's url, retrieving detailed information about the playlist
+        and omitting information about its songs.
+
+        Parameters
+        ----------
+            link : `str`
+                The URL of the playlist to skim, this does not contain song information.
+
+        Returns
+        -------
+            `dict`:
+                A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        """
+        return await YTDLInterface.__call_dlp(YTDLInterface.skim_playlist_options, link)
 
     # Searches for a provided string
     @staticmethod
@@ -148,10 +183,10 @@ class YTDLInterface:
                 ytdlp.extract_info, link, download=False)
             query_result = await loop.run_in_executor(None, partial)
 
-
-        # Might work, might break links
-        if query_result.get('entries') is not None:
-            if len(query_result.get('entries')) == 0:
-                raise YTDLError(f'Couldn\'t fetch `{link}`')
+        # TODO testing to see if removing this will cause
+        # errors further down the line
+        #if query_result.get('entries') is not None:
+        #    if len(query_result.get('entries')) == 0:
+        #        raise YTDLError(f'Couldn\'t fetch `{link}`')
 
         return query_result

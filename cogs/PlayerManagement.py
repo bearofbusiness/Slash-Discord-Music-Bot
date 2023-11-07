@@ -4,7 +4,6 @@ from discord import app_commands
 
 import Utils
 from Servers import Servers
-from Player import Player
 
 class PlayerManagement(commands.Cog):
     def __init__(self, bot: discord.Client):
@@ -43,10 +42,7 @@ class PlayerManagement(commands.Cog):
         if not await Utils.Pretests.player_exists(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
-        await player.clean()
-        player.vc = await player.vc.channel.connect(self_deaf=True)
-        player = Player.from_player(player)
-        Servers.set_player(interaction.guild_id, player)
+        Utils.force_reset_player(player)
         
 
 async def setup(bot):
