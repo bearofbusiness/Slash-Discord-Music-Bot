@@ -42,7 +42,7 @@ class PlayerManagement(commands.Cog):
         if not await Utils.Pretests.player_exists(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
-        Utils.force_reset_player(player)
+        await Utils.force_reset_player(player)
         
 
 async def setup(bot):
