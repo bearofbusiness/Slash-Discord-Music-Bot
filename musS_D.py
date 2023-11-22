@@ -50,45 +50,67 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         intents.message_content = True
 
         super().__init__(command_prefix="​", intents=intents)
-        self.synced=False
 
-    async def on_ready(self):
-        #Checking if database exists
+    async def setup_hook(self):
+        #adding cogs
+        await self.load_extension("cogs.GuildManagement")
+        await self.load_extension("cogs.QueueManagement")
+        await self.load_extension("cogs.PlaybackManagement")
+        await self.load_extension("cogs.PlayerManagement")
+        Utils.pront("Cogs loaded!")
 
+        # Database loading
         Utils.pront("Attempting to locate or create database")
         import InitializeDB
         del InitializeDB
         
-        #fixing column values
+        # Fixing column values
         Utils.pront("Fixing column values if needed")
         DB.fix_column_values()
 
-        #adding existing servers to database
+        # Adding existing servers to database
         Utils.pront("Adding servers to database if any are missing")
         DB.initalize_servers_in_DB(bot.guilds)
 
-        #adding cogs
-        await bot.load_extension("cogs.GuildManagement")
-        await bot.load_extension("cogs.QueueManagement")
-        await bot.load_extension("cogs.PlaybackManagement")
-        await bot.load_extension("cogs.PlayerManagement")
-        Utils.pront("Cogs loaded!")
+    async def on_ready(self):
 
-        #syncing tree
+        # Command syncing
         Utils.pront("Syncing tree")
-        if not self.synced:
-            await bot.tree.sync()  # please dont remove just in case i need to sync
+        await self.tree.sync()
         Utils.pront("Tree synced!")
 
-        #setting status
+        # Setting status
         Utils.pront("Setting bot status")
         await self.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} Servers."))
+            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
         
         Utils.pront("Bot is ready", lvl="OKGREEN")
 
-# Global Variables
+    async def on_resumed(self):
+        Utils.pront("Updating bot status")
+        await self.change_presence(activity=discord.Activity(
+            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
+
+# Initialize bot object
 bot = Bot()
+
+# Custom error handler
+async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
+
+    # If a yt_dlp DownloadError was raised
+    if isinstance(error.original, yt_dlp.utils.DownloadError):
+        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.",
+                                                              content=f'```ansi\n{error.original.exc_info[1]}```'))
+        # Return here because we don't want to print an obvious error like this.
+        return
+
+    # Fallback default error
+    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
+    # Allows entire error to be printed without raising an exception
+    # (would create an infinite loop as it would be caught by this function)
+    traceback.print_exc()
+# Set error handler method
+bot.tree.on_error = on_tree_error
 
 ## EVENT LISTENERS ##
 #TODO walk through this logic again
@@ -163,22 +185,7 @@ async def _help(interaction: discord.Interaction) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
     await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
-# Custom error handler
-async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
 
-    # If a yt_dlp DownloadError was raised
-    if isinstance(error.original, yt_dlp.utils.DownloadError):
-        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.",
-                                                              content=f'```ansi\n{error.original.exc_info[1]}```'))
-        # Return here because we don't want to print an obvious error like this.
-        return
-
-    # Fallback default error
-    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
-    # Allows entire error to be printed without raising an exception
-    # (would create an infinite loop as it would be caught by this function)
-    traceback.print_exc()
-bot.tree.on_error = on_tree_error
 
 
 

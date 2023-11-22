@@ -3,7 +3,6 @@ import time
 from discord import Member, Interaction
 from Vote import Vote
 from YTDLInterface import YTDLInterface
-from Utils import pront
 
 
 class Song:
@@ -192,7 +191,6 @@ class Song:
         """
         Starts the Song's internal timer for it's elapsed time.
         """
-        pront('Starting song timer')
         self.start_time = time.time()
         self.pause_time = 0
 
