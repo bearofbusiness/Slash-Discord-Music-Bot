@@ -38,7 +38,7 @@ class Player:
         The Queue that the Player is responsible for.
     song : `Song`
         The song that is playing, or about to play.
-        This is innacurate as to when the Player is actually playing audio, is_playing() should be used instead.
+        To know when the Player is actually playing audio, is_playing() should be used.
     last_np_message: `discord.Message` | `None`
         The last automatic now-playing Message the Player has sent.  NoneType if it has not sent one.
     looping : `bool`
@@ -56,6 +56,8 @@ class Player:
     -------
     async clean():
         Cleans up and closes the player.
+    is_dead():
+        Whether the Player is being cleaned and should not be used.
     is_playing():
         Whether the player is playing audio or in-between songs. Pausing the Song does not effect this.
     pause():
@@ -170,7 +172,7 @@ class Player:
             await self.vc.channel.send(embed=embed)
             # Traceback print here so we get the full error without causing an infinite loop of exception raises
             traceback.print_exc()
-            #await self.clean()
+            await self.clean()
             
 
     def __song_complete(self, error=None):
@@ -255,6 +257,7 @@ class Player:
                         # If even after repopulating, the song was going to pass the expiry time
                         if self.song.expiry_epoch - time.time() - self.song.duration < 30:
                             await self.song.channel.send(f"Song {self.song.title} -- {self.song.uploader} ({self.song.original_url}) was unable to load because it would expire before playback completed (too long)")
+                            continue
                 
 
                 # Clear player_song_end here because this is when we start playing audio again
@@ -300,19 +303,22 @@ class Player:
         Cleans up and closes a player.
         """
         Utils.pront('cleaning')
+        if self.player_kill.is_set():
+            Utils.pront('Player has already been killed, not cleaning', 'WARNING')
         self.player_kill.set()
+        # End await in Player loop so the while completes
+        self.player_song_end.set()
         # Immediately remove the Player from Servers to avoid a race condition
         # which leads to the defunct player being re-used
         Servers.remove(self)
-        # Only disconnect if bot is connected to vc
-        # (it won't be if it was disconnected by an admin)
         if self.vc.is_connected():
             await self.vc.disconnect()
         # Run logic on the to-be defunct np
         await self.__last_np_message_handler()
-        # Needs to be after at least player.vc.disconnect() because for some
-        # godawful reason it refuses to disconnect otherwise
+        # Needs to be after all awaited logic or the task closing will stop cleaning
+        # (if it was initiated by the Player)
         self.player_task.cancel()
+        #TODO try putting del self here
 
     def is_playing(self) -> bool:
         """
