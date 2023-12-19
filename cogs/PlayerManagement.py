@@ -15,7 +15,9 @@ class PlayerManagement(commands.Cog):
             return
         await interaction.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(interaction.guild_id), progress=True))
 
-    @app_commands.command(name="loop", description="Loops the current song")
+    loop = app_commands.Group(name='loop', description='Commands that relate to the post-playback behavior of songs')
+
+    @loop.command(name="single", description="Loops the current song")
     async def _loop(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.player_exists(interaction):
             return
@@ -23,7 +25,7 @@ class PlayerManagement(commands.Cog):
         player.set_loop(not player.looping)
         await Utils.send(interaction, title='🔂 Looped.' if player.looping else 'Loop disabled.')
 
-    @app_commands.command(name="queueloop", description="Loops the queue")
+    @loop.command(name="queue", description="Loops the queue")
     async def _queue_loop(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.player_exists(interaction):
             return
@@ -31,7 +33,7 @@ class PlayerManagement(commands.Cog):
         player.set_queue_loop(not player.queue_looping)
         await Utils.send(interaction, title='🔁 Queue looped.' if player.queue_looping else 'Queue loop disabled.')
 
-    @app_commands.command(name="trueloop", description="Loops and adds songs to a random position in queue")
+    @loop.command(name="true", description="Loops and adds songs to a random position in queue")
     async def _true_loop(self, interaction: discord.Interaction) -> None:
         player = Servers.get_player(interaction.guild.id)
         player.set_true_loop(not player.queue_looping)
