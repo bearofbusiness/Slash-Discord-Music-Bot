@@ -191,7 +191,6 @@ class Song:
         """
         Starts the Song's internal timer for it's elapsed time.
         """
-        print('Starting song timer')
         self.start_time = time.time()
         self.pause_time = 0
 

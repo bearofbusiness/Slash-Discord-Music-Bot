@@ -10,7 +10,7 @@ class PlaybackManagement(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="skip", description="Skips the currently playing song")
-    async def skip(self, interaction: discord.Interaction) -> None:
+    async def _skip(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
 
@@ -18,9 +18,8 @@ class PlaybackManagement(commands.Cog):
 
         await Utils.skip_logic(player, interaction)
 
-
-    @app_commands.command(name="forceskip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
-    async def force_skip(self, interaction: discord.Interaction) -> None:
+    @app_commands.command(name="force-skip", description="Skips the currently playing song without having a vote. (Requires Manage Channels permission.)")
+    async def _force_skip(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
 
@@ -36,7 +35,7 @@ class PlaybackManagement(commands.Cog):
         await Utils.send(interaction, "Skipped!", ":white_check_mark:")
 
     @app_commands.command(name="replay", description="Restarts the current song")
-    async def replay(self, interaction: discord.Interaction) -> None:
+    async def _replay(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         
@@ -54,17 +53,15 @@ class PlaybackManagement(commands.Cog):
         player.vc.stop()
         await Utils.send(interaction, title='⏪ Rewound')
 
-
     @app_commands.command(name="pause", description="Pauses the current song")
-    async def pause(self, interaction: discord.Interaction) -> None:
+    async def _pause(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         Servers.get_player(interaction.guild_id).pause()
         await Utils.send(interaction, title='⏸ Paused')
 
-
     @app_commands.command(name="resume", description="Resumes the current song")
-    async def resume(self, interaction: discord.Interaction) -> None:
+    async def _resume(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         Servers.get_player(interaction.guild_id).resume()
