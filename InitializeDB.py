@@ -15,3 +15,4 @@ try:
     """)
 except sqlite3.OperationalError:
     pass
+db.close()

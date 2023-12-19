@@ -61,16 +61,8 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 
         # Database loading
         Utils.pront("Attempting to locate or create database")
-        import InitializeDB
-        del InitializeDB
+        DB.create_tables()
         
-        # Fixing column values
-        Utils.pront("Fixing column values if needed")
-        DB.fix_column_values()
-
-        # Adding existing servers to database
-        Utils.pront("Adding servers to database if any are missing")
-        DB.initalize_servers_in_DB(bot.guilds)
 
     async def on_ready(self):
 
@@ -78,6 +70,14 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         Utils.pront("Syncing tree")
         await self.tree.sync()
         Utils.pront("Tree synced!")
+
+        # Fixing column values
+        Utils.pront("Fixing column values if needed")
+        DB.fix_column_values()
+        
+        # Adding existing servers to database
+        Utils.pront("Adding servers to database if any are missing")
+        DB.initalize_servers_in_DB(bot.guilds)
 
         # Setting status
         Utils.pront("Setting bot status")
