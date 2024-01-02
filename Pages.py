@@ -143,7 +143,9 @@ class Pages:
         },
         "play": {
             "title": "play", "description": "This command is used to play a song from youtube. if given a playlist it will pick the first song in the playlist",
-            "fields": []
+            "fields": [
+                {"name": "Top", "value": "Puts the song at the top of the queue needs DJ role or manage channels permission"},
+            ]
         },
         "skip": {
             "title": "skip", "description": "This command is used to skip the playing song",
