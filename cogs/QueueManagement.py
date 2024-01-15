@@ -35,7 +35,7 @@ class QueueManagement(commands.Cog):
         song = Song(interaction, link, scrape)
 
         # Check if song didn't initialize properly via scrape
-        if song.title is None:
+        if song.uploader is None:
             # If it didn't, query the link instead (resolves searches in the link field)
             query = await YTDLInterface.query_link(link)
             song = Song(interaction, query.get('original_url'), query)
