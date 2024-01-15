@@ -25,6 +25,10 @@ class GuildManagement(commands.Cog):
 
     @app_commands.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
     async def _leave(self, interaction: discord.Interaction) -> None:
+        if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            return
         if not await Utils.Pretests.voice_channel(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
@@ -42,15 +46,16 @@ class GuildManagement(commands.Cog):
         
     @app_commands.command(name="settings", description="Get or set the bot's settings for your server")
     async def _settings(self, interaction: discord.Interaction) -> None:
-        if not Utils.Pretests.has_discretionary_authority(interaction):
-            await Utils.send(interaction, title='Insufficient permissions!', ephemeral=True)
-            return
-        embed = Utils.get_embed(interaction, title='Settings')
-        embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{('Text', 'VC')[DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc')]}`")
-        embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
-        embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
-        embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
-        await interaction.response.send_message(ephemeral=True, embed=embed, view=Buttons.GuildSettingsView(interaction))
+        for role in interaction.user.roles:
+            if role.permissions.manage_channels or role.permissions.administrator: 
+                embed = Utils.get_embed(interaction, title='Settings')
+                embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{('Text', 'VC')[DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc')]}`")
+                embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
+                embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
+                embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
+                await interaction.response.send_message(ephemeral=True, embed=embed, view=Buttons.GuildSettingsView(interaction))
+                return
+        await Utils.send(interaction, title='Insufficient permissions!', ephemeral=True)
 
 async def setup(bot):
     Utils.pront("Cog GuildManagement loading...")

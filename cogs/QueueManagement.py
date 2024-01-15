@@ -35,7 +35,7 @@ class QueueManagement(commands.Cog):
         song = Song(interaction, link, scrape)
 
         # Check if song didn't initialize properly via scrape
-        if song.title is None:
+        if song.uploader is None:
             # If it didn't, query the link instead (resolves searches in the link field)
             query = await YTDLInterface.query_link(link)
             song = Song(interaction, query.get('original_url'), query)
@@ -227,12 +227,10 @@ class QueueManagement(commands.Cog):
         if not await Utils.Pretests.player_exists(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
-        # If there's enough people, require authority to shuffle
-        if len(player.vc.channel.members) > 4:
-            if not Utils.Pretests.has_discretionary_authority(interaction):
-                await Utils.send(interaction, title='Insufficient permissions!', 
-                            content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
-                return
+        if not Utils.Pretests.has_discretionary_authority(interaction):
+            await Utils.send(interaction, title='Insufficient permissions!', 
+                        content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
+            return
                 
         player.queue.shuffle()
         await interaction.response.send_message('🔀 Queue shuffled')
