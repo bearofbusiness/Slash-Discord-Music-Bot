@@ -161,3 +161,5 @@ cython_debug/
 
 # Bot database
 settings.db
+
+.vscode
