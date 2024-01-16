@@ -55,14 +55,13 @@ class DebugCog(commands.Cog):
     async def list_group(self, ctx: commands.Context):
         pass
 
-    @list_group.command(name='lss', description='lists hashes')
-    @commands.is_owner()
-    async def _list_servers(self, ctx: commands.Context) -> None:
+
+    async def _list_servers(self) -> None:
         stringBuilder = ""
         for i in self.bot.guilds:
             stringBuilder += str(i.name) + "\n"
+        print(stringBuilder)
 
-        await Utils.send(ctx, title='Hashes:', description=stringBuilder)
 
 
 async def setup(bot):
