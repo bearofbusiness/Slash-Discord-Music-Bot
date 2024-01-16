@@ -40,6 +40,7 @@ class YTDLInterface:
         'default_search': 'auto',
         'source_address': '0.0.0.0',
         'lazy_playlist': True,
+        'noplaylist': True
 
     }
 

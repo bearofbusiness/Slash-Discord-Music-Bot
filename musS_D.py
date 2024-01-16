@@ -31,7 +31,6 @@ TODO:
         1- implement a suggestions command that goes to a google forms or something.
     -other
         9- add info on permissions to help
-        7- fnt DJ role to do most bot functions, users without can still queue songs (! top), join bot to channel, etc.//it works
         5- rename get_embed's content argument to description
         5- right more help including dj role
 
