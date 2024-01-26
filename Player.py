@@ -183,7 +183,7 @@ class Player:
         Other than that this is just to raise the player_song_end flag for __player.
         """
         if error:
-            raise VoiceError(str(error))
+            raise VoiceError(error)
         self.player_song_end.set()
 
     

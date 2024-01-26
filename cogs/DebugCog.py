@@ -50,12 +50,6 @@ class DebugCog(commands.Cog):
         print(mystdout.getvalue())
         await Utils.send(ctx, title='Command Sent:', description='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
 
-
-    @commands.hybrid_group(name='list')
-    async def list_group(self, ctx: commands.Context):
-        pass
-
-
     async def _list_servers(self) -> None:
         stringBuilder = ""
         for i in self.bot.guilds:
