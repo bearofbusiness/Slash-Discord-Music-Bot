@@ -30,7 +30,7 @@ class DebugCog(commands.Cog):
             Utils.pront(e, "ERROR")
         sys.stdout = old_stdout
         print(mystdout.getvalue())
-        await Utils.send(ctx, title='Command Sent:', description='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
+        await Utils.send(ctx, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
 
 
     @commands.hybrid_command(name="exec", description="debug cog")
@@ -48,7 +48,7 @@ class DebugCog(commands.Cog):
             Utils.pront(e, "ERROR")
         sys.stdout = old_stdout
         print(mystdout.getvalue())
-        await Utils.send(ctx, title='Command Sent:', description='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
+        await Utils.send(ctx, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
 
 
     @commands.hybrid_group(name='list')
