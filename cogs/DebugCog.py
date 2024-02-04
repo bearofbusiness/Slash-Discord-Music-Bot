@@ -53,12 +53,6 @@ class DebugCog(commands.Cog):
         print(mystdout.getvalue())
         await Utils.send(interaction, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
 
-    async def _list_servers(self) -> None:
-        stringBuilder = ""
-        for i in self.bot.guilds:
-            stringBuilder += str(i.name) + "\n"
-        print(stringBuilder)
-
 
 
 async def setup(bot):

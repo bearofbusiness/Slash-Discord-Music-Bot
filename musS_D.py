@@ -56,7 +56,7 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         await self.load_extension("cogs.QueueManagement")
         await self.load_extension("cogs.PlaybackManagement")
         await self.load_extension("cogs.PlayerManagement")
-        await self.load_extension("cogs.DebugCog")
+        #await self.load_extension("cogs.DebugCog")
         Utils.pront("Cogs loaded!")
 
         # Database loading
@@ -85,6 +85,10 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
             type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
         
         Utils.pront("Bot is ready", lvl="OKGREEN")
+        stringBuilder = ""
+        for i in self.bot.guilds:
+            stringBuilder += str(i.name) + "\n"
+        print(stringBuilder)
 
     async def on_resumed(self):
         Utils.pront("Updating bot status")
@@ -184,9 +188,5 @@ async def on_guild_remove(guild: discord.Guild)-> None:
 async def _help(interaction: discord.Interaction) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
     await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
-
-
-
-
 
 bot.run(key)
