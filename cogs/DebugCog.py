@@ -33,7 +33,7 @@ class DebugCog(commands.Cog):
             Utils.pront(e, "ERROR")
         sys.stdout = old_stdout
         print(mystdout.getvalue())
-        await Utils.send(ctx, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
+        await Utils.send(interaction, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
 
 
     @app_commands.command(name="exec", description="debug cog")
@@ -51,7 +51,7 @@ class DebugCog(commands.Cog):
             Utils.pront(e, "ERROR")
         sys.stdout = old_stdout
         print(mystdout.getvalue())
-        await Utils.send(ctx, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
+        await Utils.send(interaction, title='Command Sent:', content='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
 
     async def _list_servers(self) -> None:
         stringBuilder = ""
