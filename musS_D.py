@@ -86,7 +86,7 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         
         Utils.pront("Bot is ready", lvl="OKGREEN")
         stringBuilder = ""
-        for i in self.bot.guilds:
+        for i in self.guilds:
             stringBuilder += str(i.name) + "\n"
         print(stringBuilder)
 
