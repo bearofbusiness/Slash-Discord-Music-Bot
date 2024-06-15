@@ -12,10 +12,12 @@ class DebugCog(commands.Cog):
 
     @commands.hybrid_command(name="unload", description="unloads the debug cog")
     async def _unload(self, ctx: commands.Context) -> None:
+
         await self.bot.remove_cog("DebugCog")
         await Utils.send(ctx, 'done')
         await self.bot.tree.sync()
         
+
     @commands.hybrid_command(name="eval", description="debug cog")
     @commands.is_owner()
     async def _eval(self, ctx: commands.Context, command: str) -> None:
@@ -31,7 +33,6 @@ class DebugCog(commands.Cog):
         sys.stdout = old_stdout
         print(mystdout.getvalue())
         await Utils.send(ctx, title='Command Sent:', description='in:\n```' + command + '```' + '\n\nout:```ansi\n' + str(mystdout.getvalue()) + '```')
-
 
     @commands.hybrid_command(name="exec", description="debug cog")
     @commands.is_owner()
@@ -55,7 +56,6 @@ class DebugCog(commands.Cog):
         for i in self.bot.guilds:
             stringBuilder += str(i.name) + "\n"
         print(stringBuilder)
-
 
 
 async def setup(bot):
