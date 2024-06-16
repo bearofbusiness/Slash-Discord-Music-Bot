@@ -316,7 +316,7 @@ class Song:
         other : `Song`
             The Song to compare to.
         """
-        return self.link == other.link
+        return other and self.link == other.link
 
     def __str__(self) -> str:
         """
