@@ -15,7 +15,7 @@ class NowPlayingButtons(discord.ui.View):
         super().__init__(timeout=None)
         self.player = player
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪",label="rewind", row=1)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪",label="Rewind", row=1)
     async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
@@ -45,13 +45,13 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏸ Paused"))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, label="skip", emoji="⏩", row=1)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, label="Skip", emoji="⏩", row=1)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         await Utils.skip_logic(self.player, interaction)
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, label="loop song", emoji="🔂", row=2)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, label="Loop song", emoji="🔂", row=2)
     async def loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -59,7 +59,7 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", label="queue loop", row=2)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", label="Queue loop", row=2)
     async def queue_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -67,7 +67,7 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', label="shuffle loop", row=2)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', label="True Loop", row=2)
     async def true_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -75,7 +75,7 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", label="shuffle", row=3)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", label="Shuffle", row=3)
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -87,11 +87,9 @@ class NowPlayingButtons(discord.ui.View):
         player.queue.shuffle()
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title='🔀 Queue shuffled'))
 
-
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺", label="refresh timestamp", row=3)
-    async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
-        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
-        await interaction.response.send_message(delete_after=1, ephemeral=True, embed=Utils.get_embed(interaction, '⏺ Refreshed', progress=False))
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺", label="Refresh timestamp", row=3)
+    async def timestamp_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+        await interaction.response.send_message(delete_after=10, embed=Utils.get_embed(interaction, '⏺ Timestamp:', content=f"## `{Utils.get_progress_bar(self.player.song)}`", progress=False))
 
 class SearchSelection(discord.ui.View):
     def __init__(self, query_result, *, timeout=180):
