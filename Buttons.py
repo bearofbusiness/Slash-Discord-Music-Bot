@@ -15,22 +15,22 @@ class NowPlayingButtons(discord.ui.View):
         super().__init__(timeout=None)
         self.player = player
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪", row=1)
-    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None: 
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪",label="rewind", row=1)
+    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
-        
+
         if not Utils.Pretests.has_song_authority(interaction, self.player.song):
-            await Utils.send(interaction, title='Insufficient permissions!', 
+            await Utils.send(interaction, title='Insufficient permissions!',
                             content="You don't have the correct permissions to use this command!  Please refer to /help for more information.", ephemeral=True)
             return
-        
+
         self.player.queue.add_at(self.player.song, 0)
         self.player.vc.stop()
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏪ Rewound"))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", row=1)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", label="Pause/Play", row=1)
     async def pause_play_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
@@ -45,13 +45,13 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏸ Paused"))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏩", row=1)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, label="skip", emoji="⏩", row=1)
     async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         await Utils.skip_logic(self.player, interaction)
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔂", row=2)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, label="loop song", emoji="🔂", row=2)
     async def loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -59,7 +59,7 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", row=2)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", label="queue loop", row=2)
     async def queue_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -67,7 +67,7 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', row=2)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', label="shuffle loop", row=2)
     async def true_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
@@ -75,20 +75,20 @@ class NowPlayingButtons(discord.ui.View):
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", row=3)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", label="shuffle", row=3)
     async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
         if not Utils.Pretests.has_discretionary_authority(interaction):
-            await Utils.send(interaction, title='Insufficient permissions!', 
+            await Utils.send(interaction, title='Insufficient permissions!',
                         content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
             return
         player.queue.shuffle()
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title='🔀 Queue shuffled'))
 
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺", row=3)
+    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺", label="refresh timestamp", row=3)
     async def refresh_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
         await interaction.response.send_message(delete_after=1, ephemeral=True, embed=Utils.get_embed(interaction, '⏺ Refreshed', progress=False))
@@ -97,7 +97,7 @@ class SearchSelection(discord.ui.View):
     def __init__(self, query_result, *, timeout=180):
         self.query_result = query_result
         super().__init__(timeout=timeout)
-    
+
     # All the buttons will call this method to add the song to queue
     async def __selector(self, index: int, interaction: discord.Interaction) -> None:
         entry = self.query_result.get('entries')[index]
@@ -165,7 +165,7 @@ class QueueButtons(discord.ui.View):
             self.page = max_page - 1
         elif self.page >= max_page:
             self.page = 0
-        
+
 
         # The index to start reading from Queue
         min_queue_index = page_size * (self.page)
@@ -191,12 +191,12 @@ class QueueButtons(discord.ui.View):
     async def button_left(self,interaction:discord.Interaction,button:discord.ui.Button):
         self.page -= 1
         await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
-        
+
     @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="➡")
     async def button_right(self,interaction:discord.Interaction,button:discord.ui.Button):
         self.page += 1
         await interaction.response.edit_message(embed=self.get_queue_embed(interaction), view=self)
-        
+
 
 class GuildSettingsView(discord.ui.View):
     def __init__(self, interaction: discord.Interaction) -> None:
@@ -239,7 +239,7 @@ class GuildSettingsSelect(discord.ui.Select):
                 raise NotImplementedError(f"We is boned... returned '{default}' in GuildSettingsView selection")
 
         await interaction.response.edit_message(view=self.view)
-    
+
     @staticmethod
     def __create_select_option(interaction: discord.Interaction, label: str, value: str, description: str, emojis: list[str] = ['❎', '✅', '💽']) -> discord.SelectOption:
         emoji = emojis[DB.GuildSettings.get(interaction.guild_id, value)]
@@ -269,7 +269,7 @@ class ToggleButton(discord.ui.Button):
         embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
         embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
         embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
-        
+
         # Update Select by clearing the View
         self.view.clear_items().add_item(GuildSettingsSelect(interaction))
 
@@ -317,7 +317,7 @@ class HelpView(discord.ui.View):
         style = category.get('cat_style')
         for item in category.get('buttons'):
             self.add_item(HelpButton(item, style))
-        
+
         embed = discord.Embed.from_dict(category.get('page'))
         await interaction.response.edit_message(embed=embed, view=self)
 
