@@ -272,7 +272,7 @@ class Player:
                 # () implicit parenthesis
 
                 # Send the new NP
-                self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingButtons(self))
+                self.last_np_message = await self.send_location.send(silent=True, embed=Utils.get_now_playing_embed(self), view=Buttons.NowPlayingView(self))
 
                 # Sleep player until song ends
                 await self.player_song_end.wait()

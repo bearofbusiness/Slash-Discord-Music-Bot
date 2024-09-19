@@ -31,6 +31,7 @@ class DB:
                     CREATE TABLE GuildSettings (
                         guild_id INTEGER PRIMARY KEY,
                         np_sent_to_vc BOOLEAN DEFAULT '1',
+                        verbose_np BOOLEAN DEFAULT '1',
                         remove_orphaned_songs BOOLEAN DEFAULT '0',
                         song_breadcrumbs BOOLEAN DEFAULT '1'
                     )
@@ -39,7 +40,7 @@ class DB:
             pass
 
     def fix_column_values() -> None:
-        columns = [['np_sent_to_vc',"1"], ['remove_orphaned_songs',"0"], ['allow_playlist',"1"], ['song_breadcrumbs', "1"]]
+        columns = [['np_sent_to_vc',"1"], ['verbose_np', "1"], ['remove_orphaned_songs',"0"], ['allow_playlist',"1"], ['song_breadcrumbs', "1"]]
         for i in columns:
             try:
                 DB._cursor.execute(f"ALTER TABLE GuildSettings ADD COLUMN {i[0]} BOOLEAN DEFAULT '{i[1]}'")
@@ -100,6 +101,8 @@ class DB:
             match setting:
                 case 'guild_id':
                     return setting
+                case 'verbose_np':
+                    return setting
                 case 'np_sent_to_vc':
                     return setting
                 case 'remove_orphaned_songs':
@@ -129,6 +132,8 @@ class DB:
 
                     > np_sent_to_vc
 
+                    > verbose_np
+
                     > remove_orphaned_songs
 
                     > allow_playlist
@@ -155,6 +160,8 @@ class DB:
                     > guild_id
 
                     > np_sent_to_vc
+                    
+                    > verbose_np
 
                     > remove_orphaned_songs
 

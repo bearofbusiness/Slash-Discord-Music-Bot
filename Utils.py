@@ -282,12 +282,12 @@ async def force_reset_player(player: Player) -> None:
     # TODO i hate getting the guild id like this...
     Servers.set_player(player.vc.guild.id, player)
 
-# Moved the logic for skip into here to be used by NowPlayingButtons and PlayerManagement
+# Moved the logic for skip into here to be used by NowPlayingView and PlayerManagement
 async def skip_logic(player: Player, interaction: discord.Interaction):
     """
     Performs all of the complex logic for permitting or denying skips.
     
-    Placed here for use in both PlaybackManagement and NowPlayingButtons
+    Placed here for use in both PlaybackManagement and NowPlayingView
     
     Parameters
     ----------

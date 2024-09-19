@@ -1,3 +1,4 @@
+from typing import Any
 import discord
 import math
 
@@ -10,13 +11,21 @@ from Servers import Servers
 from Song import Song
 from Pages import Pages
 
-class NowPlayingButtons(discord.ui.View):
+class NowPlayingView(discord.ui.View):
     def __init__(self, player: Player):
         super().__init__(timeout=None)
         self.player = player
+        # This shit sucks.  I have to do this to have it setting-aware.
+        self.add_item(NowPlayingButton(player=player, callback=self.rewind_button, emoji="⏪",label="Rewind", row=1))
+        self.add_item(NowPlayingButton(player=player, callback=self.pause_play_button, emoji="⏸", label="Pause/Play", row=1))
+        self.add_item(NowPlayingButton(player=player, callback=self.skip_button, label="Skip", emoji="⏩", row=1))
+        self.add_item(NowPlayingButton(player=player, callback=self.loop_button, label="Loop Song", emoji="🔂", row=2))
+        self.add_item(NowPlayingButton(player=player, callback=self.queue_loop_button, emoji="🔁", label="Queue Loop", row=2))
+        self.add_item(NowPlayingButton(player=player, callback=self.true_loop_button, emoji='♾', label="True Loop", row=2))
+        self.add_item(NowPlayingButton(player=player, callback=self.shuffle_button, emoji="🔀", label="Shuffle", row=3))
+        self.add_item(NowPlayingButton(player=player, callback=self.timestamp_button, emoji="⏺", label="Refresh Timestamp", row=3))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏪",label="Rewind", row=1)
-    async def rewind_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def rewind_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
 
@@ -27,56 +36,50 @@ class NowPlayingButtons(discord.ui.View):
 
         self.player.queue.add_at(self.player.song, 0)
         self.player.vc.stop()
-        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏪ Rewound"))
-
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏸", label="Pause/Play", row=1)
-    async def pause_play_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    
+    async def pause_play_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         if self.player.vc.is_paused():
             self.player.resume()
-            button.emoji = "⏸"
-            self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
+            self.emoji = "⏸"
+            self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
             await interaction.response.send_message(embed=Utils.get_embed(interaction, title="▶ Resumed"))
             return
         self.player.pause()
-        button.emoji = "▶"
-        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
+        self.emoji = "▶"
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title="⏸ Paused"))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, label="Skip", emoji="⏩", row=1)
-    async def skip(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def skip_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.playing_audio(interaction):
             return
         await Utils.skip_logic(self.player, interaction)
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, label="Loop song", emoji="🔂", row=2)
-    async def loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def loop_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
         self.player.set_loop(not self.player.looping)
-        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔁", label="Queue loop", row=2)
-    async def queue_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def queue_loop_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
         self.player.set_queue_loop(not self.player.queue_looping)
-        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji='♾', label="True Loop", row=2)
-    async def true_loop_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def true_loop_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
         self.player.set_true_loop(not self.player.true_looping)
-        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player, progress=True), view=self)
+        self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
         await interaction.response.send_message(ephemeral=True, embed=Utils.get_embed(interaction, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="🔀", label="Shuffle", row=3)
-    async def shuffle_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def shuffle_button(self, interaction: discord.Interaction) -> None:
         if not await Utils.Pretests.voice_channel(interaction):
             return
         player = Servers.get_player(interaction.guild_id)
@@ -87,9 +90,19 @@ class NowPlayingButtons(discord.ui.View):
         player.queue.shuffle()
         await interaction.response.send_message(embed=Utils.get_embed(interaction, title='🔀 Queue shuffled'))
 
-    @discord.ui.button(style=discord.ButtonStyle.blurple, emoji="⏺", label="Refresh timestamp", row=3)
-    async def timestamp_button(self, interaction: discord.Interaction, button: discord.ui.Button) -> None:
+    async def timestamp_button(self, interaction: discord.Interaction) -> None:
         await interaction.response.send_message(delete_after=10, embed=Utils.get_embed(interaction, '⏺ Timestamp:', content=f"## `{Utils.get_progress_bar(self.player.song)}`", progress=False))
+
+class NowPlayingButton(discord.ui.Button):
+    def __init__(self, *, player, callback, label: str | None, emoji: str, row: int):
+        # If verbose buttons are disabled, set the label to None
+        if not DB.GuildSettings.get(player.vc.guild.id, setting='verbose_np'):
+            label = None
+        self.player = player
+        super().__init__(style=discord.ButtonStyle.blurple, label=label, emoji=emoji, row=row)
+        self.callback = callback
+
+
 
 class SearchSelection(discord.ui.View):
     def __init__(self, query_result, *, timeout=180):
@@ -205,6 +218,7 @@ class GuildSettingsSelect(discord.ui.Select):
     def __init__(self, interaction: discord.Interaction) -> None:
         options = [
             GuildSettingsSelect.__create_select_option(interaction, label='Now Playing Location', value='np_sent_to_vc', description='Changes where auto Now Playing messages are sent.', emojis=['#️⃣', '🔊']),
+            GuildSettingsSelect.__create_select_option(interaction, label='Verbose Control Buttons', value='verbose_np', description='Adds verbose text to the control buttons.'),
             GuildSettingsSelect.__create_select_option(interaction, label='Remove Orphaned Songs', value='remove_orphaned_songs', description='Removes all the songs a user queued when they leave.'),
             GuildSettingsSelect.__create_select_option(interaction, label='Allow Playlist', value='allow_playlist', description='Whether the bot should allow users to queue playlists.'),
             GuildSettingsSelect.__create_select_option(interaction, label='Leave Song Breadcrumbs', value='song_breadcrumbs', description='Whether the bot should leave breadcrumbs to songs.')
@@ -224,6 +238,9 @@ class GuildSettingsSelect(discord.ui.Select):
             case 'np_sent_to_vc':
                 self.placeholder = "Now Playing Location"
                 self.view.add_item(ToggleButton(current_state, value, ['Text', 'VC']))
+            case 'verbose_np':
+                self.placeholder = "Verbose Control Buttons"
+                self.view.add_item(ToggleButton(current_state, value))
             case 'remove_orphaned_songs':
                 self.placeholder = "Remove Orphaned Songs"
                 self.view.add_item(ToggleButton(current_state, value))
@@ -264,6 +281,7 @@ class ToggleButton(discord.ui.Button):
         # Update Embed
         embed = Utils.get_embed(interaction, title='Settings')
         embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{('Text', 'VC')[DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc')]}`")
+        embed.add_field(name='Verbose Control Buttons', value=f"Adds verbose text to the control buttons on the auto Now Playing. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'verbose_np'))}`")
         embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
         embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
         embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")

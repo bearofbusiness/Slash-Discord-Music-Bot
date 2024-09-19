@@ -50,6 +50,7 @@ class GuildManagement(commands.Cog):
             if role.permissions.manage_channels or role.permissions.administrator: 
                 embed = Utils.get_embed(interaction, title='Settings')
                 embed.add_field(name='Now Playing Location', value=f"Changes where auto Now Playing messages are sent between VC and the channel the song was queued from. The current value is: `{('Text', 'VC')[DB.GuildSettings.get(interaction.guild_id, 'np_sent_to_vc')]}`")
+                embed.add_field(name='Verbose Control Buttons', value=f"Adds verbose text to the control buttons on the auto Now Playing. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'verbose_np'))}`")
                 embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'remove_orphaned_songs'))}`")
                 embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(interaction.guild_id, 'allow_playlist')]}`")
                 embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(interaction.guild_id, 'song_breadcrumbs'))}`")
