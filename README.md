@@ -4,7 +4,7 @@ MaBalls is an open-source discord music bot. It is designed to work with YouTube
 
 We used [yt-dlp](https://github.com/yt-dlp/yt-dlp) to parse media and [discord.py](https://github.com/Rapptz/discord.py) to communicate with the discord API.
 
-We host a bot that runs our master branch, its join URL is [here.](https://discord.com/api/oauth2/authorize?client_id=918667870114828288&permissions=3467840&scope=bot)
+We host a bot that runs our master branch - its join URL is [here.](https://discord.com/api/oauth2/authorize?client_id=918667870114828288&permissions=3467840&scope=bot)
 
 Installing
 ----------

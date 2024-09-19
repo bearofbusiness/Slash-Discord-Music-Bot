@@ -77,9 +77,9 @@ def get_progress_bar(song: Song) -> str:
 
     if percent_duration > 100:#percent duration cant be greater than 100
         return 'The player has stalled, please run /force-reset-player.'
-    
+
     ret = f'{song.parse_duration_short_hand(math.floor(song.get_elapsed_time()))}/{song.parse_duration_short_hand(song.duration)}'
-    ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * "    ")}]'
+    ret += f' [{(math.floor(percent_duration / 4) * "▬")}{">" if percent_duration < 100 else ""}{((math.floor((100 - percent_duration) / 4)) * " ")}]'
     return ret
 
 @DeprecationWarning
@@ -154,13 +154,12 @@ def get_embed(interaction, title='', content='', url=None, color='', progress: b
     embed.set_author(name=interaction.user.display_name,
                      icon_url=interaction.user.display_avatar.url)
 
-    # If the calling method wants the progress bar
+    # If the calling method wants the status bar
     if progress:
         player = Servers.get_player(interaction.guild_id)
         if player and player.is_playing():
-            footer_message = f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{get_progress_bar(player.song)}'
 
-            embed.set_footer(text=footer_message,
+            embed.set_footer(text= f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}',
                              icon_url=player.song.thumbnail)
     return embed
 
@@ -221,11 +220,12 @@ def get_now_playing_embed(player: Player, progress: bool = False) -> discord.Emb
     embed.add_field(name='Duration:', value=player.song.parse_duration(
         player.song.duration), inline=True)
     embed.add_field(name='Requested by:', value=player.song.requester.mention)
+    if progress:
+        embed.add_field(name='Timestamp:', value=f"`{get_progress_bar(player.song)}`", inline=False)
     embed.set_image(url=player.song.thumbnail)
     embed.set_author(name=player.song.requester.display_name,
                      icon_url=player.song.requester.display_avatar.url)
-    if progress:
-        embed.set_footer(text=get_progress_bar(player.song))
+    
     return embed
 
 def populate_song_list(songs: list[Song], guild_id: int) -> None:
@@ -282,12 +282,12 @@ async def force_reset_player(player: Player) -> None:
     # TODO i hate getting the guild id like this...
     Servers.set_player(player.vc.guild.id, player)
 
-# Moved the logic for skip into here to be used by NowPlayingButtons and PlayerManagement
+# Moved the logic for skip into here to be used by NowPlayingView and PlayerManagement
 async def skip_logic(player: Player, interaction: discord.Interaction):
     """
     Performs all of the complex logic for permitting or denying skips.
     
-    Placed here for use in both PlaybackManagement and NowPlayingButtons
+    Placed here for use in both PlaybackManagement and NowPlayingView
     
     Parameters
     ----------

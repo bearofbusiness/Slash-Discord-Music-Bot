@@ -169,7 +169,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 )
                 if player.is_playing():
                     embed.set_footer(icon_url=player.song.thumbnail,
-                        text=f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}\n{Utils.get_progress_bar(player.song)}')
+                        text=f'{"🔂 " if player.looping else ""}{"🔁 " if player.queue_looping else ""}{"♾ " if player.true_looping else ""}')
                 await player.send_location.send(embed=embed)
 
 
