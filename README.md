@@ -10,9 +10,11 @@ Installing
 ----------
 **Python 3.10 or higher is required**
 
-Requirements are listed inside the `requirements.txt` file. 
+Requirements are listed inside the `requirements.txt` file. You must install it using pip on windows or using your package manager on linux. You can also use anaconda for package management.
 
 The main file is `musS_D.py`
+
+The best way to run it is through a console `python3.10 musS_D.py`(set python version as needed)
 
 Dotenv Configuration
 --------------------
