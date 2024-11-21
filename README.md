@@ -8,7 +8,9 @@ We host a bot that runs our master branch - its join URL is [here.](https://disc
 
 Installing
 ----------
-**Python 3.10 or higher is required**
+create a bot [here](https://discord.com/developers/applications/) and invite it to your server of choice.
+
+**[Python 3.10 or higher is required](https://www.python.org/downloads/)**
 
 Requirements are listed inside the `requirements.txt` file. You must install it using pip on windows or using your package manager on linux. You can also use anaconda for package management.
 
@@ -19,7 +21,7 @@ The best way to run it is through a console `python3.10 musS_D.py`(set python ve
 Dotenv Configuration
 --------------------
 
-Out of the box, the bot will search for a discord token in the .env named `key`
+Out of the box, the bot will search for a discord token in the .env named `key`. put the key from the developer portal here.(ps. dont share it with anyone multiple bots can be ran of the same bot account)
 
 ### Example .env
 ```env
