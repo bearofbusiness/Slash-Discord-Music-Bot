@@ -1,6 +1,6 @@
 MaBalls
 =======
-MaBalls is an open-source discord music bot. It is designed to work with YouTube primarily but should work with any non-DRM music.
+MaBalls is an open-source discord music bot. It is designed to work with YouTube primarily but should work with any non-DRM media.
 
 We used [yt-dlp](https://github.com/yt-dlp/yt-dlp) to parse media and [discord.py](https://github.com/Rapptz/discord.py) to communicate with the discord API.
 
@@ -8,20 +8,21 @@ We host a bot that runs our master branch - its join URL is [here.](https://disc
 
 Installing
 ----------
-create a bot [here](https://discord.com/developers/applications/) and invite it to your server of choice.
 
 **[Python 3.10 or higher is required](https://www.python.org/downloads/)**
 
-Requirements are listed inside the `requirements.txt` file. You must install it using pip on windows or using your package manager on linux. You can also use anaconda for package management.
+Requirements are listed inside the `requirements.txt` file.
 
 The main file is `musS_D.py`
 
-The best way to run it is through a console `python3.10 musS_D.py`(set python version as needed)
+If you're new to this, don't worry! We have* an in-depth install guide [here.](yyyyyyy.info)
+
+*The guide has yet to be written. The link takes you to one of *the* sites on the internet of all time.
 
 Dotenv Configuration
 --------------------
 
-Out of the box, the bot will search for a discord token in the .env named `key`. put the key from the developer portal here.(ps. dont share it with anyone multiple bots can be ran of the same bot account)
+Out of the box, the bot will search for a Discord token in the .env named `key`.
 
 ### Example .env
 ```env
