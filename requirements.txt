@@ -3,3 +3,4 @@ python-dotenv
 pynacl
 traceback
 yt_dlp
+audioop-lts
