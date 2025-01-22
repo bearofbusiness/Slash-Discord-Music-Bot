@@ -1,6 +1,6 @@
 discord
 python-dotenv
 pynacl
-traceback
+traceback #not needed in python 3.13
 yt_dlp
-audioop-lts
+audioop-lts #needed in only new versons of python
