@@ -40,7 +40,8 @@ class YTDLInterface:
         'default_search': 'auto',
         'source_address': '0.0.0.0',
         'lazy_playlist': True,
-        'noplaylist': True
+        'noplaylist': True,
+        "cookiefile": "cookies.txt",
 
     }
 
@@ -56,7 +57,7 @@ class YTDLInterface:
         'source_address': '0.0.0.0',
         'extract_flat':True,
         'lazy_playlist': True,
-
+        "cookiefile": "cookies.txt",
     }
 
     skim_playlist_options = {
@@ -73,6 +74,7 @@ class YTDLInterface:
         'source_address': '0.0.0.0',
         'playlist_items' : '0',
         'lazy_playlist': True,
+        "cookiefile": "cookies.txt",
     }
 
     ffmpeg_options = {

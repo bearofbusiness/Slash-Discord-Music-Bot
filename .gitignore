@@ -162,4 +162,7 @@ cython_debug/
 # Bot database
 settings.db
 
+# cookies
+cookies.txt
+
 .vscode
