@@ -40,6 +40,13 @@ class QueueManagement(commands.Cog):
             query = await YTDLInterface.query_link(link)
             song = Song(interaction, query.get('original_url'), query)
 
+        # Checks if valid link as been returned from query
+        if "https://" not in song.original_url:
+            await interaction.followup.send(
+                embed=Utils.get_embed(interaction, title="No results found from search string!", content=":x:",
+                                      progress=False))
+            return
+
         # If not in a VC, join
         if interaction.guild.voice_client is None:
             await interaction.user.voice.channel.connect(self_deaf=True)
@@ -61,7 +68,6 @@ class QueueManagement(commands.Cog):
         else:
             Servers.get_player(interaction.guild_id).queue.add(song)
             position = len(Servers.get_player(interaction.guild_id).queue.get())
-            
 
         embed = Utils.get_embed(
             interaction,
