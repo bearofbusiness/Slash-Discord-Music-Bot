@@ -136,7 +136,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         # If we've been forcibly removed from a VC
         # (this leaves a hanging voice_client)
             if member.guild.voice_client is not None:
-                Utils.pront("bot was forcibly removed")
+                Utils.pront("Voice client hanging from force disconnect, bot was disconnected from VC", lvl="WARNING")
                 player = Servers.get_player(member.guild.id)
                 # Clean up the player if it exists
                 if player is not None:
@@ -153,12 +153,15 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             else:
                 await player.clean()
         
-        # If the bot should purge their queued songs
+        # If the bot should purge duplicate queued songs
         if DB.GuildSettings.get(member.guild.id, 'remove_orphaned_songs'):
             player = Servers.get_player(member.guild.id)
+
             # If there isn't a player, abort
             if player is None:
+                Utils.pront("Attempted to purge queue, missing player", lvl="WARNING")
                 return
+
             # Loop through songs in queue and remove duplicates
             removed = 0
             for i in range(len(player.queue.get()) - 1, 0, -1):
@@ -166,6 +169,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 if player.queue.get(i).requester == member:
                     player.queue.remove(i)
                     removed += 1
+
             # If songs were removed, let the users know.
             if removed != 0:
                 embed = discord.Embed(
