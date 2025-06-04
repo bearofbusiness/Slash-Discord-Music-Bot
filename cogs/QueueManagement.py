@@ -2,6 +2,7 @@ import discord
 import random
 from discord.ext import commands
 from discord import app_commands
+from discord.ext.commands import has_guild_permissions
 
 import Buttons
 import Utils
@@ -18,6 +19,12 @@ class QueueManagement(commands.Cog):
 
     @app_commands.command(name="play", description="Plays a song from youtube(or other sources somtimes) in the voice channel you are in")
     async def _play(self, interaction: discord.Interaction, link: str, top: bool = False) -> None:
+        # checks if correct permissions are set
+        perm_check = await Utils.Pretests.check_perms(interaction)
+        if perm_check is not None:
+            await interaction.response.send_message(f"My install link was not set up correctly, i am missing: {perm_check}")
+            return
+
         # Check if author is in VC
         if interaction.user.voice is None:
             await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
