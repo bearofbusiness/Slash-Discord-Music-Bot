@@ -534,9 +534,7 @@ class Pretests:
         # makeshift enum
         required = {
             "CONNECT": perms.connect,
-            "SPEAK": perms.speak,
-            "SEND_MESSAGES": perms.send_messages,
-            "EMBED_LINKS": perms.embed_links
+            "SPEAK": perms.speak
         }
 
         # if one or more permissions are false, return the false permissions
