@@ -6,7 +6,6 @@ from discord.ext.commands import has_guild_permissions
 
 import Buttons
 import Utils
-from YTDLInterface import YTDLInterface
 from Player import Player
 from Servers import Servers
 from Song import Song
