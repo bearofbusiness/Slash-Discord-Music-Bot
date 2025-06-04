@@ -370,12 +370,14 @@ class Pretests:
         Checks if the interaction.user has discretionary authority in the current scenario.
     has_song_authority(interaction: `discord.Interaction`, song: `Song`):
         Checks if the interaction.user has authority over the given song.
-    voice_channel(interaction: `discord.Interaction`)
+    voice_channel(interaction: `discord.Interaction`):
         Checks if all voice channel states are correct.
     player_exists(interaction: `discord.Interaction`):
         Checks if there is a Player registered for the current guild and if voice channel states are correct.
-    playing_audio(interaction: `discord.Interaction`)
+    playing_audio(interaction: `discord.Interaction`):
         Checks if audio is playing in a player for that guild and voice channel states are correct.
+    check_perms(interaction: `discord.Interaction`):
+        Checks if the bot is set up with the correct permissions to function properly.
     """
     # To be used with control over the Player as a whole
     def has_discretionary_authority(interaction: discord.Interaction) -> bool:
@@ -506,4 +508,41 @@ class Pretests:
             await interaction.response.send_message("This command can only be used while a song is playing.")
             return False
         return True
-    
+
+
+    async def check_perms(interaction: discord.Interaction) -> str | None:
+        """
+        Checks if the bot is set up with the correct permissions to function properly.
+
+        Returns any required permissions that are not set to True in a formatted string, returns None otherwise.
+
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to check and respond in.
+
+        Returns
+        -------
+        `str`:
+            If any required permissions are not set, they will be returned as a formatted string.
+        `None`:
+            None will be returned if all required permissions are set correctly.
+        """
+
+        perms = interaction.channel.permissions_for(interaction.guild.me)
+
+        # makeshift enum
+        required = {
+            "CONNECT": perms.connect,
+            "SPEAK": perms.speak,
+            "SEND_MESSAGES": perms.send_messages,
+            "EMBED_LINKS": perms.embed_links
+        }
+
+        # if one or more permissions are false, return the false permissions
+        missing = [perm for perm, value in required.items() if not value]
+
+        if len(missing) > 0:
+            return str(", ".join(missing))
+        else:
+            return None
