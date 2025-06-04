@@ -1,3 +1,4 @@
+import logging
 import discord
 import os
 import traceback
@@ -15,6 +16,9 @@ from DB import DB
 # imports for error type checking
 import yt_dlp
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
+
+handler = logging.FileHandler(filename='recent.log', encoding='utf-8', mode='w')
+
 XX = '''
 #-fnt stands for finished not tested
 TODO:
@@ -189,4 +193,4 @@ async def _help(interaction: discord.Interaction) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
     await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
-bot.run(key)
+bot.run(key, log_handler=handler, log_level=logging.DEBUG, root_logger=True)
