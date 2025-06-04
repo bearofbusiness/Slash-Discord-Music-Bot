@@ -95,7 +95,7 @@ class DB:
 
             Returns
             -------
-            `str`:
+            setting : str
                 The setting argument.
             """
             match setting:
@@ -154,7 +154,6 @@ class DB:
             setting : `str`
                 The setting to set.
 
-
                 The Valid values are:
 
                     > guild_id
@@ -166,7 +165,6 @@ class DB:
                     > remove_orphaned_songs
 
                     > song_breadcrumbs
-                    
             value : `str` | `bool` | `int`
                 The value to update the field with.
             """

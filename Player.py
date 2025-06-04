@@ -118,7 +118,7 @@ class Player:
             
         Returns
         -------
-        `Player`:
+        Player
             The new Player.
         """
         # Force creation of an empty Player
@@ -159,9 +159,9 @@ class Player:
         awaitable : `any`
             The awaitable object to run within the wrapper.
 
-        Return
-        ------
-        `any`:
+        Returns
+        -------
+        any
             The result of the awaitable.
         """
         try:
@@ -326,10 +326,8 @@ class Player:
 
         Returns
         -------
-        `bool`:
-            True if the Player is playing audio or paused.
-
-            False if the Player is between songs.
+        bool
+            True if the Player is playing audio or paused. False if the Player is between songs.
         """
         return not self.player_song_end.is_set()
     

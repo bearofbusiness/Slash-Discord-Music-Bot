@@ -48,12 +48,10 @@ class Servers():
         server: `int`
             The guild id to search for a Player under.
 
-        Return
-        ------
-        `Player`:
-            The Player associated with the guild.
-        `None`:
-            Returned if there is no Player associated with the guild id.
+        Returns
+        -------
+        player : Player or None
+            The Player associated with the guild or None if there is no Player associated with the guild id.
         """
         return Servers.dict.get(server)
 

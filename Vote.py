@@ -48,7 +48,7 @@ class Vote:
         """
         Returns
         -------
-        `list[discord.Member]`:
+        list : list[discord.Member]
             A list of all members who have voted, from first to last.
         """
         return self.voters

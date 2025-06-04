@@ -143,7 +143,7 @@ class Song:
 
         Returns
         -------
-        `Song`:
+        Song
             A Song object.
         """
         song = cls(interaction, link, {'webpage_url': link})
@@ -213,7 +213,7 @@ class Song:
 
         Returns
         -------
-        `int`:
+        seconds : int
             The number of seconds that the song has played for.
         """
         return time.time() - (self.start_time + self.pause_time + ((time.time() - self.pause_start)if self.pause_start else 0))
@@ -229,10 +229,8 @@ class Song:
 
         Returns
         -------
-        `int`:
-            The epoch at which the url will expire
-        `NoneType`:
-            If the epoch was unable to be parsed from the URL
+        epoch : int or None
+            The epoch at which the url will expire. Otherwise, None If the epoch was unable to be parsed from the URL
         """
         url = url[url.find('expire=') + 7: url.find('&')]
         if not url.isnumeric():
