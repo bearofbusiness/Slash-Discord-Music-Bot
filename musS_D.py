@@ -193,4 +193,4 @@ async def _help(interaction: discord.Interaction) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
     await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
-bot.run(key, log_handler=handler, log_level=logging.DEBUG, root_logger=True)
+bot.run(key, log_handler=handler, log_level=logging.INFO, root_logger=True)
