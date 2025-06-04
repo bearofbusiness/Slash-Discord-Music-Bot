@@ -136,7 +136,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         # If we've been forcibly removed from a VC
         # (this leaves a hanging voice_client)
             if member.guild.voice_client is not None:
-                Utils.pront("Voice client hanging from force disconnect, bot was disconnected from VC", lvl="WARNING")
+                Utils.pront("Bot was disconnected from VC")
                 player = Servers.get_player(member.guild.id)
                 # Clean up the player if it exists
                 if player is not None:
