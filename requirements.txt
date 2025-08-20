@@ -1,5 +1,6 @@
-discord
+py-cord 
 python-dotenv
 pynacl
-traceback
+#traceback #not needed in python 3.13
 yt_dlp
+#audioop-lts #needed in only python 3.13
