@@ -42,20 +42,20 @@ load_dotenv()  # getting the key from the .env file
 key = os.environ.get('key')
 
 
-class Bot(commands.Bot):  # initiates the bots intents and on_ready event
+class Bot(discord.Bot):  # initiates the bots intents and on_ready event
     def __init__(self):
         intents = discord.Intents.default()
         intents.members = True
         intents.message_content = True
 
-        super().__init__(command_prefix="​", intents=intents)
+        super().__init__(intents=intents)
 
-    async def setup_hook(self):
+    def setup_hook(self):
         #adding cogs
-        await self.load_extension("cogs.GuildManagement")
-        await self.load_extension("cogs.QueueManagement")
-        await self.load_extension("cogs.PlaybackManagement")
-        await self.load_extension("cogs.PlayerManagement")
+        self.load_extension("cogs.GuildManagement")
+        self.load_extension("cogs.QueueManagement")
+        self.load_extension("cogs.PlaybackManagement")
+        self.load_extension("cogs.PlayerManagement")
         #await self.load_extension("cogs.DebugCog")
         Utils.pront("Cogs loaded!")
 
@@ -67,9 +67,14 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
     async def on_ready(self):
 
         # Command syncing
-        Utils.pront("Syncing tree")
-        await self.tree.sync()
-        Utils.pront("Tree synced!")
+        # Utils.pront("Syncing tree")
+        # await self.tree.sync()
+        # Utils.pront("Tree synced!")
+
+
+        self.setup_hook()
+
+        #await self.sync_commands()
 
         # Fixing column values
         Utils.pront("Fixing column values if needed")
@@ -89,6 +94,10 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         for i in self.guilds:
             stringBuilder += str(i.name) + "\n"
         print(stringBuilder)
+        print("Loaded app commands:",
+              [c.qualified_name for c in self.application_commands])
+
+       
 
     async def on_resumed(self):
         Utils.pront("Updating bot status")
@@ -99,18 +108,18 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 bot = Bot()
 
 # Custom error handler
-@bot.tree.error
-async def on_tree_error(interaction: discord.Interaction, error: discord.app_commands.AppCommandError):
-
+@bot.event
+async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.ApplicationCommandError):
     # If a yt_dlp DownloadError was raised
-    if isinstance(error.original, yt_dlp.utils.DownloadError):
-        await interaction.followup.send(embed=Utils.get_embed(interaction, "An error occurred while trying to parse the link.",
+    if isinstance(getattr(error, "original", None), yt_dlp.utils.DownloadError):
+        await ctx.respond(
+            embed=Utils.get_embed(ctx, "An error occurred while trying to parse the link.",
                                                               content=f'```ansi\n{error.original.exc_info[1]}```'))
         # Return here because we don't want to print an obvious error like this.
         return
 
     # Fallback default error
-    await interaction.channel.send(embed=Utils.get_embed(interaction, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
+    await ctx.respond(embed=Utils.get_embed(ctx, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
     # Allows entire error to be printed without raising an exception
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()
@@ -184,9 +193,9 @@ async def on_guild_remove(guild: discord.Guild)-> None:
     DB.GuildSettings.remove_guild(guild.id)
     Utils.pront(f"Removed {guild.name} from database")
 
-@bot.tree.command(name="help", description="Shows the help menu")
-async def _help(interaction: discord.Interaction) -> None:
+@bot.slash_command(name="help", description="Shows the help menu")
+async def _help(ctx: discord.ApplicationContext) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
-    await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
+    await ctx.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
 bot.run(key)

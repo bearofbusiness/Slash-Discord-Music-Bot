@@ -58,7 +58,7 @@ class DebugCog(commands.Cog):
         print(stringBuilder)
 
 
-async def setup(bot):
+def setup(bot: discord.Bot):
     Utils.pront("Cog DebugCog loading...")
-    await bot.add_cog(DebugCog(bot))
+    bot.add_cog(DebugCog(bot))
     Utils.pront("Cog DebugCog loaded!")

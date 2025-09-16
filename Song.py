@@ -1,6 +1,6 @@
 import time
 
-from discord import Member, Interaction
+from discord import Member, ApplicationContext
 from Vote import Vote
 from YTDLInterface import YTDLInterface
 
@@ -44,7 +44,7 @@ class Song:
     
     Class Methods
     -------------
-    async from_link(interaction: `discord.Interaction`, link: `str`):
+    async from_link(ctx: `discord.ApplicationContext`, link: `str`):
         Will attempt to automatically initalize a Song with the provided link.
     
     Methods
@@ -69,22 +69,22 @@ class Song:
     parse_duration_short_hand(duration : `int` | `None`):
         Parses a duration in seconds into a shorter human readable xx:xx:xx:xx format.
     """
-    def __init__(self, interaction: Interaction, link: str, dict: dict):
+    def __init__(self, ctx: ApplicationContext, link: str, dict: dict):
         """
         Creates a Song from a dictionary containing specific key:value pairs that match the output of yt-dlp.
 
         Parameters
         ----------
-        interaction : `discord.Interaction`
-            The Interaction that created the Song.
+        ctx : `discord.ApplicationContext`
+            The ApplicationContext that created the Song.
         link : `str`
             The raw URL or query that created the Song.
         dict : `dict`
             The dict containing yt-dlp's output.
         """
         self.link = link
-        self.requester = interaction.user
-        self.channel = interaction.channel
+        self.requester = ctx.user
+        self.channel = ctx.channel
         self.vote = None
 
         # If there's an unexpected list of entries
@@ -130,14 +130,14 @@ class Song:
             self.expiry_epoch = Song.__parse_expiry_epoch(self.audio)
 
     @classmethod
-    async def from_link(cls, interaction: Interaction, link: str):
+    async def from_link(cls, ctx: ApplicationContext, link: str):
         """
         Creates a Song from the provided link.
 
         Parameters
         ----------
-        interaction : `discord.Interaction`
-            The Interaction that created the Song.
+        ctx : `discord.ApplicationContext`
+            The ApplicationContext that created the Song.
         link : `str`
             The URL the method should try to pull information from.
 
@@ -146,7 +146,7 @@ class Song:
         `Song`:
             A Song object.
         """
-        song = cls(interaction, link, {'webpage_url': link})
+        song = cls(ctx, link, {'webpage_url': link})
         await song.populate()
         return song
 
