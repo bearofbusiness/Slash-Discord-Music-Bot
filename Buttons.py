@@ -37,7 +37,7 @@ class NowPlayingView(discord.ui.View):
         self.player.queue.add_at(self.player.song, 0)
         self.player.vc.stop()
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
-        await ctx.response.send_message(embed=Utils.get_embed(ctx, title="⏪ Rewound"))
+        await Utils.respond(ctx, embed=Utils.get_embed(ctx, title="⏪ Rewound"))
     
     async def pause_play_button(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.playing_audio(ctx):
@@ -46,12 +46,12 @@ class NowPlayingView(discord.ui.View):
             self.player.resume()
             self.emoji = "⏸"
             self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
-            await ctx.response.send_message(embed=Utils.get_embed(ctx, title="▶ Resumed"))
+            await Utils.respond(ctx, embed=Utils.get_embed(ctx, title="▶ Resumed"))
             return
         self.player.pause()
         self.emoji = "▶"
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
-        await ctx.response.send_message(embed=Utils.get_embed(ctx, title="⏸ Paused"))
+        await Utils.respond(ctx, embed=Utils.get_embed(ctx, title="⏸ Paused"))
 
     async def skip_button(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.playing_audio(ctx):
@@ -63,21 +63,21 @@ class NowPlayingView(discord.ui.View):
             return
         self.player.set_loop(not self.player.looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
-        await ctx.response.send_message(ephemeral=True, embed=Utils.get_embed(ctx, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
+        await Utils.respond(ctx, ephemeral=True, embed=Utils.get_embed(ctx, title='🔂 Looped.' if self.player.looping else 'Loop disabled.'))
 
     async def queue_loop_button(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.voice_channel(ctx):
             return
         self.player.set_queue_loop(not self.player.queue_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
-        await ctx.response.send_message(ephemeral=True, embed=Utils.get_embed(ctx, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
+        await Utils.respond(ctx, ephemeral=True, embed=Utils.get_embed(ctx, title='🔁 Queue looped.' if self.player.queue_looping else 'Queue loop disabled.'))
 
     async def true_loop_button(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.voice_channel(ctx):
             return
         self.player.set_true_loop(not self.player.true_looping)
         self.player.last_np_message = await self.player.last_np_message.edit(embed=Utils.get_now_playing_embed(self.player), view=self)
-        await ctx.response.send_message(ephemeral=True, embed=Utils.get_embed(ctx, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
+        await Utils.respond(ctx, ephemeral=True, embed=Utils.get_embed(ctx, title='♾ True looped.' if self.player.true_looping else 'True loop disabled.'))
 
     async def shuffle_button(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.voice_channel(ctx):
@@ -88,10 +88,10 @@ class NowPlayingView(discord.ui.View):
                         content="You don't have the correct permissions to use this command!  Please refer to /help for more information.")
             return
         player.queue.shuffle()
-        await ctx.response.send_message(embed=Utils.get_embed(ctx, title='🔀 Queue shuffled'))
+        await Utils.respond(ctx, embed=Utils.get_embed(ctx, title='🔀 Queue shuffled'))
 
     async def timestamp_button(self, ctx: discord.ApplicationContext) -> None:
-        await ctx.response.send_message(delete_after=10, embed=Utils.get_embed(ctx, '⏺ Timestamp:', content=f"## `{Utils.get_progress_bar(self.player.song)}`", progress=False))
+        await Utils.respond(ctx, delete_after=10, embed=Utils.get_embed(ctx, '⏺ Timestamp:', content=f"## `{Utils.get_progress_bar(self.player.song)}`", progress=False))
 
 class NowPlayingButton(discord.ui.Button):
     def __init__(self, *, player, callback, label: str | None, emoji: str, row: int):
@@ -115,8 +115,8 @@ class SearchSelection(discord.ui.View):
         song = Song(ctx, entry.get('original_url'), entry)
 
         # If not in a VC, join
-        if ctx.guild is None:
-            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
+        if ctx.guild.voice_client is None:
+            await ctx.user.voice.channel.connect(self_deaf=True)
 
         # If player does not exist, create one.
         if Servers.get_player(ctx.guild_id) is None:
@@ -138,7 +138,7 @@ class SearchSelection(discord.ui.View):
         embed.add_field(name='Duration:',
                         value=Song.parse_duration(song.duration))
         embed.set_thumbnail(url=song.thumbnail)
-        await ctx.response.send_message(embed=embed)
+        await Utils.respond(ctx, embed=embed)
 
 
     @discord.ui.button(label="1",style=discord.ButtonStyle.blurple)

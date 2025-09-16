@@ -10,7 +10,7 @@ class BaseCog(commands.Cog):
 
     @discord.slash_command(name="sample_command", description="this should not be loaded")
     async def _sample_command(self, ctx: discord.ApplicationContext) -> None:
-        ctx.response.send_message("the")
+        await Utils.respond(ctx, "the")
 
 def setup(bot: discord.Bot):
     Utils.pront("Cog BaseCog loading...")

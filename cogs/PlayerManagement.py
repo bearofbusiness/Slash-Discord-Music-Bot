@@ -13,7 +13,7 @@ class PlayerManagement(commands.Cog):
     async def _now(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.player_exists(ctx):
             return
-        await ctx.response.send_message(embed=Utils.get_now_playing_embed(Servers.get_player(ctx.guild_id), progress=True))
+        await Utils.respond(ctx, embed=Utils.get_now_playing_embed(Servers.get_player(ctx.guild_id), progress=True))
 
     loop = discord.SlashCommandGroup(name='loop', description='Commands that relate to the post-playback behavior of songs')
 
