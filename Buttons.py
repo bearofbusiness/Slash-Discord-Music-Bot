@@ -115,8 +115,9 @@ class SearchSelection(discord.ui.View):
         song = Song(ctx, entry.get('original_url'), entry)
 
         # If not in a VC, join
-        if ctx.guild.voice_client is None:
-            await ctx.user.voice.channel.connect(self_deaf=True)
+        if not ctx.voice_client:
+            await ctx.author.voice.channel.connect()
+            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
 
         # If player does not exist, create one.
         if Servers.get_player(ctx.guild_id) is None:
@@ -321,13 +322,14 @@ class HelpView(discord.ui.View):
             discord.SelectOption(label='Queue Management', description='Commands for modifying the queue'),
             discord.SelectOption(label='Other Commands', description='Miscellaneous commands that don\'t fit into to any category')
         ], placeholder='Select a command category.', )
-    async def setting_selection(self, ctx: discord.ApplicationContext, select: discord.ui.Select):
+    async def setting_selection(self, select: discord.ui.Select, ctx: discord.ApplicationContext):
         value = select.values[0]
         self.placeholder = value
 
         # Remove any existing Buttons before spawning a new one
         item = self.children[0]
-        self.clear_items().add_item(item)
+        self.clear_items()
+        self.add_item(item)
 
         category = Pages.get_category(value)
         style = category.get('cat_style')

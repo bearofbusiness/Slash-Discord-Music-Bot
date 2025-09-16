@@ -19,7 +19,9 @@ class GuildManagement(commands.Cog):
             await Utils.respond(ctx, 'I am already in a voice channel', ephemeral=True)
             return
         # Connect to the voice channel
-        await ctx.user.voice.channel.connect(self_deaf=True)
+        await ctx.author.voice.channel.connect()
+        await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
+        
         await Utils.send(ctx, title='Joined!', content=':white_check_mark:', progress=False)
 
     @discord.slash_command(name="leave", description="Removes the MaBalls from the voice channel you are in")

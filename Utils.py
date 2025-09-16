@@ -349,10 +349,10 @@ async def force_reset_player(player: Player) -> None:
         The player to restart.
     """
     await player.clean()
-    plaer.guild.change_voice_state()
-    await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
+
+    ##TODO: make sure this works
     player.vc.voice_connect()
-    player.vc = await player.vc.channel.connect(self_deaf=True)
+    player.vc = await player.vc.channel.guild.change_voice_state(channel=player.channel, self_deaf=True)
     player = Player.from_player(player)
     # TODO i hate getting the guild id like this...
     Servers.set_player(player.vc.guild.id, player)

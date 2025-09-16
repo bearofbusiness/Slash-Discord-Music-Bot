@@ -39,8 +39,9 @@ class QueueManagement(commands.Cog):
             song = Song(ctx, query.get('original_url'), query)
 
         # If not in a VC, join
-        if ctx.guild.voice_client is None:
-            await ctx.user.voice.channel.connect(self_deaf=True)
+        if not ctx.voice_client:
+            await ctx.author.voice.channel.connect()
+            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
 
         # If player does not exist, create one.
         if Servers.get_player(ctx.guild_id) is None:
@@ -119,7 +120,8 @@ class QueueManagement(commands.Cog):
 
         # If not in a VC, join
         if ctx.guild.voice_client is None:
-            await ctx.user.voice.channel.connect(self_deaf=True)
+            await ctx.author.voice.channel.connect()
+            await ctx.guild.change_voice_state(channel=ctx.author.voice.channel, self_deaf=True)
 
         # Shuffle the entries[] within playlist before processing them
         if shuffle:
