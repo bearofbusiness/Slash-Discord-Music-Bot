@@ -19,12 +19,12 @@ class QueueManagement(commands.Cog):
     async def _play(self, ctx: discord.ApplicationContext, link: str, top: bool = False) -> None:
         # Check if author is in VC
         if ctx.user.voice is None:
-            await ctx.response.send_message('You are not in a voice channel', ephemeral=True)
+            await Utils.respond(ctx, 'You are not in a voice channel', ephemeral=True)
             return
 
         # Check if author is in the *right* vc if it applies
         if ctx.guild.voice_client is not None and ctx.user.voice.channel != ctx.guild.voice_client.channel:
-            await ctx.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+            await Utils.respond(ctx, "You must be in the same voice channel in order to use MaBalls", ephemeral=True)
             return
         await ctx.defer()
 
@@ -78,7 +78,7 @@ class QueueManagement(commands.Cog):
         match DB.GuildSettings.get(ctx.guild_id, 'allow_playlist'):
             # False
             case 0:
-                await ctx.response.send_message("Playlists are disabled on this server", ephemeral=True)
+                await Utils.respond(ctx, "Playlists are disabled on this server", ephemeral=True)
                 return
             # True
             case 1:
@@ -86,7 +86,7 @@ class QueueManagement(commands.Cog):
             # DJ Only
             case 2:
                 if not Utils.Pretests.has_discretionary_authority(ctx):
-                    await ctx.response.send_message(embed=Utils.get_embed(ctx, title='Insufficient permissions!', 
+                    await Utils.respond(ctx, embed=Utils.get_embed(ctx, title='Insufficient permissions!',
                             content="Playlists are DJ-only in this server!  Please refer to /help for more information."))
                     return
             case default:
@@ -94,12 +94,12 @@ class QueueManagement(commands.Cog):
             
         # Check if author is in VC
         if ctx.user.voice is None:
-            await ctx.response.send_message('You are not in a voice channel', ephemeral=True)
+            await Utils.respond(ctx, 'You are not in a voice channel', ephemeral=True)
             return
 
         # Check if author is in the *right* vc if it applies
         if ctx.guild.voice_client is not None and ctx.user.voice.channel != ctx.guild.voice_client.channel:
-            await ctx.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+            await Utils.respond(ctx, "You must be in the same voice channel in order to use MaBalls", ephemeral=True)
             return
 
         await ctx.defer()
@@ -173,12 +173,12 @@ class QueueManagement(commands.Cog):
     async def _search(self, ctx: discord.ApplicationContext, query: str) -> None:
         # Check if author is in VC
         if ctx.user.voice is None:
-            await ctx.response.send_message('You are not in a voice channel', ephemeral=True)
+            await Utils.respond(ctx, 'You are not in a voice channel', ephemeral=True)
             return
 
         # Check if author is in the *right* vc if it applies
         if ctx.guild.voice_client is not None and ctx.user.voice.channel != ctx.guild.voice_client.channel:
-            await ctx.response.send_message("You must be in the same voice channel in order to use MaBalls", ephemeral=True)
+            await Utils.respond(ctx, "You must be in the same voice channel in order to use MaBalls", ephemeral=True)
             return
 
         await ctx.defer()
@@ -218,7 +218,7 @@ class QueueManagement(commands.Cog):
 
         qb = Buttons.QueueButtons(page=page)
 
-        await ctx.response.send_message(embed=qb.get_queue_embed(ctx), view=qb)
+        await Utils.respond(ctx, embed=qb.get_queue_embed(ctx), view=qb)
 
     @discord.slash_command(name="shuffle", description="Shuffles the queue")
     async def shuffle(self, ctx: discord.ApplicationContext) -> None:
@@ -231,7 +231,7 @@ class QueueManagement(commands.Cog):
             return
                 
         player.queue.shuffle()
-        await ctx.response.send_message('🔀 Queue shuffled')
+        await Utils.respond(ctx, '🔀 Queue shuffled')
 
     remove = discord.SlashCommandGroup(name='remove', description='Commands that relate to removing songs from the queue')
 
@@ -271,7 +271,7 @@ class QueueManagement(commands.Cog):
         embed.set_thumbnail(url=removed_song.thumbnail)
         embed.set_author(name=removed_song.requester.display_name,
                         icon_url=removed_song.requester.display_avatar.url)
-        await ctx.response.send_message(embed=embed)
+        await Utils.respond(ctx, embed=embed)
 
     @remove.command(name="user", description="Removes all of the songs added by a specific user")
     async def _remove_user(self, ctx: discord.ApplicationContext, member: discord.Member):
@@ -297,7 +297,7 @@ class QueueManagement(commands.Cog):
                 embed.add_field(name='And more...', value='...', inline=False)
                 break
             embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
-        await ctx.response.send_message(embed=embed)
+        await Utils.respond(ctx, embed=embed)
 
     @remove.command(name="duplicates", description="Removes duplicate songs from the queue")
     async def _remove_dupes(self, ctx: discord.ApplicationContext):
@@ -328,7 +328,7 @@ class QueueManagement(commands.Cog):
                 embed.add_field(name='And more...', value='...', inline=False)
                 break
             embed.add_field(name=removed[index].uploader, value=removed[index].title, inline=False)
-        await ctx.response.send_message(embed=embed)
+        await Utils.respond(ctx, embed=embed)
 
     async def _clear(self, ctx: discord.ApplicationContext) -> None:
         if not await Utils.Pretests.player_exists(ctx):
@@ -340,7 +340,7 @@ class QueueManagement(commands.Cog):
             return
 
         Servers.get_player(ctx.guild_id).queue.clear()
-        await ctx.response.send_message('💥 Queue cleared')
+        await Utils.respond(ctx, '💥 Queue cleared')
 
     @discord.slash_command(name="inspect", description="Inspects a song by number in queue")
     async def _inspect(self, ctx: discord.ApplicationContext, number_in_queue: int):
@@ -368,7 +368,7 @@ class QueueManagement(commands.Cog):
         embed.set_image(url=song.thumbnail)
         embed.set_author(name=song.requester.display_name,
                         icon_url=song.requester.display_avatar.url)
-        await ctx.response.send_message(embed=embed)
+        await Utils.respond(ctx, embed=embed)
     
     @discord.slash_command(name="move", description="Moves a song in the queue to a different position. run queue command before using this command.")
     async def _move(self, ctx: discord.ApplicationContext, song_number: int, new_position: int) -> None:

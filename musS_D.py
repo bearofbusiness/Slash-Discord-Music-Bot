@@ -50,7 +50,9 @@ class Bot(discord.Bot):  # initiates the bots intents and on_ready event
 
         super().__init__(intents=intents)
 
-    def setup_hook(self):
+    async def setup_hook(self) -> None:
+        await super().setup_hook()
+
         #adding cogs
         self.load_extension("cogs.GuildManagement")
         self.load_extension("cogs.QueueManagement")
@@ -71,8 +73,6 @@ class Bot(discord.Bot):  # initiates the bots intents and on_ready event
         # await self.tree.sync()
         # Utils.pront("Tree synced!")
 
-
-        self.setup_hook()
 
         #await self.sync_commands()
 
@@ -112,14 +112,14 @@ bot = Bot()
 async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.ApplicationCommandError):
     # If a yt_dlp DownloadError was raised
     if isinstance(getattr(error, "original", None), yt_dlp.utils.DownloadError):
-        await ctx.respond(
+        await Utils.respond(ctx,
             embed=Utils.get_embed(ctx, "An error occurred while trying to parse the link.",
                                                               content=f'```ansi\n{error.original.exc_info[1]}```'))
         # Return here because we don't want to print an obvious error like this.
         return
 
     # Fallback default error
-    await ctx.respond(embed=Utils.get_embed(ctx, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
+    await Utils.respond(ctx, embed=Utils.get_embed(ctx, title="MaBalls ran into Ma issue.", content=f'```ansi\n{error}```', progress=False))
     # Allows entire error to be printed without raising an exception
     # (would create an infinite loop as it would be caught by this function)
     traceback.print_exc()
@@ -196,6 +196,6 @@ async def on_guild_remove(guild: discord.Guild)-> None:
 @bot.slash_command(name="help", description="Shows the help menu")
 async def _help(ctx: discord.ApplicationContext) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
-    await ctx.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
+    await Utils.respond(ctx, embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
 bot.run(key)

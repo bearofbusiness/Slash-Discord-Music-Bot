@@ -13,10 +13,10 @@ class GuildManagement(commands.Cog):
     @discord.slash_command(name="join", description="Adds the MaBalls to the voice channel you are in")
     async def _join(self, ctx: discord.ApplicationContext) -> None:
         if ctx.user.voice is None:  # checks if the user is in a voice channel
-            await ctx.response.send_message('You are not in a voice channel', ephemeral=True)
+            await Utils.respond(ctx, 'You are not in a voice channel', ephemeral=True)
             return
         if ctx.guild.voice_client is not None:  # checks if the bot is in a voice channel
-            await ctx.response.send_message('I am already in a voice channel', ephemeral=True)
+            await Utils.respond(ctx, 'I am already in a voice channel', ephemeral=True)
             return
         # Connect to the voice channel
         await ctx.user.voice.channel.connect(self_deaf=True)
@@ -53,7 +53,7 @@ class GuildManagement(commands.Cog):
                 embed.add_field(name='Remove Orphaned Songs', value=f"Whether the bot should remove all the songs a user queued when they leave the VC. The current value is: `{bool(DB.GuildSettings.get(ctx.guild_id, 'remove_orphaned_songs'))}`")
                 embed.add_field(name='Allow Playlist', value=f"Whether the bot should allow users to queue playlists. The current value is: `{('No', 'Yes', 'DJ Only')[DB.GuildSettings.get(ctx.guild_id, 'allow_playlist')]}`")
                 embed.add_field(name='Leave Song Breadcrumbs', value=f"Whether the bot should leave breadcrumbs to previously played songs to be able trace back the queue. The current value is: `{bool(DB.GuildSettings.get(ctx.guild_id, 'song_breadcrumbs'))}`")
-                await ctx.response.send_message(ephemeral=True, embed=embed, view=Buttons.GuildSettingsView(ctx))
+                await Utils.respond(ctx, ephemeral=True, embed=embed, view=Buttons.GuildSettingsView(ctx))
                 return
         await Utils.send(ctx, title='Insufficient permissions!', ephemeral=True)
 
