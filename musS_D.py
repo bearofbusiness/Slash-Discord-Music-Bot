@@ -85,8 +85,7 @@ class Bot(discord.Bot):  # initiates the bots intents and on_ready event
         Utils.pront("Attempting to locate or create database")
         DB.create_tables()
 
-
-        #await self.sync_commands()
+        await self.sync_commands()
 
         # Fixing column values
         Utils.pront("Fixing column values if needed")
