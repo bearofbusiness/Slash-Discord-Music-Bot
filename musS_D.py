@@ -250,7 +250,7 @@ async def update(interaction: discord.Interaction):
         if TMUX_OLD:
             subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
 
-        await interaction.followup.send("✅ Update complete! Restarting into new tmux session...", ephemeral=True)
+        await interaction.channel.send("✅ Update complete! Restarting into new tmux session...", ephemeral=True)
 
         # Gracefully stop the old process
         asyncio.get_event_loop().call_later(3, lambda: sys.exit(0))
