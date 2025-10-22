@@ -6,6 +6,7 @@ import random
 import traceback
 import time
 
+import yt_dlp
 
 # Our imports
 import Buttons
@@ -100,6 +101,11 @@ class Player:
         self.true_looping = False
 
         self.vc = vc
+
+        try:
+            vc.guild.id
+        except AttributeError as e:
+            Utils.pront("Not connected to a Voice Channel: \n" + str(e), lvl="ERROR")
 
         self.send_location = vc.channel if DB.GuildSettings.get(vc.guild.id, setting='np_sent_to_vc') else song.channel
 
@@ -266,9 +272,7 @@ class Player:
                 self.song.start()
 
                 # Begin playing audio into Discord
-                self.vc.play(discord.FFmpegPCMAudio(
-                    self.song.audio, **YTDLInterface.ffmpeg_options
-                ), after=self.__song_complete)
+                self.vc.play(discord.FFmpegPCMAudio(self.song.audio, **YTDLInterface.ffmpeg_options), after=self.__song_complete)
                 # () implicit parenthesis
 
                 # Send the new NP
