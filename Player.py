@@ -106,6 +106,7 @@ class Player:
             vc.guild.id
         except AttributeError as e:
             Utils.pront("Not connected to a Voice Channel: \n" + str(e), lvl="ERROR")
+            return
 
         self.send_location = vc.channel if DB.GuildSettings.get(vc.guild.id, setting='np_sent_to_vc') else song.channel
 
