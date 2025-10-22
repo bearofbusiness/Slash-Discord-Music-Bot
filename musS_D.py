@@ -210,7 +210,9 @@ async def update(interaction: discord.Interaction):
     """
         WARNING this command is very hardcoded and only works on my machine -frosty
     """
-    await interaction.followup.send("Updating yt-dlp and restarting bot", ephemeral=True)
+
+    await interaction.response.defer(thinking=True)
+    await interaction.response.send("Updating yt-dlp and restarting bot", ephemeral=True)
 
     # Paths and names
     BOT_DIR = "/home/fw/GitHub/Slash-Discord-Music-Bot-fw"
