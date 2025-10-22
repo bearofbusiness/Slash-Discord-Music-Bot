@@ -145,7 +145,6 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 # Clean up the player if it exists
                 if player is not None:
                     await player.clean()
-        await bot.get_channel(1412606966622191626).connect(self_deaf=True, reconnect=True, timeout=60)
         return
 
     # If the user was in the same VC as the bot and disconnected
