@@ -1,4 +1,8 @@
+import asyncio
 import logging
+import subprocess
+import sys
+
 import discord
 import os
 import traceback
@@ -196,5 +200,63 @@ async def on_guild_remove(guild: discord.Guild)-> None:
 async def _help(interaction: discord.Interaction) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
     await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
+
+
+@bot.tree.command(
+    name="update",
+    description="Update yt-dlp to nightly",
+)
+async def update(interaction: discord.Interaction):
+    """
+        WARNING this command is very hardcoded and only works on my machine -frosty
+    """
+    await interaction.followup.send("Updating yt-dlp and restarting bot", ephemeral=True)
+
+    # Paths and names
+    BOT_DIR = "/home/fw/GitHub/Slash-Discord-Music-Bot-fw"
+    VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
+
+    try:
+        # Get current tmux session name if inside tmux
+        TMUX_OLD = subprocess.run(
+            ["tmux", "display-message", "-p", "#S"],
+            capture_output=True,
+            text=True,
+            check=True
+        ).stdout.strip()
+
+        # Run pip upgrade inside venv
+        subprocess.run(
+            [f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", "git+https://github.com/yt-dlp/yt-dlp.git"],
+            check=True
+        )
+
+        TMUX_NEW = "frostyslashdiscord-" + subprocess.run(
+            ["yt-dlp", "--version"],
+            capture_output=True,
+            text=True,
+            check=True
+        ).stdout.strip()
+
+        # Create new tmux session and start the bot in it
+        subprocess.run([
+            "tmux", "new-session", "-d", "-s", TMUX_NEW,
+            f"bash -c 'cd {BOT_DIR} && source .venv/bin/activate && python musS_D.py'"
+        ], check=True)
+
+        # Kill the old tmux session if we got a name
+        if TMUX_OLD:
+            subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
+
+        await interaction.followup.send("✅ Update complete! Restarting into new tmux session...", ephemeral=True)
+
+        # Gracefully stop the old process
+        asyncio.get_event_loop().call_later(3, lambda: sys.exit(0))
+
+    except subprocess.CalledProcessError as e:
+        raise e
+    except Exception as e:
+        raise e
+
 
 bot.run(key, log_handler=handler, log_level=logging.INFO, root_logger=True)
