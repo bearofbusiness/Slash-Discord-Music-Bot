@@ -78,7 +78,9 @@ class YTDLInterface:
     }
 
     ffmpeg_options = {
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5 -headers "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)"',
+        'options': '-vn'
+    }
 
     # Rapidy retrieves shell information surrounding a URL
     @staticmethod
