@@ -143,8 +143,9 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 Utils.pront("Bot was disconnected from VC")
                 player = Servers.get_player(member.guild.id)
                 # Clean up the player if it exists
-                if player is not None:
-                    await player.clean()          
+                # if player is not None:
+                #     await player.clean()
+                await player.vc.connect(self_deaf=True, reconnect=True, timeout=60)
         return
 
     # If the user was in the same VC as the bot and disconnected
