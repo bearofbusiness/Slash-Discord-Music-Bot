@@ -217,6 +217,8 @@ async def update(interaction: discord.Interaction):
     # Paths and names
     BOT_DIR = "/home/fw/GitHub/Slash-Discord-Music-Bot-fw"
     VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
+    VENV_PACKAGES = "packages.txt"
+    YT_DLP_NEW_VERSION = ""
 
     try:
         # Get current tmux session name for deletion later
@@ -227,22 +229,36 @@ async def update(interaction: discord.Interaction):
             check=True
         ).stdout.strip()
 
-        # Run pip upgrade inside venv
-        subprocess.run(
-            [f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", "git+https://github.com/yt-dlp/yt-dlp.git"],
-            check=True
-        )
+        # Run pip upgrade inside venv for all venv packages and update yt-dlp to nightly
+        p1 = subprocess.run([
+            "python", "-m", "pip", "install", "--upgrade", "pip"
+        ], check=True)
 
-        TMUX_NEW = "frostyslashdiscord-" + subprocess.run(
+        if p1.returncode is None:
+            await interaction.channel.send("Finished pip update")
+
+        p2 = subprocess.run([
+            "pip", "install", "--upgrade", "-r", f"{VENV_PACKAGES}"
+        ], check=True)
+
+        if p1.returncode is None:
+            await interaction.channel.send("Finished venv packages update")
+
+        p3 = subprocess.run([
+            f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", "git+https://github.com/yt-dlp/yt-dlp.git"
+        ], check=True)
+
+        YT_DLP_NEW_VERSION = subprocess.run(
             ["yt-dlp", "--version"],
             capture_output=True,
             text=True,
             check=True
         ).stdout.strip()
 
-        subprocess.run([
-            "python", "-m", "pip", "install", "--upgrade", "pip"
-        ], check=True)
+        if p1.returncode is None:
+            await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION)
+
+        TMUX_NEW = "frostyslashdiscord-" + YT_DLP_NEW_VERSION
 
         # Create new tmux session and start the bot in it
         subprocess.run([
@@ -250,14 +266,11 @@ async def update(interaction: discord.Interaction):
             f"bash -c 'cd {BOT_DIR} && source .venv/bin/activate && python musS_D.py'"
         ], check=True)
 
+        await interaction.channel.send("Finished installing all packages.\nTerminating old process")
+
         # Kill the old tmux session if we got a name
         if TMUX_OLD:
             subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
-
-        await interaction.channel.send("Update complete! Restarting into new tmux session...", ephemeral=True)
-
-        # Gracefully stop the old process
-        asyncio.get_event_loop().call_later(3, lambda: sys.exit(0))
 
     except subprocess.CalledProcessError as e:
         print(e.stderr)
