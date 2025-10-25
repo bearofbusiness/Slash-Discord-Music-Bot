@@ -213,7 +213,6 @@ async def update(interaction: discord.Interaction):
     """
 
     await interaction.response.defer(thinking=True)
-    await interaction.followup.send("Updating yt-dlp and restarting bot", ephemeral=True)
 
     # Paths and names
     BOT_DIR = os.getcwd()
