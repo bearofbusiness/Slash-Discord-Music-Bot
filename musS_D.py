@@ -219,7 +219,7 @@ async def update(interaction: discord.Interaction):
     VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
 
     try:
-        # Get current tmux session name if inside tmux
+        # Get current tmux session name for deletion later
         TMUX_OLD = subprocess.run(
             ["tmux", "display-message", "-p", "#S"],
             capture_output=True,
@@ -240,6 +240,10 @@ async def update(interaction: discord.Interaction):
             check=True
         ).stdout.strip()
 
+        subprocess.run([
+            "python", "-m", "pip", "install", "--upgrade", "pip"
+        ], check=True)
+
         # Create new tmux session and start the bot in it
         subprocess.run([
             "tmux", "new-session", "-d", "-s", TMUX_NEW,
@@ -250,12 +254,13 @@ async def update(interaction: discord.Interaction):
         if TMUX_OLD:
             subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
 
-        await interaction.channel.send("✅ Update complete! Restarting into new tmux session...", ephemeral=True)
+        await interaction.channel.send("Update complete! Restarting into new tmux session...", ephemeral=True)
 
         # Gracefully stop the old process
         asyncio.get_event_loop().call_later(3, lambda: sys.exit(0))
 
     except subprocess.CalledProcessError as e:
+        print(e.stderr)
         raise e
     except Exception as e:
         raise e
