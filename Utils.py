@@ -379,6 +379,33 @@ class Pretests:
     check_perms(interaction: `discord.Interaction`):
         Checks if the bot is set up with the correct permissions to function properly.
     """
+
+    def has_update_authority(interaction: discord.Interaction) -> bool:
+        """
+        Checks if the interaction.user has discretionary authority in the current scenario.
+
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to pull interaction.user from.
+
+        Returns
+        -------
+        bool
+            Whether the interaction.user should have discretionary authority.
+        """
+
+        developers = [
+            369999044023549962,
+            311659410109759488,
+            670821194550870016
+        ]
+
+        # for developers
+        if interaction.user.id in developers:
+            return True
+        return False
+
     # To be used with control over the Player as a whole
     def has_discretionary_authority(interaction: discord.Interaction) -> bool:
         """

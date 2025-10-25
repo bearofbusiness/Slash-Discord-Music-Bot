@@ -212,6 +212,13 @@ async def update(interaction: discord.Interaction):
         This simply updates those existing packages and forces yt-dlp to be on the latest nightly branch.
     """
 
+    if not Utils.Pretests.has_update_authority(interaction):
+        await Utils.send(interaction,
+            title='Insufficient permissions!',
+            content="You don't have the correct permissions to use this command!  Please refer to /help for more information."
+        )
+        return
+
     await interaction.response.defer(thinking=True)
 
     # Paths and names
