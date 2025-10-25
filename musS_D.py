@@ -236,7 +236,7 @@ async def update(interaction: discord.Interaction):
 
         while p1.returncode is not None:
             if p1.returncode == 0:
-                await interaction.channel.send("Finished pip update")
+                await interaction.channel.send("Finished pip update.")
                 break
 
         subprocess.run([
@@ -251,7 +251,7 @@ async def update(interaction: discord.Interaction):
 
         while p2.returncode is not None:
             if p2.returncode == 0:
-                await interaction.channel.send("Finished venv packages update")
+                await interaction.channel.send("Finished venv packages update.")
                 break
 
         p3 = subprocess.run([
@@ -267,18 +267,22 @@ async def update(interaction: discord.Interaction):
 
         while p3.returncode is not None:
             if p3.returncode == 0:
-                await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION)
+                await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION + ".")
                 break
 
         TMUX_NEW = "frostyslashdiscord-" + YT_DLP_NEW_VERSION
 
         # Create new tmux session and start the bot in it
-        subprocess.run([
+        p4 = subprocess.run([
             "tmux", "new-session", "-d", "-s", TMUX_NEW,
             f"bash -c 'cd {BOT_DIR} && source .venv/bin/activate && python musS_D.py'"
         ], check=True)
 
-        await interaction.channel.send("Finished installing all packages.\nTerminating old process")
+        while p4.returncode is not None:
+            if p4.returncode == 0:
+                await interaction.channel.send("Created new process.")
+
+        await interaction.channel.send("Finished installing all packages.\nTerminating old process.")
 
         if TMUX_OLD:
             subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
