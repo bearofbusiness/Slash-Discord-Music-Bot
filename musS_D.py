@@ -234,15 +234,17 @@ async def update(interaction: discord.Interaction):
             "python", "-m", "pip", "install", "--upgrade", "pip"
         ], check=True)
 
-        if p1.returncode is None:
-            await interaction.channel.send("Finished pip update")
+        while p1.returncode is not None:
+            if p1.returncode == 0:
+                await interaction.channel.send("Finished pip update")
 
         p2 = subprocess.run([
             "pip", "install", "--upgrade", "-r", f"{VENV_PACKAGES}"
         ], check=True)
 
-        if p1.returncode is None:
-            await interaction.channel.send("Finished venv packages update")
+        while p1.returncode is not None:
+            if p1.returncode == 0:
+                await interaction.channel.send("Finished venv packages update")
 
         p3 = subprocess.run([
             f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", "git+https://github.com/yt-dlp/yt-dlp.git"
@@ -255,8 +257,9 @@ async def update(interaction: discord.Interaction):
             check=True
         ).stdout.strip()
 
-        if p1.returncode is None:
-            await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION)
+        while p1.returncode is not None:
+            if p1.returncode == 0:
+                await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION)
 
         TMUX_NEW = "frostyslashdiscord-" + YT_DLP_NEW_VERSION
 
