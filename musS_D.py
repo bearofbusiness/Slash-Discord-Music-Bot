@@ -235,7 +235,7 @@ async def update(interaction: discord.Interaction):
 
         while p1.returncode is not None:
             if p1.returncode == 0:
-                await interaction.channel.send("Finished pip update.")
+                await interaction.followup.send("Finished pip update.")
                 break
 
         subprocess.run([
