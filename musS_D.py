@@ -208,16 +208,16 @@ async def _help(interaction: discord.Interaction) -> None:
 )
 async def update(interaction: discord.Interaction):
     """
-        WARNING this command is very hardcoded and only works on my machine -frosty
+        This command REQUIRES python pip and tmux, this command also only works after all required packages have already been installed.
+        This simply updates those existing packages and forces yt-dlp to be on the latest nightly branch.
     """
 
     await interaction.response.defer(thinking=True)
     await interaction.followup.send("Updating yt-dlp and restarting bot", ephemeral=True)
 
     # Paths and names
-    BOT_DIR = "/home/fw/GitHub/Slash-Discord-Music-Bot-fw"
+    BOT_DIR = os.getcwd()
     VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
-    VENV_PACKAGES = "packages.txt"
     YT_DLP_NEW_VERSION = ""
 
     try:
@@ -239,8 +239,16 @@ async def update(interaction: discord.Interaction):
                 await interaction.channel.send("Finished pip update")
                 break
 
+        subprocess.run([
+            "touch", f"{BOT_DIR}/packages.txt"
+        ], check=True)
+
+        subprocess.run([
+            "pip", "freeze", "|", "cut", "-d", "'='", "-f", "1", "|", "sort", "-u", ">", "packages.txt"
+        ], check=True)
+
         p2 = subprocess.run([
-            "pip", "install", "--upgrade", "-r", f"{VENV_PACKAGES}"
+            "pip", "install", "--upgrade", "-r", "packages.txt"
         ], check=True)
 
         while p2.returncode is not None:
@@ -274,7 +282,6 @@ async def update(interaction: discord.Interaction):
 
         await interaction.channel.send("Finished installing all packages.\nTerminating old process")
 
-        # Kill the old tmux session if we got a name
         if TMUX_OLD:
             subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
 
