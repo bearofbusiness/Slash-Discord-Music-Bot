@@ -243,9 +243,7 @@ async def update(interaction: discord.Interaction):
             "touch", f"{BOT_DIR}/packages.txt"
         ], check=True)
 
-        subprocess.run([
-            "pip", "freeze", "|", "cut", "-d", "'='", "-f", "1", "|", "sort", "-u", ">", "packages.txt"
-        ], check=True)
+        subprocess.run("pip freeze | cut -d '=' -f 1 | sort -u > packages.txt", shell=True, check=True)
 
         p2 = subprocess.run([
             "pip", "install", "--upgrade", "-r", "packages.txt"
