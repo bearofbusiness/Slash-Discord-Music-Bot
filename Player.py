@@ -236,9 +236,6 @@ class Player:
                 # Update send location preference
                 self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
 
-                except AttributeError:
-                    self.send_location = self.song.channel
-
                 # If the song will expire while playing
                 if self.song.expiry_epoch is not None and self.song.expiry_epoch - time.time() - self.song.duration < 30:
                     self.song.expiry_epoch = None
