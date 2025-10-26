@@ -101,11 +101,7 @@ class Player:
 
         self.vc = vc
 
-        try:
-            self.send_location = vc.channel if DB.GuildSettings.get(vc.guild.id, setting='np_sent_to_vc') else song.channel
-        except AttributeError:
-            self.send_location = song.channel
-
+        self.send_location = vc.channel if DB.GuildSettings.get(vc.guild.id, setting='np_sent_to_vc') else song.channel
 
         # Create task to run __player
         self.player_task = asyncio.create_task(
@@ -238,8 +234,8 @@ class Player:
                 await self.__last_np_message_handler()
 
                 # Update send location preference
-                try:
-                    self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
+                self.send_location = self.vc.channel if DB.GuildSettings.get(self.vc.guild.id, setting='np_sent_to_vc') else self.song.channel
+
                 except AttributeError:
                     self.send_location = self.song.channel
 
