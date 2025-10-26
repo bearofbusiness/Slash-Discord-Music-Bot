@@ -157,7 +157,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
             else:
                 await player.clean()
         
-        # If the bot should purge duplicate queued songs
+        # If the bot should purge their queued songs
         if DB.GuildSettings.get(member.guild.id, 'remove_orphaned_songs'):
             player = Servers.get_player(member.guild.id)
 
@@ -276,7 +276,7 @@ async def update(interaction: discord.Interaction):
                 await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION + ".")
                 break
 
-        TMUX_NEW = "frostyslashdiscord-" + YT_DLP_NEW_VERSION
+        TMUX_NEW = "SlashDiscordMusicBot-" + YT_DLP_NEW_VERSION
 
         # Create new tmux session and start the bot in it
         p4 = subprocess.run([

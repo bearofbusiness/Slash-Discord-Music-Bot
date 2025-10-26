@@ -17,7 +17,7 @@ class GuildManagement(commands.Cog):
         # checks if correct permissions are set
         perm_check = await Utils.Pretests.check_perms(interaction)
         if perm_check is not None:
-            await interaction.response.send_message(f"My install link was not set up correctly, i am missing: {perm_check}")
+            await interaction.response.send_message(f"My install link was not set up correctly, I am missing: {perm_check}")
             return
 
         if interaction.user.voice is None:  # checks if the user is in a voice channel
