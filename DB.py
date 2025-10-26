@@ -39,18 +39,6 @@ class DB:
                     )
             """)
 
-            DB._cursor.execute(f"""
-                    CREATE TABLE Updates ( 
-                        post_reset_day INT NOT NULL
-                    );
-            """)
-
-            DB._cursor.execute(f"""
-                INSERT INTO Updates VALUES (
-                    {datetime.today().day}
-                );    
-            """)
-
             DB._settings_db.commit()
         except sqlite3.OperationalError:
             pass
