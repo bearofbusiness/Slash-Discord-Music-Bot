@@ -26,7 +26,7 @@ class Update(commands.Cog):
             This also REQUIRES linux to run properly.
         """
 
-        if not Utils.Pretests.update_check():
+        if not await Utils.Pretests.update_check():
             await interaction.response.send_message("YT-DLP is already on the latest version")
             return
 
