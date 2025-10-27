@@ -25,8 +25,13 @@ class Update(commands.Cog):
             it will then force reinstall YT-DLP (**using pip**) to be on the latest version from the nightly channel.
             This also REQUIRES linux to run properly.
         """
+        # Paths and names
+        TMUX_SESSION_NAME = "SlashDiscordMusicBot"
+        BOT_DIR = os.getcwd()
+        VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
+        YT_DLP_NEW_VERSION = ""
 
-        if not self.has_update_authority(interaction):
+        if not self.__has_update_authority(interaction):
             await Utils.send(interaction,
                 title='Insufficient permissions!',
                 content="You don't have the correct permissions to use this command!  Please refer to /help for more information."
@@ -34,12 +39,6 @@ class Update(commands.Cog):
             return
 
         await interaction.response.defer(thinking=True)
-
-        # Paths and names
-        TMUX_SESSION_NAME = "SlashDiscordMusicBot"
-        BOT_DIR = os.getcwd()
-        VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
-        YT_DLP_NEW_VERSION = ""
 
         try:
             # Get current tmux session name for deletion later
@@ -127,14 +126,14 @@ class Update(commands.Cog):
         Returns
         -------
         bool
-            Whether the interaction.user should have discretionary authority.
+            Whether the interaction.user should have the authority to update the bot.
         """
 
         dotenv.load_dotenv()
-        developers = list(os.environ.get('developers'))
+        developers = os.environ.get('developers', "").split(",")
 
         # for developers
-        if interaction.user.id in developers:
+        if str(interaction.user.id) in developers:
             return True
         return False
 
