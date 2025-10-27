@@ -27,7 +27,7 @@ class QueueManagement(commands.Cog):
             return
         
         # check if yt-dlp is out of date
-        if await Update.update_check():
+        if await Utils.Pretests.update_check():
             await interaction.response.send_message("YT-DLP is out of date, please run /update.")
             return
 
