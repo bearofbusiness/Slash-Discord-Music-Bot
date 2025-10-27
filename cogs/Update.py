@@ -20,9 +20,9 @@ class Update(commands.Cog):
         """
             This command REQUIRES python pip, tmux and a venv, this command also only works after all required packages
             have already been installed and the bot needs to be running in a tmux session.
-            This simply updates those existing packages and forces yt-dlp to be on the latest nightly version.
+            This simply updates those existing packages and forces yt-dlp to be on the latest version.
             When this command is run, it will create a list of existing packages already installed in the venv and update all of them,
-            it will then force reinstall YT-DLP (**using pip**) to be on the latest version from the nightly channel.
+            it will then force reinstall YT-DLP (**using pip**) to be on the latest version.
             This also REQUIRES linux to run properly.
         """
 
