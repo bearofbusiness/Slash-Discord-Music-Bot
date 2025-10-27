@@ -51,7 +51,7 @@ class Update(commands.Cog):
 
             # Run pip upgrade inside venv for all venv packages and update yt-dlp to nightly
             p1 = subprocess.run([
-                "python", "-m", "pip", "install", "--upgrade", "pip"
+                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "pip"
             ], check=True)
 
             while p1.returncode is not None:
@@ -66,7 +66,7 @@ class Update(commands.Cog):
             subprocess.run("pip freeze | cut -d '=' -f 1 | sort -u > packages.txt", shell=True, check=True)
 
             p2 = subprocess.run([
-                "pip", "install", "--upgrade", "-r", "packages.txt"
+                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "-r", "packages.txt"
             ], check=True)
 
             while p2.returncode is not None:
