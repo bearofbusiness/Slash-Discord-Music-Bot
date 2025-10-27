@@ -1,4 +1,5 @@
 import asyncio
+import os
 import subprocess
 
 import discord
@@ -6,6 +7,7 @@ import math
 import random
 import time
 
+import dotenv
 import requests
 import yt_dlp.utils
 
@@ -408,8 +410,11 @@ class Pretests:
                 return True
             if role.permissions.manage_channels or role.permissions.administrator:
                 return True
+
+        dotenv.load_dotenv()
+        developers = os.environ.get('developers', "").split(",")
         # Force discretionary authority for developers
-        if interaction.user.id == 369999044023549962 or interaction.user.id == 311659410109759488:
+        if str(interaction.user.id) in developers:
             return True
         return False
 
@@ -533,7 +538,6 @@ class Pretests:
 
         perms = interaction.channel.permissions_for(interaction.guild.me)
 
-        # makeshift enum
         required = {
             "CONNECT": perms.connect,
             "SPEAK": perms.speak
