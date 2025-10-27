@@ -64,7 +64,7 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         await self.load_extension("cogs.QueueManagement")
         await self.load_extension("cogs.PlaybackManagement")
         await self.load_extension("cogs.PlayerManagement")
-        await self.load_extension("cogs.Update")
+        # await self.load_extension("cogs.Update") # uncomment to enable self updating
         #await self.load_extension("cogs.DebugCog")
         Utils.pront("Cogs loaded!")
 
