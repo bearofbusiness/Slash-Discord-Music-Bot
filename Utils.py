@@ -567,12 +567,14 @@ class Pretests:
             ["yt-dlp", "--version"]
             , check=True, capture_output=True, text=True).stdout.strip()
 
-        response = requests.get(
-            "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest",
-            timeout=5
-        )
-        response.raise_for_status()
-        latest = response.json().get("tag_name", "").strip()
+        resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
+        resp.raise_for_status()
+        latest = (resp.json().get("tag_name") or "").strip()
+
+        # normalize / fallback
+        if not latest:
+            # try name field as fallback
+            latest = (resp.json().get("name") or "").strip()
 
         pront("\nYT-DLP version checking\nCurrent : " + current + "\nLatest  : " + latest, lvl="DEBUG")
 
