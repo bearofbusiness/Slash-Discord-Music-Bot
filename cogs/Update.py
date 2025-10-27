@@ -102,6 +102,7 @@ class Update(commands.Cog):
             while p4.returncode is not None:
                 if p4.returncode == 0:
                     await interaction.channel.send("Created new process.")
+                    break
 
             await interaction.channel.send("Finished installing all packages.\nTerminating old process.")
 
