@@ -114,28 +114,27 @@ class Update(commands.Cog):
         except Exception as e:
             raise e
 
-    @staticmethod
-    def __has_update_authority(interaction: discord.Interaction) -> bool:
-        """
-        Checks if the interaction.user has discretionary authority in the current scenario.
+def has_update_authority(interaction: discord.Interaction) -> bool:
+    """
+    Checks if the interaction.user has discretionary authority in the current scenario.
 
-        Parameters
-        ----------
-        interaction: `discord.Interaction`
+    Parameters
+    ----------
+    interaction: `discord.Interaction`
 
-        Returns
-        -------
-        bool
-            Whether the interaction.user should have the authority to update the bot.
-        """
+    Returns
+    -------
+    bool
+        Whether the interaction.user should have the authority to update the bot.
+    """
 
-        dotenv.load_dotenv()
-        developers = os.environ.get('developers', "").split(",")
+    dotenv.load_dotenv()
+    developers = os.environ.get('developers', "").split(",")
 
-        # for developers
-        if str(interaction.user.id) in developers:
-            return True
-        return False
+    # for developers
+    if str(interaction.user.id) in developers:
+        return True
+    return False
 
 
 async def setup(bot):

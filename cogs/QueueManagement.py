@@ -11,6 +11,8 @@ from Servers import Servers
 from Song import Song
 from YTDLInterface import YTDLInterface
 from DB import DB
+from cogs import Update
+
 
 class QueueManagement(commands.Cog):
     def __init__(self, bot: discord.Client):
@@ -24,8 +26,8 @@ class QueueManagement(commands.Cog):
             await interaction.response.send_message(f"My install link was not set up correctly, I am missing: {perm_check}")
             return
         
-        # check if yt-dlp is out of date
-        if await Utils.Pretests.update_check(interaction):
+        # check if yt-dlp is out of date (requires Update.py cog to be loaded)
+        if Update.has_update_authority(interaction):
             await interaction.response.send_message("YT-DLP is out of date, please run /update.")
             return
 
