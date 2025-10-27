@@ -1,12 +1,9 @@
 import asyncio
-import subprocess
-
 import discord
 import math
 import random
 import time
 
-import requests
 import yt_dlp.utils
 
 from datetime import datetime

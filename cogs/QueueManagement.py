@@ -26,8 +26,8 @@ class QueueManagement(commands.Cog):
             await interaction.response.send_message(f"My install link was not set up correctly, I am missing: {perm_check}")
             return
         
-        # check if yt-dlp is out of date (requires Update.py cog to be loaded)
-        if Update.has_update_authority(interaction):
+        # check if yt-dlp is out of date
+        if await Update.update_check():
             await interaction.response.send_message("YT-DLP is out of date, please run /update.")
             return
 

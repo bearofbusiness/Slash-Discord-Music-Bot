@@ -3,6 +3,7 @@ import subprocess
 
 import discord
 import dotenv
+import requests
 from discord.ext import commands
 from discord import app_commands
 
@@ -135,6 +136,38 @@ def has_update_authority(interaction: discord.Interaction) -> bool:
     if str(interaction.user.id) in developers:
         return True
     return False
+
+
+async def update_check() -> bool:
+    """
+    Check if yt-dlp is out of date
+
+    Parameters
+    ----------
+    interaction : `discord.Interaction`
+        The interaction to check and respond in.
+
+    Returns
+    -------
+    bool
+        True: yt-dlp is out of date
+        False: yt-dlp is not out of date
+    """
+
+    current = subprocess.run(
+        ["yt-dlp", "--version"]
+    , check=True, capture_output=True, text=True).stdout.strip()
+
+    response = requests.get(
+        "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest",
+        timeout=5
+    )
+    response.raise_for_status()
+    latest = response.json().get("tag_name", "").strip()
+
+    Utils.pront("\nYT-DLP version checking\nCurrent : " + current + "\nLatest  : " + latest, lvl="DEBUG")
+
+    return not latest == current
 
 
 async def setup(bot):
