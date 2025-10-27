@@ -25,6 +25,11 @@ class Update(commands.Cog):
             it will then force reinstall YT-DLP (**using pip**) to be on the latest version from the nightly channel.
             This also REQUIRES linux to run properly.
         """
+
+        if not Utils.Pretests.update_check():
+            await interaction.response.send_message("YT-DLP is already on the latest version")
+            return
+
         # Paths and names
         TMUX_SESSION_NAME = "SlashDiscordMusicBot"
         BOT_DIR = os.getcwd()
