@@ -23,6 +23,11 @@ class QueueManagement(commands.Cog):
         if perm_check is not None:
             await interaction.response.send_message(f"My install link was not set up correctly, I am missing: {perm_check}")
             return
+        
+        # check if yt-dlp is out of date
+        if await Utils.Pretests.update_check(interaction):
+            await interaction.response.send_message("YT-DLP is out of date, please run /update.")
+            return
 
         # Check if author is in VC
         if interaction.user.voice is None:

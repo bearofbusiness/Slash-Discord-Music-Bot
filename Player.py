@@ -11,7 +11,7 @@ import time
 import Buttons
 import Utils
 from Servers import Servers
-from Queue import Queue
+from PlaylistQueue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
 from DB import DB

@@ -1,8 +1,12 @@
 import asyncio
+import subprocess
+
 import discord
 import math
 import random
 import time
+
+import requests
 import yt_dlp.utils
 
 from datetime import datetime
@@ -567,3 +571,33 @@ class Pretests:
             return str(", ".join(missing))
         else:
             return None
+
+
+    async def update_check(interaction: discord.Interaction) -> bool:
+        """
+        Check if yt-dlp is out of date
+
+        Parameters
+        ----------
+        interaction : `discord.Interaction`
+            The interaction to check and respond in.
+
+        Returns
+        -------
+        bool
+            True: yt-dlp is out of date
+            False: yt-dlp is not out of date
+        """
+
+        current = subprocess.run(
+            ["yt-dlp", "--version"]
+        , check=True, capture_output=True, text=True).stdout.strip()
+
+        response = requests.get(
+            "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest",
+            timeout=5
+        )
+        response.raise_for_status()
+        latest = response.json().get("tag_name", "").strip()
+
+        return not latest == current
