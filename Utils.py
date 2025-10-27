@@ -384,31 +384,6 @@ class Pretests:
         Checks if the bot is set up with the correct permissions to function properly.
     """
 
-    def has_update_authority(interaction: discord.Interaction) -> bool:
-        """
-        Checks if the interaction.user has discretionary authority in the current scenario.
-
-        Parameters
-        ----------
-        interaction : `discord.Interaction`
-            The interaction to pull interaction.user from.
-
-        Returns
-        -------
-        bool
-            Whether the interaction.user should have discretionary authority.
-        """
-
-        developers = [
-            369999044023549962,
-            311659410109759488,
-            670821194550870016
-        ]
-
-        # for developers
-        if interaction.user.id in developers:
-            return True
-        return False
 
     # To be used with control over the Player as a whole
     def has_discretionary_authority(interaction: discord.Interaction) -> bool:
@@ -571,33 +546,3 @@ class Pretests:
             return str(", ".join(missing))
         else:
             return None
-
-
-    async def update_check(interaction: discord.Interaction) -> bool:
-        """
-        Check if yt-dlp is out of date
-
-        Parameters
-        ----------
-        interaction : `discord.Interaction`
-            The interaction to check and respond in.
-
-        Returns
-        -------
-        bool
-            True: yt-dlp is out of date
-            False: yt-dlp is not out of date
-        """
-
-        current = subprocess.run(
-            ["yt-dlp", "--version"]
-        , check=True, capture_output=True, text=True).stdout.strip()
-
-        response = requests.get(
-            "https://api.github.com/repos/yt-dlp/yt-dlp-nightly-builds/releases/latest",
-            timeout=5
-        )
-        response.raise_for_status()
-        latest = response.json().get("tag_name", "").strip()
-
-        return not latest == current
