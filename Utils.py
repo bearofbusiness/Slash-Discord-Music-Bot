@@ -535,7 +535,7 @@ class Pretests:
             Otherwise, None will be returned
         """
 
-        perms = interaction.channel.permissions_for(interaction.guild.me)
+        perms = interaction.user.voice.channel.permissions_for(interaction.guild.me)
 
         required = {
             "CONNECT": perms.connect,
