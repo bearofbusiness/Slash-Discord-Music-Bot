@@ -70,18 +70,18 @@ class Pages:
             "page" : {
                 "title": "Other Commands", "description": "",
                 "fields": [
-                {"name": "help", "value": "This command"},
-                {"name": "settings", "value": "Get or set the bot's settings for the server"},
-                {"name": "ping", "value": "A diagnostic command to make sure the bot is running"},
-                {"name": "join", "value": "Have MaBalls join the voice channel you are connected to"},
-                {"name": "leave", "value": "Have MaBalls disconnect from its voice channel"},
-                {"name": "inspect", "value": "Get information about a song in the queue by its index"},
-                {"name": "replay", "value": "Restarts the current song"},
-                {"name": "pause", "value": "Pauses the current song"},
-                {"name": "resume", "value": "Resumes the current song"},
-                {"name": "now", "value": "Gets the song that is currently playing"},
-                {"name": "force-reset-player", "value": "Did something go wrong while listening?  Run this command and it will (hopefully) sort it out!"}
-
+                    {"name": "help", "value": "This command"},
+                    {"name": "settings", "value": "Get or set the bot's settings for the server"},
+                    {"name": "ping", "value": "A diagnostic command to make sure the bot is running"},
+                    {"name": "join", "value": "Have MaBalls join the voice channel you are connected to"},
+                    {"name": "leave", "value": "Have MaBalls disconnect from its voice channel"},
+                    {"name": "inspect", "value": "Get information about a song in the queue by its index"},
+                    {"name": "replay", "value": "Restarts the current song"},
+                    {"name": "pause", "value": "Pauses the current song"},
+                    {"name": "resume", "value": "Resumes the current song"},
+                    {"name": "now", "value": "Gets the song that is currently playing"},
+                    {"name": "force-reset-player", "value": "Did something go wrong while listening?  Run this command and it will (hopefully) sort it out!"},
+                    {"name": "update", "value": "Updates all bot libraries to maintain functionality, this command is disabled by default. To enable this command, see \"Cogs\" in the readme on this bot's repository or check README.md"}
                 ]
             },
             "buttons" : ["help", "settings", "ping", "join", "leave", "inspect",  "replay", "pause", "resume", "now"],
