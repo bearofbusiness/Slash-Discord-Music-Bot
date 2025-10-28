@@ -411,7 +411,6 @@ class Pretests:
             if role.permissions.manage_channels or role.permissions.administrator:
                 return True
 
-        dotenv.load_dotenv()
         developers = os.environ.get('developers', "").split(",")
         # Force discretionary authority for developers
         if str(interaction.user.id) in developers:

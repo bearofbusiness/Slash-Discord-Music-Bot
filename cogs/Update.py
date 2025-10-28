@@ -136,7 +136,6 @@ class Update(commands.Cog):
             Whether the interaction.user should have the authority to update the bot.
         """
 
-        dotenv.load_dotenv()
         developers = os.environ.get('developers', "").split(",")
 
         # for developers
