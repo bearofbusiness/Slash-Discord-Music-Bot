@@ -1,7 +1,4 @@
-import asyncio
 import logging
-import subprocess
-import sys
 
 import discord
 import os
