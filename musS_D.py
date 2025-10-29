@@ -90,8 +90,12 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 
         # Setting status
         Utils.pront("Setting bot status")
-        await self.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
+        await self.change_presence(
+            activity=discord.CustomActivity(
+                # type=discord.ActivityType.watching,
+                name=f"Watching you in {len(bot.guilds):,} servers."
+            )
+        )
         
         Utils.pront("Bot is ready", lvl="OKGREEN")
         stringBuilder = ""
@@ -101,8 +105,12 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 
     async def on_resumed(self):
         Utils.pront("Updating bot status")
-        await self.change_presence(activity=discord.Activity(
-            type=discord.ActivityType.watching, name=f"you in {len(bot.guilds):,} servers."))
+        await self.change_presence(
+            activity=discord.CustomActivity(
+                # type=discord.ActivityType.watching,
+                name=f"you in {len(bot.guilds):,} servers."
+            )
+        )
 
 # Initialize bot object
 bot = Bot()
@@ -133,7 +141,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
     # because we're not connected to that server anyways >:(
     if member.guild.voice_client is None:
         return
-    
+
     # If it's the bot
     if member == bot.user:
         # if we're disconnecting
