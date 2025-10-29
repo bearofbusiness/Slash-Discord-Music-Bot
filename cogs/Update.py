@@ -2,7 +2,6 @@ import os
 import subprocess
 
 import discord
-import dotenv
 from discord.ext import commands
 from discord import app_commands
 
@@ -31,7 +30,7 @@ class Update(commands.Cog):
             return
 
         # Paths and names
-        TMUX_SESSION_NAME = "SlashDiscordMusicBot"
+        TMUX_SESSION_NAME = os.environ.get('tmux_session_name')
         BOT_DIR = os.getcwd()
         VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
         YT_DLP_NEW_VERSION = ""
@@ -96,6 +95,8 @@ class Update(commands.Cog):
                     await interaction.channel.send("Finished yt-dlp update to " + YT_DLP_NEW_VERSION + ".")
                     break
 
+            await interaction.channel.send("Finished installing all packages.\nTerminating old process.")
+
             TMUX_NEW = TMUX_SESSION_NAME + "-" + YT_DLP_NEW_VERSION
 
             # Create new tmux session and start the bot in it
@@ -108,8 +109,6 @@ class Update(commands.Cog):
                 if p4.returncode == 0:
                     await interaction.channel.send("Created new process.")
                     break
-
-            await interaction.channel.send("Finished installing all packages.\nTerminating old process.")
 
             if TMUX_OLD:
                 subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)
