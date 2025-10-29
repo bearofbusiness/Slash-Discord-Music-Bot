@@ -2,6 +2,7 @@ import discord
 import random
 from discord.ext import commands
 from discord import app_commands
+from discord.ext.commands import has_guild_permissions
 
 import Buttons
 import Utils
@@ -10,6 +11,8 @@ from Servers import Servers
 from Song import Song
 from YTDLInterface import YTDLInterface
 from DB import DB
+from cogs import Update
+
 
 
 class QueueManagement(commands.Cog):

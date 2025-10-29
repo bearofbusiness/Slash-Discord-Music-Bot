@@ -79,15 +79,10 @@ class Update(commands.Cog):
                     await interaction.channel.send("Finished venv packages update.")
                     break
 
-            # resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
-            # resp.raise_for_status()
-            # latest = resp.json()['assets'][6]['browser_download_url']
-
-            # p3 = subprocess.run([
-            #     f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", latest
-            # ], check=True)
-
-            p3 = subprocess.run("./update_script.sh", shell=True, check=True)
+            p3 = subprocess.run([
+                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall",
+                "git+https://github.com/yt-dlp/yt-dlp.git"
+            ], check=True)
 
             YT_DLP_NEW_VERSION = subprocess.run(
                 f"{VENV_PYTHON} -m pip show yt-dlp | grep 'Version' | awk '{{print $2}}'",
@@ -116,6 +111,8 @@ class Update(commands.Cog):
                 if p4.returncode == 0:
                     await interaction.channel.send("Created new process.")
                     break
+
+            await interaction.channel.send("Finished installing all packages.\nTerminating old process.")
 
             if TMUX_OLD:
                 subprocess.run(["tmux", "kill-session", "-t", TMUX_OLD], check=False)

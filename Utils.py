@@ -566,16 +566,9 @@ class Pretests:
             False: yt-dlp is not out of date
         """
 
-        BOT_DIR = os.getcwd()
-        VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
-
         current = subprocess.run(
-            f"{VENV_PYTHON} -m pip show yt-dlp | grep 'Version' | awk '{{print $2}}'",
-            shell=True,
-            check=True,
-            capture_output=True,
-            text=True
-        ).stdout.strip()
+            ["yt-dlp", "--version"]
+            , check=True, capture_output=True, text=True).stdout.strip()
 
         resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
         resp.raise_for_status()
