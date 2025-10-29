@@ -31,7 +31,7 @@ class Update(commands.Cog):
             return
 
         # Paths and names
-        TMUX_SESSION_NAME = "SlashDiscordMusicBot"
+        TMUX_SESSION_NAME = os.environ.get('tmux_session_name')
         BOT_DIR = os.getcwd()
         VENV_PYTHON = f"{BOT_DIR}/.venv/bin/python"
         YT_DLP_NEW_VERSION = ""
