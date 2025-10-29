@@ -34,7 +34,12 @@ Users in the `developers` list will always have control of the bot, and (if enab
 ```dotenv
 developers=111111111111111111,222222222222222222,333333333333333333
 ```
-
+When using /update (see next section), a new tmux session will be created, and it requires a name. 
+Please add a new line in your .env to apply this name 
+### Example tmux_session_name
+```dotenv
+tmux_session_name="SlashDiscordMusicBot"
+```
 Updates
 -------
 
