@@ -44,7 +44,7 @@ To help 'automate' these upgrades, [Frostwolf74](https://github.com/Frostwolf74)
 *Due to security risks and specific dependencies, this functionality is disabled by default* and is limited to users listed in the `developers` key in the `.env`.
 ### Additional System Dependencies for Updates
 
-For updates to function properly, **Ma must be run in a Linux-based environment** and *within a `.venv`**.  
+For updates to function properly, **Ma must be run in a Linux-based environment** and *within a `.venv`*.  
 The following dependencies are required:
 
 - `pip` Python module (within venv)
