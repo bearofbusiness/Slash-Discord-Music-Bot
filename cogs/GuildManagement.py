@@ -7,21 +7,31 @@ from Servers import Servers
 from DB import DB
 import Buttons
 
+
 class GuildManagement(commands.Cog):
     def __init__(self, bot: discord.Client):
         self.bot = bot
 
     @app_commands.command(name="join", description="Adds the MaBalls to the voice channel you are in")
     async def _join(self, interaction: discord.Interaction) -> None:
+        # checks if correct permissions are set
+        perm_check = await Utils.Pretests.check_perms(interaction)
+        if perm_check is not None:
+            await interaction.response.send_message(f"My install link was not set up correctly, I am missing: {perm_check}")
+            return
+
         if interaction.user.voice is None:  # checks if the user is in a voice channel
             await interaction.response.send_message('You are not in a voice channel', ephemeral=True)
             return
+
         if interaction.guild.voice_client is not None:  # checks if the bot is in a voice channel
             await interaction.response.send_message('I am already in a voice channel', ephemeral=True)
             return
+
         # Connect to the voice channel
         await interaction.user.voice.channel.connect(self_deaf=True)
         await Utils.send(interaction, title='Joined!', content=':white_check_mark:', progress=False)
+
 
     @app_commands.command(name="leave", description="Removes the MaBalls from the voice channel you are in")
     async def _leave(self, interaction: discord.Interaction) -> None:
@@ -43,7 +53,8 @@ class GuildManagement(commands.Cog):
         else:
             await interaction.guild.voice_client.disconnect()
         await Utils.send(interaction, title='Left!', content=':white_check_mark:', progress=False)
-        
+
+
     @app_commands.command(name="settings", description="Get or set the bot's settings for your server")
     async def _settings(self, interaction: discord.Interaction) -> None:
         for role in interaction.user.roles:
@@ -57,6 +68,7 @@ class GuildManagement(commands.Cog):
                 await interaction.response.send_message(ephemeral=True, embed=embed, view=Buttons.GuildSettingsView(interaction))
                 return
         await Utils.send(interaction, title='Insufficient permissions!', ephemeral=True)
+
 
 async def setup(bot):
     Utils.pront("Cog GuildManagement loading...")

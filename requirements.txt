@@ -1,6 +1,17 @@
+aiohappyeyeballs
+aiohttp
+aiosignal
+attrs
+audioop-lts # only needed for Python 3.13+
+cffi
 discord
+discord.py
+frozenlist
+idna
+multidict
+propcache
+pycparser
+PyNaCl
 python-dotenv
-pynacl
-traceback #not needed in python 3.13
-yt_dlp
-audioop-lts #needed in only new versons of python
+yarl
+yt-dlp

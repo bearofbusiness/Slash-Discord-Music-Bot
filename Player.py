@@ -11,7 +11,7 @@ import time
 import Buttons
 import Utils
 from Servers import Servers
-from Queue import Queue
+from PlaylistQueue import Queue
 from Song import Song
 from YTDLInterface import YTDLInterface
 from DB import DB
@@ -118,7 +118,7 @@ class Player:
             
         Returns
         -------
-        `Player`:
+        Player
             The new Player.
         """
         # Force creation of an empty Player
@@ -159,9 +159,9 @@ class Player:
         awaitable : `any`
             The awaitable object to run within the wrapper.
 
-        Return
-        ------
-        `any`:
+        Returns
+        -------
+        any
             The result of the awaitable.
         """
         try:
@@ -266,9 +266,7 @@ class Player:
                 self.song.start()
 
                 # Begin playing audio into Discord
-                self.vc.play(discord.FFmpegPCMAudio(
-                    self.song.audio, **YTDLInterface.ffmpeg_options
-                ), after=self.__song_complete)
+                self.vc.play(discord.FFmpegPCMAudio(self.song.audio, **YTDLInterface.ffmpeg_options), after=self.__song_complete)
                 # () implicit parenthesis
 
                 # Send the new NP
@@ -326,10 +324,8 @@ class Player:
 
         Returns
         -------
-        `bool`:
-            True if the Player is playing audio or paused.
-
-            False if the Player is between songs.
+        bool
+            True if the Player is playing audio or paused. False if the Player is between songs.
         """
         return not self.player_song_end.is_set()
     

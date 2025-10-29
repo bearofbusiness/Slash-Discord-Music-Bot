@@ -1,3 +1,8 @@
+import asyncio
+import logging
+import subprocess
+import sys
+
 import discord
 import os
 import traceback
@@ -15,11 +20,14 @@ from DB import DB
 # imports for error type checking
 import yt_dlp
 # needed to add it to a var bc of pylint on my laptop but i delete it right after
+
+handler = logging.FileHandler(filename='recent.log', encoding='utf-8', mode='w')
+
 XX = '''
 #-fnt stands for finished not tested
 TODO:
     6- make a new way to limit mixes to 50 songs
-    5- make sure all pydocs are tabbed properly (parameters are tabbed in, same with returns)
+    5-f make sure all pydocs are tabbed properly (parameters are tabbed in, same with returns)
     3- clean up todos in various parts of code
     2- write more pydocs
     -make more commands
@@ -56,7 +64,8 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
         await self.load_extension("cogs.QueueManagement")
         await self.load_extension("cogs.PlaybackManagement")
         await self.load_extension("cogs.PlayerManagement")
-        #await self.load_extension("cogs.DebugCog")
+        # await self.load_extension("cogs.Update")
+        # await self.load_extension("cogs.DebugCog")
         Utils.pront("Cogs loaded!")
 
         # Database loading
@@ -132,11 +141,11 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         # If we've been forcibly removed from a VC
         # (this leaves a hanging voice_client)
             if member.guild.voice_client is not None:
-                Utils.pront("bot was forcibly removed")
+                Utils.pront("Bot was disconnected from VC")
                 player = Servers.get_player(member.guild.id)
                 # Clean up the player if it exists
                 if player is not None:
-                    await player.clean()          
+                    await player.clean()
         return
 
     # If the user was in the same VC as the bot and disconnected
@@ -152,9 +161,12 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
         # If the bot should purge their queued songs
         if DB.GuildSettings.get(member.guild.id, 'remove_orphaned_songs'):
             player = Servers.get_player(member.guild.id)
+
             # If there isn't a player, abort
             if player is None:
+                Utils.pront("Attempted to purge queue, missing player", lvl="WARNING")
                 return
+
             # Loop through songs in queue and remove duplicates
             removed = 0
             for i in range(len(player.queue.get()) - 1, 0, -1):
@@ -162,6 +174,7 @@ async def on_voice_state_update(member: discord.Member, before: discord.VoiceSta
                 if player.queue.get(i).requester == member:
                     player.queue.remove(i)
                     removed += 1
+
             # If songs were removed, let the users know.
             if removed != 0:
                 embed = discord.Embed(
@@ -189,4 +202,5 @@ async def _help(interaction: discord.Interaction) -> None:
     embed = discord.Embed.from_dict(Pages.get_main_page())
     await interaction.response.send_message(embed=embed, view=Buttons.HelpView(), ephemeral=True)
 
-bot.run(key)
+
+bot.run(key, log_handler=handler, log_level=logging.INFO, root_logger=True)

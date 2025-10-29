@@ -78,7 +78,9 @@ class YTDLInterface:
     }
 
     ffmpeg_options = {
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'}
+        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+        'options': '-vn'
+    }
 
     # Rapidy retrieves shell information surrounding a URL
     @staticmethod
@@ -88,13 +90,13 @@ class YTDLInterface:
         
         Parameters
         ----------
-            link : `str`
-                The URL to be scraped, note that searches do not work when scraping.
+        link : `str`
+            The URL to be scraped, note that searches do not work when scraping.
 
         Returns
         -------
-            `dict`:
-                A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        dict
+            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, link)
 
@@ -107,13 +109,13 @@ class YTDLInterface:
         
         Parameters
         ----------
-            link : `str`
-                The URL to be queried, non-links will be searched and the first result returned.
+        link : `str`
+            The URL to be queried, non-links will be searched and the first result returned.
 
         Returns
         -------
-            `dict`:
-                A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        dict
+            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.retrieve_options, link)
 
@@ -126,13 +128,13 @@ class YTDLInterface:
 
         Parameters
         ----------
-            link : `str`
-                The URL of the playlist to skim, this does not contain song information.
+        link : `str`
+            The URL of the playlist to skim, this does not contain song information.
 
         Returns
         -------
-            `dict`:
-                A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
+        dict
+            A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.skim_playlist_options, link)
 
@@ -144,12 +146,12 @@ class YTDLInterface:
         
         Parameters
         ----------
-            `query` : `str`
-                The text to be searched.  The method will return the top 5 search results.
+        `query` : `str`
+            The text to be searched.  The method will return the top 5 search results.
 
         Returns
         -------
-        `dict`:
+        dict
             A dictionary containing the result of the yt-dlp call.  This may or may not be able to be converted to JSON, it depends on yt-dlp.
         """
         return await YTDLInterface.__call_dlp(YTDLInterface.scrape_options, f'ytsearch5:{query}')
@@ -169,7 +171,7 @@ class YTDLInterface:
 
         Returns
         -------
-        `dict`:
+        dict
             A dictionary containing the result of the yt-dlp call.
         
         Raises

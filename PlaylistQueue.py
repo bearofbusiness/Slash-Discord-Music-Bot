@@ -3,7 +3,7 @@ from asyncio import Event
 
 from Song import Song
 
-
+# PlayListQueue
 class Queue:
     """
     A class for containing and managing a list of Songs.
@@ -78,18 +78,16 @@ class Queue:
         index : `int` | `None`, optional
             The index of the Song to retrieve.
 
+        Returns
+        -------
+        songs : Song or list[Song]
+            Song when provided with an integer, return the Song at that index.
+            list[Song] when provided with a NoneType, return all of the Songs in a list.
+
         Raises
         ------
         `IndexError`
             If the requested index is out of range.
-
-        Returns
-        -------
-        `Song`:
-            When provided with an integer, return the Song at that index.
-        `list[Song]`:
-            When provided with a NoneType, return all of the Songs in a list.
-
         """
         if index is None:
             return self.queue

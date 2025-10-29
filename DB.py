@@ -1,4 +1,6 @@
 import sqlite3
+from datetime import datetime
+
 from discord.utils import SequenceProxy
 from discord import Guild
 class DB:
@@ -36,6 +38,8 @@ class DB:
                         song_breadcrumbs BOOLEAN DEFAULT '1'
                     )
             """)
+
+            DB._settings_db.commit()
         except sqlite3.OperationalError:
             pass
 
@@ -95,7 +99,7 @@ class DB:
 
             Returns
             -------
-            `str`:
+            setting : str
                 The setting argument.
             """
             match setting:
@@ -154,7 +158,6 @@ class DB:
             setting : `str`
                 The setting to set.
 
-
                 The Valid values are:
 
                     > guild_id
@@ -166,7 +169,6 @@ class DB:
                     > remove_orphaned_songs
 
                     > song_breadcrumbs
-                    
             value : `str` | `bool` | `int`
                 The value to update the field with.
             """
