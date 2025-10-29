@@ -51,7 +51,8 @@ The following dependencies are required:
 
 - `tmux` (system package)
 
-Additionally, **Ma must be launched within a tmux session.** Consider adding a run.sh script for convenience. (feel free to submit a pull request!).  
+Additionally, **Ma must be launched within a tmux session.** Consider adding a run.sh script for convenience. (feel free to submit a pull request!).
+
 *Note: We are not responsible for any broken systems if you fail to use a `.venv`. It's like using a condom: ignore it at your own risk.*
 
 If you accept the implications, and have the dependencies installed,
