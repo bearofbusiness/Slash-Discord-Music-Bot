@@ -79,13 +79,15 @@ class Update(commands.Cog):
                     await interaction.channel.send("Finished venv packages update.")
                     break
 
-            resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
-            resp.raise_for_status()
-            latest = resp.json()['assets'][6]['browser_download_url']
+            # resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
+            # resp.raise_for_status()
+            # latest = resp.json()['assets'][6]['browser_download_url']
 
-            p3 = subprocess.run([
-                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", latest
-            ], check=True)
+            # p3 = subprocess.run([
+            #     f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", latest
+            # ], check=True)
+
+            p3 = subprocess.run("update_script.sh", shell=True, check=True)
 
             YT_DLP_NEW_VERSION = subprocess.run(
                 f"{VENV_PYTHON} -m pip show yt-dlp | grep 'Version' | awk '{{print $2}}'",
