@@ -2,6 +2,7 @@ import os
 import subprocess
 
 import discord
+import requests
 from discord.ext import commands
 from discord import app_commands
 
@@ -78,9 +79,12 @@ class Update(commands.Cog):
                     await interaction.channel.send("Finished venv packages update.")
                     break
 
+            resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
+            resp.raise_for_status()
+            latest = resp.json()['assets'][6]['browser_download_url']
+
             p3 = subprocess.run([
-                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall",
-                "git+https://github.com/yt-dlp/yt-dlp.git"
+                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", latest
             ], check=True)
 
             YT_DLP_NEW_VERSION = subprocess.run(
