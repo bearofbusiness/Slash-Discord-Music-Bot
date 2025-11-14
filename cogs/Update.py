@@ -88,10 +88,11 @@ class Update(commands.Cog):
             ], check=True)
 
             YT_DLP_NEW_VERSION = subprocess.run(
-                ["yt-dlp", "--version"],
+                f"{VENV_PYTHON} -m pip show yt-dlp | grep 'Version' | awk '{{print $2}}'",
+                shell=True,
+                check=True,
                 capture_output=True,
-                text=True,
-                check=True
+                text=True
             ).stdout.strip()
 
             while p3.returncode is not None:
