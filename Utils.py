@@ -567,8 +567,9 @@ class Pretests:
         """
 
         current = subprocess.run(
-            ["yt-dlp", "--version"]
-            , check=True, capture_output=True, text=True).stdout.strip()
+            "source .venv/bin/activate && python -m pip show yt-dlp | grep 'Version' | awk '{print $2}'",
+            shell=True, check=True, capture_output=True, text=True
+        ).stdout.strip()
 
         resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
         resp.raise_for_status()
