@@ -57,11 +57,16 @@ class Bot(commands.Bot):  # initiates the bots intents and on_ready event
 
     async def setup_hook(self):
         #adding cogs
-        await self.load_extension("cogs.GuildManagement")
-        await self.load_extension("cogs.QueueManagement")
-        await self.load_extension("cogs.PlaybackManagement")
-        await self.load_extension("cogs.PlayerManagement")
-        # await self.load_extension("cogs.Update")
+        if os.environ.get('enable_GuildManagement') == "true":
+            await self.load_extension("cogs.GuildManagement")
+        if os.environ.get('enable_QueueManagement') == "true":
+            await self.load_extension("cogs.QueueManagement")
+        if os.environ.get('enable_PlaybackManagement') == "true":
+            await self.load_extension("cogs.PlaybackManagement")
+        if os.environ.get('enable_PlayerManagement') == "true":
+            await self.load_extension("cogs.PlayerManagement")
+        if os.environ.get('enable_Update') == "true":
+            await self.load_extension("cogs.Update")
         # await self.load_extension("cogs.DebugCog")
         Utils.pront("Cogs loaded!")
 
