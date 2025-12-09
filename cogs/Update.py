@@ -79,6 +79,10 @@ class Update(commands.Cog):
                     await interaction.channel.send("Finished venv packages update.")
                     break
 
+            subprocess.run(
+                f"yt-dlp --upgrade"
+            )
+
             p3 = subprocess.run([
                 f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall",
                 "git+https://github.com/yt-dlp/yt-dlp.git"
