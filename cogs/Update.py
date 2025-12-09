@@ -87,7 +87,7 @@ class Update(commands.Cog):
             #     f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall", latest
             # ], check=True)
 
-            p3 = subprocess.run("update_script.sh", shell=True, check=True)
+            p3 = subprocess.run("./update_script.sh", shell=True, check=True)
 
             YT_DLP_NEW_VERSION = subprocess.run(
                 f"{VENV_PYTHON} -m pip show yt-dlp | grep 'Version' | awk '{{print $2}}'",
