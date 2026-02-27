@@ -83,21 +83,23 @@ class Update(commands.Cog):
                     f"yt-dlp --upgrade"
                 )
             except Exception as e:
-                Utils.pront("Exception caught while attempting to update yt-dlp internally.")
+                Utils.pront("Exception caught while attempting to update yt-dlp internally: " + e)
 
 
             p3 = subprocess.run([
-                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--pre", "--force-reinstall",
+                f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall",
                 "yt-dlp[default]"
             ], check=True)
 
-            YT_DLP_NEW_VERSION = subprocess.run(
-                f"{VENV_PYTHON} -m pip show yt-dlp | grep 'Version' | awk '{{print $2}}'",
-                shell=True,
-                check=True,
-                capture_output=True,
-                text=True
-            ).stdout.strip()
+            pre1 = subprocess.Popen(["pip", "freeze"], stdout=subprocess.PIPE)
+            pre2 = subprocess.run(
+                 ["grep", "yt-dlp="],
+                 stdin=pre1.stdout,
+                 text=True,
+                 capture_output=True,
+            ).stdout.strip().split("==")[1]
+            pre3 = pre2.split(".")
+            YT_DLP_NEW_VERSION = f"{pre3[0]}.{pre3[1]:0>2}.{pre3[2]:0>2}"
 
             while p3.returncode is not None:
                 if p3.returncode == 0:
