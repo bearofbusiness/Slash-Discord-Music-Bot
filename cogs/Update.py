@@ -88,7 +88,7 @@ class Update(commands.Cog):
 
             p3 = subprocess.run([
                 f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--pre", "--force-reinstall",
-                "\"yt-dlp[default]\""
+                "yt-dlp[default]"
             ], check=True)
 
             YT_DLP_NEW_VERSION = subprocess.run(
