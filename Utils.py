@@ -566,9 +566,16 @@ class Pretests:
             False: yt-dlp is not out of date
         """
 
-        current = subprocess.run(
-            ["yt-dlp", "--version"]
-            , check=True, capture_output=True, text=True).stdout.strip()
+        pre1 = subprocess.Popen(["pip", "freeze"], stdout=subprocess.PIPE)
+        pre2 = subprocess.run(
+            ["grep", "yt-dlp="],
+            stdin=pre1.stdout,
+            text=True,
+            capture_output=True,
+        ).stdout.strip().split("==")[1]
+        pre3 = pre2.split(".")
+        current = f"{pre3[0]}.{pre3[1]:0>2}.{pre3[2]:0>2}"
+
 
         resp = requests.get("https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest", timeout=5)
         resp.raise_for_status()
