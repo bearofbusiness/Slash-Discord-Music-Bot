@@ -78,10 +78,13 @@ class Update(commands.Cog):
                 if p2.returncode == 0:
                     await interaction.channel.send("Finished venv packages update.")
                     break
+            try:
+                subprocess.run(
+                    f"yt-dlp --upgrade"
+                )
+            except Exception as e:
+                Utils.pront("Exception caught while attempting to update yt-dlp internally.")
 
-            subprocess.run(
-                f"yt-dlp --upgrade"
-            )
 
             p3 = subprocess.run([
                 f"{VENV_PYTHON}", "-m", "pip", "install", "--upgrade", "--force-reinstall",
