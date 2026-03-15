@@ -21,12 +21,16 @@ If you're new to this, don't worry! We have* an in-depth install guide [here.](y
 
 Cogs
 ----
-There are cogs available that can be enabled and disabled at will, to enable and disable them, go to `setup_hook`
-in musS_D.py (line 61) and add a `#` before a `await self.load_extension` if you want to disable the respective cog, 
-however, you should not do that for the first four cogs as they are required for functionality. The third cog `Update` 
-is disabled by default and can be enabled to allow a user specified in the `developers` key of the .env file to run 
-/update to automatically update the bot's libraries to ensure functionality of yt-dlp. To enable this, simply remove the
-`#` at the beginning of line 67. However, this command **only works on linux systems and requires the bot to be 
+There are cogs available that can be enabled and disabled at will in order to add extensibility to the bot. 
+All but `Update` are needed for core functionality.
+They can be enabled and disabled via the `.env` with respective keys.
+
+Update
+------
+The `Update` cog is disabled by default, and when enabled allows a user specified in the `developers` key of the `.env` file to run 
+the /update command; which automatically update the bot's libraries to ensure functionality of yt-dlp.
+To enable the `Update` cog, change the corresponding value in the `.env` to "true". 
+However, this command **only works on linux systems and requires the bot to be 
 currently running in a tmux session and a python virtual environment**
 
 Dotenv Configuration
@@ -44,3 +48,4 @@ full control of the bot.
 ```dotenv
 developers=111111111111111111,222222222222222222,333333333333333333
 ```
+For a complete example, check the example_env file.
