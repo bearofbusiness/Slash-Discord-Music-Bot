@@ -1,0 +1,19 @@
+# The discord token
+key="aaaaaaaaaaaaaaaaaaaaaaaaaa.bbbbbb.cccccccccccccccccccccccccccccccccccccc"
+
+# The developers (by user id) who get full control over the bot, including /update if enabled.
+developers=your_user_id_here,111111111111111111,222222222222222222
+
+# The naming scheme of the tmux session created by the bot when updating. It will have the yt-dlp version appended.
+tmux_session_name="SlashDiscordMusicBot"
+
+# Core bot functionality
+enable_GuildManagement="true"
+enable_QueueManagement="true"
+enable_PlaybackManagement="true"
+enable_PlayerManagement="true"
+
+# Update functionality
+enable_Update="false"
+
+# In order to apply this file, rename it to ".env"
