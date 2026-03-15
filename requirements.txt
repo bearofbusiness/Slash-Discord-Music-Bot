@@ -4,6 +4,7 @@ aiosignal
 attrs
 audioop-lts # only needed for Python 3.13+
 cffi
+davey
 discord
 discord.py
 frozenlist
